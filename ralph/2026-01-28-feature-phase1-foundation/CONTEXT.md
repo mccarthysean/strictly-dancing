@@ -1405,3 +1405,36 @@ strictly-dancing/
 
 **Next**: T048 - Create Message and Conversation Models
 
+---
+
+### Entry [E-049] 2026-01-29T08:35:00Z
+
+**Task**: T048 - Create Message and Conversation Models
+**Status**: DONE
+**Progress**: 48/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/models/conversation.py with Conversation and Message models
+- Conversation model has: id, participant_1_id, participant_2_id, last_message_at, last_message_preview, participant_1_unread_count, participant_2_unread_count
+- Message model has: id, conversation_id, sender_id, content, message_type, read_at
+- MessageType enum with 5 values: text, system, booking_request, booking_confirmed, booking_cancelled
+- Added unique constraint on participant pair (participant_1_id, participant_2_id)
+- Added check constraint ensuring participant_1_id < participant_2_id for consistent ordering
+- Added CASCADE deletes on foreign keys
+- Created helper methods: get_other_participant_id(), is_participant(), is_read()
+- Created Alembic migration (000000000008) for conversations and messages tables
+- Added indexes for efficient queries:
+  - ix_conversations_participant_1, ix_conversations_participant_2
+  - ix_conversations_last_message_at
+  - ix_messages_conversation_created, ix_messages_conversation_read_at
+- Updated app/models/__init__.py with new exports
+- Created 53 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (821/821 total - 53 new tests added)
+- Files: app/models/conversation.py, alembic/versions/20260129_070000_create_conversations_and_messages_tables.py, tests/unit/test_conversation_model.py
+- Linting: All checks passed
+- Alembic heads: 000000000008 recognized
+
+**Next**: T049 - Implement Messaging Repository
+

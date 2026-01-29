@@ -8,6 +8,7 @@ from app.models.availability import (
 )
 from app.models.base import Base
 from app.models.booking import Booking, BookingStatus
+from app.models.conversation import Conversation, Message, MessageType
 from app.models.dance_style import DanceStyle, DanceStyleCategory
 from app.models.host_dance_style import HostDanceStyle
 from app.models.host_profile import HostProfile, VerificationStatus
@@ -19,11 +20,14 @@ __all__ = [
     "Base",
     "Booking",
     "BookingStatus",
+    "Conversation",
     "DanceStyle",
     "DanceStyleCategory",
     "DayOfWeek",
     "HostDanceStyle",
     "HostProfile",
+    "Message",
+    "MessageType",
     "RecurringAvailability",
     "User",
     "UserType",
