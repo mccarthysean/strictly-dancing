@@ -2120,6 +2120,587 @@ class TestCancelBookingEndpoint:
         assert data["status"] == BookingStatus.CANCELLED.value
 
 
+class TestStartBookingEndpoint:
+    """Tests for POST /api/v1/bookings/{id}/start endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_start_booking_endpoint_exists(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that the start booking endpoint exists and returns 200."""
+        # Set booking status to CONFIRMED and scheduled_start to now
+        sample_booking.status = BookingStatus.CONFIRMED
+        sample_booking.scheduled_start = datetime.now(UTC)  # Starting now
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+
+                # Create started booking for second get_by_id call
+                started_booking = MagicMock()
+                started_booking.id = sample_booking.id
+                started_booking.client_id = sample_booking.client_id
+                started_booking.host_id = sample_booking.host_id
+                started_booking.host_profile_id = sample_booking.host_profile_id
+                started_booking.dance_style_id = sample_booking.dance_style_id
+                started_booking.status = BookingStatus.IN_PROGRESS
+                started_booking.scheduled_start = sample_booking.scheduled_start
+                started_booking.scheduled_end = sample_booking.scheduled_end
+                started_booking.actual_start = datetime.now(UTC)
+                started_booking.actual_end = None
+                started_booking.duration_minutes = sample_booking.duration_minutes
+                started_booking.hourly_rate_cents = sample_booking.hourly_rate_cents
+                started_booking.amount_cents = sample_booking.amount_cents
+                started_booking.platform_fee_cents = sample_booking.platform_fee_cents
+                started_booking.host_payout_cents = sample_booking.host_payout_cents
+                started_booking.location = None
+                started_booking.location_name = sample_booking.location_name
+                started_booking.location_notes = sample_booking.location_notes
+                started_booking.client_notes = sample_booking.client_notes
+                started_booking.host_notes = None
+                started_booking.cancellation_reason = None
+                started_booking.cancelled_by_id = None
+                started_booking.cancelled_at = None
+                started_booking.stripe_payment_intent_id = (
+                    sample_booking.stripe_payment_intent_id
+                )
+                started_booking.created_at = sample_booking.created_at
+                started_booking.updated_at = sample_booking.updated_at
+                started_booking.client = sample_booking.client
+                started_booking.host = sample_booking.host
+                started_booking.host_profile = sample_booking.host_profile
+                started_booking.dance_style = sample_booking.dance_style
+
+                mock_booking_repo.get_by_id.side_effect = [
+                    sample_booking,
+                    started_booking,
+                ]
+                mock_booking_repo.update_status.return_value = started_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/start",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.asyncio
+    async def test_start_booking_validates_confirmed_status(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that start only works on confirmed bookings."""
+        # Set booking status to PENDING (not confirmed)
+        sample_booking.status = BookingStatus.PENDING
+        sample_booking.scheduled_start = datetime.now(UTC)
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/start",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "confirmed" in response.json()["detail"].lower()
+
+    @pytest.mark.asyncio
+    async def test_start_booking_validates_within_30_minutes(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that start validates within 30 minutes of scheduled start."""
+        # Set booking status to CONFIRMED but scheduled_start in the future (>30 min)
+        sample_booking.status = BookingStatus.CONFIRMED
+        sample_booking.scheduled_start = datetime.now(UTC) + timedelta(hours=2)
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/start",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "30 minutes" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_start_booking_records_actual_start(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that start records actual_start timestamp."""
+        sample_booking.status = BookingStatus.CONFIRMED
+        sample_booking.scheduled_start = datetime.now(UTC)
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+
+                # Create started booking with actual_start set
+                started_booking = MagicMock()
+                started_booking.id = sample_booking.id
+                started_booking.client_id = sample_booking.client_id
+                started_booking.host_id = sample_booking.host_id
+                started_booking.host_profile_id = sample_booking.host_profile_id
+                started_booking.dance_style_id = sample_booking.dance_style_id
+                started_booking.status = BookingStatus.IN_PROGRESS
+                started_booking.scheduled_start = sample_booking.scheduled_start
+                started_booking.scheduled_end = sample_booking.scheduled_end
+                started_booking.actual_start = datetime.now(UTC)
+                started_booking.actual_end = None
+                started_booking.duration_minutes = sample_booking.duration_minutes
+                started_booking.hourly_rate_cents = sample_booking.hourly_rate_cents
+                started_booking.amount_cents = sample_booking.amount_cents
+                started_booking.platform_fee_cents = sample_booking.platform_fee_cents
+                started_booking.host_payout_cents = sample_booking.host_payout_cents
+                started_booking.location = None
+                started_booking.location_name = sample_booking.location_name
+                started_booking.location_notes = sample_booking.location_notes
+                started_booking.client_notes = sample_booking.client_notes
+                started_booking.host_notes = None
+                started_booking.cancellation_reason = None
+                started_booking.cancelled_by_id = None
+                started_booking.cancelled_at = None
+                started_booking.stripe_payment_intent_id = (
+                    sample_booking.stripe_payment_intent_id
+                )
+                started_booking.created_at = sample_booking.created_at
+                started_booking.updated_at = sample_booking.updated_at
+                started_booking.client = sample_booking.client
+                started_booking.host = sample_booking.host
+                started_booking.host_profile = sample_booking.host_profile
+                started_booking.dance_style = sample_booking.dance_style
+
+                mock_booking_repo.get_by_id.side_effect = [
+                    sample_booking,
+                    started_booking,
+                ]
+                mock_booking_repo.update_status.return_value = started_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/start",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["actual_start"] is not None
+
+    @pytest.mark.asyncio
+    async def test_start_booking_updates_status_to_in_progress(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that start updates status to in_progress."""
+        sample_booking.status = BookingStatus.CONFIRMED
+        sample_booking.scheduled_start = datetime.now(UTC)
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+
+                # Create started booking
+                started_booking = MagicMock()
+                started_booking.id = sample_booking.id
+                started_booking.client_id = sample_booking.client_id
+                started_booking.host_id = sample_booking.host_id
+                started_booking.host_profile_id = sample_booking.host_profile_id
+                started_booking.dance_style_id = sample_booking.dance_style_id
+                started_booking.status = BookingStatus.IN_PROGRESS
+                started_booking.scheduled_start = sample_booking.scheduled_start
+                started_booking.scheduled_end = sample_booking.scheduled_end
+                started_booking.actual_start = datetime.now(UTC)
+                started_booking.actual_end = None
+                started_booking.duration_minutes = sample_booking.duration_minutes
+                started_booking.hourly_rate_cents = sample_booking.hourly_rate_cents
+                started_booking.amount_cents = sample_booking.amount_cents
+                started_booking.platform_fee_cents = sample_booking.platform_fee_cents
+                started_booking.host_payout_cents = sample_booking.host_payout_cents
+                started_booking.location = None
+                started_booking.location_name = sample_booking.location_name
+                started_booking.location_notes = sample_booking.location_notes
+                started_booking.client_notes = sample_booking.client_notes
+                started_booking.host_notes = None
+                started_booking.cancellation_reason = None
+                started_booking.cancelled_by_id = None
+                started_booking.cancelled_at = None
+                started_booking.stripe_payment_intent_id = (
+                    sample_booking.stripe_payment_intent_id
+                )
+                started_booking.created_at = sample_booking.created_at
+                started_booking.updated_at = sample_booking.updated_at
+                started_booking.client = sample_booking.client
+                started_booking.host = sample_booking.host
+                started_booking.host_profile = sample_booking.host_profile
+                started_booking.dance_style = sample_booking.dance_style
+
+                mock_booking_repo.get_by_id.side_effect = [
+                    sample_booking,
+                    started_booking,
+                ]
+                mock_booking_repo.update_status.return_value = started_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/start",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["status"] == BookingStatus.IN_PROGRESS.value
+
+    @pytest.mark.asyncio
+    async def test_start_booking_only_participant_can_start(
+        self,
+        mock_db,
+        sample_booking,
+    ):
+        """Test that only the client or host can start a booking."""
+        # Create a third user who is neither client nor host
+        other_user = MagicMock(spec=User)
+        other_user.id = uuid4()
+        other_user.email = "other@test.com"
+        other_user.first_name = "Other"
+        other_user.last_name = "User"
+        other_user.user_type = UserType.CLIENT
+        other_user.is_active = True
+        other_user.email_verified = True
+
+        sample_booking.status = BookingStatus.CONFIRMED
+        sample_booking.scheduled_start = datetime.now(UTC)
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(other_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = other_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/start",
+                        headers=get_auth_header(other_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @pytest.mark.asyncio
+    async def test_start_booking_client_can_start(
+        self,
+        mock_db,
+        sample_user,  # Client user
+        sample_booking,
+    ):
+        """Test that the client can start the booking."""
+        sample_booking.status = BookingStatus.CONFIRMED
+        sample_booking.scheduled_start = datetime.now(UTC)
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+
+                # Create started booking
+                started_booking = MagicMock()
+                started_booking.id = sample_booking.id
+                started_booking.client_id = sample_booking.client_id
+                started_booking.host_id = sample_booking.host_id
+                started_booking.host_profile_id = sample_booking.host_profile_id
+                started_booking.dance_style_id = sample_booking.dance_style_id
+                started_booking.status = BookingStatus.IN_PROGRESS
+                started_booking.scheduled_start = sample_booking.scheduled_start
+                started_booking.scheduled_end = sample_booking.scheduled_end
+                started_booking.actual_start = datetime.now(UTC)
+                started_booking.actual_end = None
+                started_booking.duration_minutes = sample_booking.duration_minutes
+                started_booking.hourly_rate_cents = sample_booking.hourly_rate_cents
+                started_booking.amount_cents = sample_booking.amount_cents
+                started_booking.platform_fee_cents = sample_booking.platform_fee_cents
+                started_booking.host_payout_cents = sample_booking.host_payout_cents
+                started_booking.location = None
+                started_booking.location_name = sample_booking.location_name
+                started_booking.location_notes = sample_booking.location_notes
+                started_booking.client_notes = sample_booking.client_notes
+                started_booking.host_notes = None
+                started_booking.cancellation_reason = None
+                started_booking.cancelled_by_id = None
+                started_booking.cancelled_at = None
+                started_booking.stripe_payment_intent_id = (
+                    sample_booking.stripe_payment_intent_id
+                )
+                started_booking.created_at = sample_booking.created_at
+                started_booking.updated_at = sample_booking.updated_at
+                started_booking.client = sample_booking.client
+                started_booking.host = sample_booking.host
+                started_booking.host_profile = sample_booking.host_profile
+                started_booking.dance_style = sample_booking.dance_style
+
+                mock_booking_repo.get_by_id.side_effect = [
+                    sample_booking,
+                    started_booking,
+                ]
+                mock_booking_repo.update_status.return_value = started_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/start",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.asyncio
+    async def test_start_booking_returns_404_not_found(
+        self,
+        mock_db,
+        sample_host_user,
+    ):
+        """Test that start returns 404 for non-existent booking."""
+        booking_id = uuid4()
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = None
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{booking_id}/start",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.asyncio
+    async def test_start_booking_allows_within_30_minutes_before(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that start works up to 30 minutes before scheduled time."""
+        # Schedule booking 20 minutes in the future (within 30 minute window)
+        sample_booking.status = BookingStatus.CONFIRMED
+        sample_booking.scheduled_start = datetime.now(UTC) + timedelta(minutes=20)
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+
+                # Create started booking
+                started_booking = MagicMock()
+                started_booking.id = sample_booking.id
+                started_booking.client_id = sample_booking.client_id
+                started_booking.host_id = sample_booking.host_id
+                started_booking.host_profile_id = sample_booking.host_profile_id
+                started_booking.dance_style_id = sample_booking.dance_style_id
+                started_booking.status = BookingStatus.IN_PROGRESS
+                started_booking.scheduled_start = sample_booking.scheduled_start
+                started_booking.scheduled_end = sample_booking.scheduled_end
+                started_booking.actual_start = datetime.now(UTC)
+                started_booking.actual_end = None
+                started_booking.duration_minutes = sample_booking.duration_minutes
+                started_booking.hourly_rate_cents = sample_booking.hourly_rate_cents
+                started_booking.amount_cents = sample_booking.amount_cents
+                started_booking.platform_fee_cents = sample_booking.platform_fee_cents
+                started_booking.host_payout_cents = sample_booking.host_payout_cents
+                started_booking.location = None
+                started_booking.location_name = sample_booking.location_name
+                started_booking.location_notes = sample_booking.location_notes
+                started_booking.client_notes = sample_booking.client_notes
+                started_booking.host_notes = None
+                started_booking.cancellation_reason = None
+                started_booking.cancelled_by_id = None
+                started_booking.cancelled_at = None
+                started_booking.stripe_payment_intent_id = (
+                    sample_booking.stripe_payment_intent_id
+                )
+                started_booking.created_at = sample_booking.created_at
+                started_booking.updated_at = sample_booking.updated_at
+                started_booking.client = sample_booking.client
+                started_booking.host = sample_booking.host
+                started_booking.host_profile = sample_booking.host_profile
+                started_booking.dance_style = sample_booking.dance_style
+
+                mock_booking_repo.get_by_id.side_effect = [
+                    sample_booking,
+                    started_booking,
+                ]
+                mock_booking_repo.update_status.return_value = started_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/start",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+
+
 class TestCompleteBookingEndpoint:
     """Tests for POST /api/v1/bookings/{id}/complete endpoint."""
 

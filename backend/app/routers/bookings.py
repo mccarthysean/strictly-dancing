@@ -450,6 +450,97 @@ async def cancel_booking(
 
 
 @router.post(
+    "/{booking_id}/start",
+    response_model=BookingWithDetailsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Start a booking session",
+    description="Host or client starts a confirmed session. Must be within 30 minutes of scheduled start time.",
+)
+async def start_booking(
+    booking_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> BookingWithDetailsResponse:
+    """Start a booking session.
+
+    This endpoint transitions a booking from CONFIRMED to IN_PROGRESS status.
+    It can only be called:
+    - By the host or client of the booking
+    - When the booking is in CONFIRMED status
+    - Within 30 minutes of the scheduled start time
+
+    The actual_start timestamp is recorded when the session starts.
+
+    Args:
+        booking_id: The booking's unique identifier.
+        db: The database session (injected).
+        current_user: The authenticated user (injected).
+
+    Returns:
+        BookingWithDetailsResponse with the started booking.
+
+    Raises:
+        HTTPException: 400 if booking is not confirmed or not within start window.
+        HTTPException: 403 if user is not a participant in the booking.
+        HTTPException: 404 if booking not found.
+    """
+    booking_repo = BookingRepository(db)
+
+    # Get the booking
+    booking = await booking_repo.get_by_id(booking_id, load_relationships=True)
+    if booking is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Booking not found",
+        )
+
+    # Verify that the current user is either the client or the host
+    user_id_str = str(current_user.id)
+    is_client = booking.client_id == user_id_str
+    is_host = booking.host_id == user_id_str
+
+    if not is_client and not is_host:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the client or host can start this booking",
+        )
+
+    # Verify the booking is in CONFIRMED status
+    if booking.status != BookingStatus.CONFIRMED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only confirmed bookings can be started",
+        )
+
+    # Verify we're within 30 minutes of the scheduled start time
+    now = datetime.now(booking.scheduled_start.tzinfo)
+    time_until_start = booking.scheduled_start - now
+
+    # Allow starting 30 minutes before scheduled start, or any time after
+    start_window = timedelta(minutes=30)
+    if time_until_start > start_window:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot start session more than 30 minutes before scheduled time",
+        )
+
+    # Record the actual start time
+    actual_start = datetime.now(booking.scheduled_start.tzinfo)
+
+    # Update the status to IN_PROGRESS
+    booking = await booking_repo.update_status(
+        booking_id,
+        BookingStatus.IN_PROGRESS,
+        actual_start=actual_start,
+    )
+
+    # Reload with relationships for response
+    booking = await booking_repo.get_by_id(booking_id, load_relationships=True)
+
+    return _build_booking_response(booking, include_details=True)
+
+
+@router.post(
     "/{booking_id}/complete",
     response_model=BookingWithDetailsResponse,
     status_code=status.HTTP_200_OK,

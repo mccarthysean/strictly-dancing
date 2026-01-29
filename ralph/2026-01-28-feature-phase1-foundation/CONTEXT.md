@@ -2070,3 +2070,40 @@ strictly-dancing/
 
 **Next**: T066 - Implement Session Start Endpoint
 
+---
+
+### Entry [E-067] 2026-01-29T09:40:00Z
+
+**Task**: T066 - Implement Session Start Endpoint
+**Status**: DONE
+**Progress**: 66/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created POST /api/v1/bookings/{id}/start endpoint in app/routers/bookings.py
+- Endpoint transitions booking from CONFIRMED to IN_PROGRESS status
+- Authorization: Either client or host can start the session (403 for others)
+- Validation: Booking must be in CONFIRMED status (400 otherwise)
+- Time window: Must be within 30 minutes of scheduled start time (400 if too early)
+- Records actual_start timestamp when session begins
+- Returns BookingWithDetailsResponse with updated booking
+- Added 9 comprehensive unit tests covering:
+  - test_start_booking_endpoint_exists
+  - test_start_booking_validates_confirmed_status
+  - test_start_booking_validates_within_30_minutes
+  - test_start_booking_records_actual_start
+  - test_start_booking_updates_status_to_in_progress
+  - test_start_booking_only_participant_can_start
+  - test_start_booking_client_can_start
+  - test_start_booking_returns_404_not_found
+  - test_start_booking_allows_within_30_minutes_before
+- All 1136 backend tests pass (9 new tests added)
+- Linting passes
+
+**Evidence**:
+- Tests: All passing (1136/1136 total - 9 new tests added)
+- Files: app/routers/bookings.py, tests/unit/test_bookings_router.py
+- Linting: All checks passed
+- Key tests: TestStartBookingEndpoint class with 9 test methods
+
+**Next**: T067 - Frontend Booking Detail Page
+
