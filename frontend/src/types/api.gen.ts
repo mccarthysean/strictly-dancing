@@ -188,6 +188,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/bookings/{booking_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the review for a booking
+         * @description Get the review associated with a specific booking.
+         */
+        get: operations["get_booking_review_api_v1_bookings__booking_id__review_get"];
+        put?: never;
+        /**
+         * Create a review for a completed booking
+         * @description Client leaves a review for a completed booking session.
+         */
+        post: operations["create_review_api_v1_bookings__booking_id__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/hosts": {
         parameters: {
             query?: never;
@@ -280,6 +304,26 @@ export interface paths {
          * @description Get the current status of the host's Stripe Connect account.
          */
         get: operations["get_stripe_account_status_api_v1_hosts_stripe_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hosts/{host_id}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get reviews for a host
+         * @description Get reviews for a host profile with cursor-based pagination.
+         */
+        get: operations["get_host_reviews_api_v1_hosts__host_id__reviews_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -390,6 +434,50 @@ export interface paths {
          * @description Mark all messages in a conversation as read.
          */
         post: operations["mark_conversation_read_api_v1_conversations__conversation_id__read_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reviews/{review_id}/response": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a host response to a review
+         * @description Host adds or updates their response to a review.
+         */
+        post: operations["add_review_response_api_v1_reviews__review_id__response_post"];
+        /**
+         * Remove a host response from a review
+         * @description Host removes their response from a review.
+         */
+        delete: operations["delete_review_response_api_v1_reviews__review_id__response_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reviews/{review_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a review by ID
+         * @description Get a specific review.
+         */
+        get: operations["get_review_api_v1_reviews__review_id__get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -568,6 +656,17 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AddResponseRequest
+         * @description Request schema for adding a host response to a review.
+         */
+        AddResponseRequest: {
+            /**
+             * Response
+             * @description Host's response to the review
+             */
+            response: string;
+        };
         /**
          * AvailabilityForDateRangeResponse
          * @description Response containing available slots for a date range.
@@ -1185,6 +1284,22 @@ export interface components {
              * @default text
              */
             message_type: components["schemas"]["MessageType"];
+        };
+        /**
+         * CreateReviewRequest
+         * @description Request schema for creating a review.
+         */
+        CreateReviewRequest: {
+            /**
+             * Rating
+             * @description Rating from 1 to 5 stars
+             */
+            rating: number;
+            /**
+             * Comment
+             * @description Optional review comment
+             */
+            comment?: string | null;
         };
         /**
          * DanceStyleCategory
@@ -1811,6 +1926,115 @@ export interface components {
             user_type: components["schemas"]["UserType"];
         };
         /**
+         * ReviewListResponse
+         * @description Response schema for paginated review list.
+         */
+        ReviewListResponse: {
+            /**
+             * Items
+             * @description List of reviews
+             */
+            items?: components["schemas"]["ReviewWithUserResponse"][];
+            /**
+             * Next Cursor
+             * @description Cursor for next page (review ID)
+             */
+            next_cursor?: string | null;
+            /**
+             * Has More
+             * @description Whether there are more reviews
+             */
+            has_more: boolean;
+            /**
+             * Total
+             * @description Total number of reviews
+             */
+            total: number;
+        };
+        /**
+         * ReviewUserSummary
+         * @description Condensed user info for review responses.
+         */
+        ReviewUserSummary: {
+            /**
+             * Id
+             * @description User UUID
+             */
+            id: string;
+            /**
+             * First Name
+             * @description First name
+             */
+            first_name: string;
+            /**
+             * Last Name
+             * @description Last name
+             */
+            last_name: string;
+        };
+        /**
+         * ReviewWithUserResponse
+         * @description Review response with reviewer details.
+         */
+        ReviewWithUserResponse: {
+            /**
+             * Id
+             * @description Review UUID
+             */
+            id: string;
+            /**
+             * Booking Id
+             * @description Booking UUID
+             */
+            booking_id: string;
+            /**
+             * Reviewer Id
+             * @description Reviewer user UUID
+             */
+            reviewer_id: string;
+            /**
+             * Reviewee Id
+             * @description Reviewee user UUID
+             */
+            reviewee_id: string;
+            /**
+             * Rating
+             * @description Rating from 1 to 5 stars
+             */
+            rating: number;
+            /**
+             * Comment
+             * @description Review comment
+             */
+            comment?: string | null;
+            /**
+             * Host Response
+             * @description Host's response to the review
+             */
+            host_response?: string | null;
+            /**
+             * Host Responded At
+             * @description When the host responded
+             */
+            host_responded_at?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             * @description When the review was created
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description When the review was last updated
+             */
+            updated_at: string;
+            /** @description Reviewer details */
+            reviewer?: components["schemas"]["ReviewUserSummary"] | null;
+            /** @description Reviewee details */
+            reviewee?: components["schemas"]["ReviewUserSummary"] | null;
+        };
+        /**
          * SetAvailabilityRequest
          * @description Schema for setting host's complete weekly availability.
          *
@@ -2388,6 +2612,72 @@ export interface operations {
             };
         };
     };
+    get_booking_review_api_v1_bookings__booking_id__review_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                booking_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewWithUserResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_review_api_v1_bookings__booking_id__review_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                booking_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewWithUserResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     search_hosts_api_v1_hosts_get: {
         parameters: {
             query?: {
@@ -2556,6 +2846,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StripeAccountStatusResponse"];
+                };
+            };
+        };
+    };
+    get_host_reviews_api_v1_hosts__host_id__reviews_get: {
+        parameters: {
+            query?: {
+                /** @description Cursor for pagination (review ID from previous page) */
+                cursor?: string | null;
+                /** @description Maximum number of reviews to return (1-50) */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                host_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -2769,6 +3095,103 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_review_response_api_v1_reviews__review_id__response_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                review_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddResponseRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewWithUserResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_review_response_api_v1_reviews__review_id__response_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                review_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewWithUserResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_review_api_v1_reviews__review_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                review_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewWithUserResponse"];
+                };
             };
             /** @description Validation Error */
             422: {

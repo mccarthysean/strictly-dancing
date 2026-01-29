@@ -1753,3 +1753,43 @@ strictly-dancing/
 
 **Next**: T058 - Frontend Review Form
 
+---
+
+### Entry [E-059] 2026-01-29T09:10:00Z
+
+**Task**: T058 - Frontend Review Form
+**Status**: DONE
+**Progress**: 58/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created frontend/src/components/ReviewForm.tsx with full review functionality
+- Implemented interactive star rating selector (1-5) with:
+  - Click to select rating
+  - Hover preview effect
+  - Rating labels (Poor, Fair, Good, Great, Excellent)
+  - Yellow filled stars vs gray outlined stars
+- Added written review textarea with:
+  - Character limit (2000)
+  - Character count display
+  - Optional field
+  - Placeholder text
+- Implemented submit with confirmation flow:
+  - Shows confirmation dialog before submission
+  - Displays rating summary and comment preview
+  - Warning that action cannot be undone
+  - Go Back and Confirm & Submit buttons
+  - Loading state during submission
+- Used $api.useMutation for type-safe API calls
+- Error handling with error message display
+- Props interface: bookingId, hostName, onSuccess, onCancel callbacks
+- TypeScript compiles with no errors
+- Frontend builds successfully (349.81 KB bundle)
+
+**Evidence**:
+- Files: frontend/src/components/ReviewForm.tsx
+- TypeScript: tsc --noEmit passes with no errors
+- Build: vite build completes successfully
+- Key features: star rating, textarea, confirmation dialog, error handling
+
+**Next**: T059 - Frontend Reviews Display
+
