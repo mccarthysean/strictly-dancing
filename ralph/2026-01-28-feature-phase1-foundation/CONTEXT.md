@@ -248,3 +248,31 @@ strictly-dancing/
 - Key tests: test_user_create_schema_validates_email, test_user_response_excludes_password_hash
 
 **Next**: T007 - Implement User Repository Layer
+
+---
+
+### Entry [E-008] 2026-01-29T05:50:00Z
+
+**Task**: T007 - Implement User Repository Layer
+**Status**: DONE
+**Progress**: 7/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created app/repositories/__init__.py with exports
+- Created app/repositories/user.py with UserRepository class
+- Implemented create() method with password hash storage
+- Implemented get_by_id() method for UUID lookup
+- Implemented get_by_email() with case-insensitive lookup (func.lower)
+- Implemented exists_by_email() for efficient registration checks
+- Implemented update() with partial field updates (exclude_unset)
+- Implemented soft_delete() setting is_active=False
+- All queries use async patterns (await session.execute/flush)
+- Created 22 unit tests for UserRepository (all passing)
+
+**Evidence**:
+- Tests: All passing (67/67 total)
+- Files: app/repositories/user.py, app/repositories/__init__.py, tests/unit/test_user_repository.py
+- Linting: All checks passed
+- Key tests: test_user_repository_create, test_user_repository_get_by_email, test_user_repository_exists_by_email
+
+**Next**: T008 - Implement Password Hashing Service
