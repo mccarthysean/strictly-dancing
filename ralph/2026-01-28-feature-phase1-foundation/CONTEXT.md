@@ -2516,3 +2516,39 @@ strictly-dancing/
 - Expo: bun run start launches Metro Bundler successfully
 
 **Next**: T076 - Set Up Mobile State Management
+
+---
+
+### Entry [E-077] 2026-01-29T10:50:00Z
+
+**Task**: T076 - Set Up Mobile State Management
+**Status**: DONE
+**Progress**: 76/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Verified stores/auth.ts exists with Zustand auth store:
+  - Uses `create` from zustand for state management
+  - AuthState interface with user, accessToken, refreshToken, isAuthenticated, isLoading, error
+  - AuthActions interface with initialize, login, register, logout, refreshAccessToken, fetchUser
+- Token persistence with expo-secure-store:
+  - ACCESS_TOKEN_KEY and REFRESH_TOKEN_KEY constants
+  - setItemAsync/getItemAsync/deleteItemAsync for token operations
+  - Tokens stored securely in device keychain
+- React Query provider configured in app/_layout.tsx:
+  - QueryClient with staleTime (5 min) and retry (3) options
+  - QueryClientProvider wrapping the entire app
+- Hydration handles async token loading:
+  - SplashScreen.preventAutoHideAsync() before load
+  - initialize() called in useEffect to restore auth state
+  - isLoading state prevents rendering until tokens are loaded
+  - SplashScreen.hideAsync() after auth initialized
+- Created comprehensive unit tests in __tests__/auth-store.test.ts:
+  - 10 tests covering initialize, login, logout, refreshAccessToken, register
+  - All tests passing
+
+**Evidence**:
+- Files: stores/auth.ts, app/_layout.tsx, __tests__/auth-store.test.ts
+- Tests: 10/10 passing (Auth Store test suite)
+- Key features: Zustand store, SecureStore persistence, QueryClient, splash screen hydration
+
+**Next**: T077 - Create Mobile API Client Service

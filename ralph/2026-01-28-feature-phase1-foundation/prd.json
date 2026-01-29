@@ -1196,14 +1196,14 @@
       "id": "T076",
       "title": "Set Up Mobile State Management",
       "description": "Configure Zustand for global state and React Query for server state.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T075"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "apps/mobile/stores/auth.ts exists with Zustand auth store", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Token persistence with expo-secure-store", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "React Query provider configured", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Hydration handles async token loading", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "apps/mobile/stores/auth.ts exists with Zustand auth store", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Token persistence with expo-secure-store", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "React Query provider configured", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Hydration handles async token loading", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": ["test_auth_store"]}
     },
