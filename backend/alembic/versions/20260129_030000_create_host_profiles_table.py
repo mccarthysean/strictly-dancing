@@ -25,7 +25,10 @@ def upgrade() -> None:
     """Create host_profiles table with PostGIS location support."""
     # Create verification_status enum
     verification_status_enum = sa.Enum(
-        "unverified", "pending", "verified", "rejected",
+        "unverified",
+        "pending",
+        "verified",
+        "rejected",
         name="verification_status_enum",
     )
     verification_status_enum.create(op.get_bind(), checkfirst=True)

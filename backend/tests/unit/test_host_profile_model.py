@@ -33,7 +33,9 @@ class TestHostProfileModel:
             stripe_onboarding_complete=True,
         )
 
-        assert profile.bio == "Experienced dance instructor specializing in Latin styles."
+        assert (
+            profile.bio == "Experienced dance instructor specializing in Latin styles."
+        )
         assert profile.headline == "Professional Latin Dance Host"
         assert profile.hourly_rate_cents == 7500
         assert profile.rating_average == Decimal("4.85")
