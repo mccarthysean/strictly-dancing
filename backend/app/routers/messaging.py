@@ -23,6 +23,7 @@ from app.schemas.messaging import (
     StartConversationRequest,
     UnreadCountResponse,
 )
+from app.services.notification_triggers import get_notification_trigger_service
 
 router = APIRouter(prefix="/api/v1/conversations", tags=["messaging"])
 
@@ -440,6 +441,22 @@ async def send_message(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         ) from e
+
+    # Send push notification to the recipient
+    try:
+        other_participant_id = conversation.get_other_participant_id(user_id_str)
+        if other_participant_id:
+            notification_service = get_notification_trigger_service(db)
+            sender_name = f"{current_user.first_name} {current_user.last_name}"
+            await notification_service.on_new_message(
+                conversation_id=conversation_id,
+                sender_name=sender_name,
+                message_preview=request.content,
+                recipient_id=UUID(other_participant_id),
+            )
+    except Exception:
+        # Don't fail the message if notification fails
+        pass
 
     return _build_message_response(message, sender=current_user)
 

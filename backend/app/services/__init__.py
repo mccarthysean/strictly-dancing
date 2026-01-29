@@ -1,6 +1,10 @@
 """Services layer for business logic."""
 
 from app.services.cache import CacheService
+from app.services.notification_triggers import (
+    NotificationTriggerService,
+    get_notification_trigger_service,
+)
 from app.services.password import PasswordService
 from app.services.push_notifications import (
     NotificationData,
@@ -25,6 +29,7 @@ __all__ = [
     "NotificationData",
     "NotificationPriority",
     "NotificationResult",
+    "NotificationTriggerService",
     "PasswordService",
     "PushNotificationService",
     "StripeAccountStatus",
@@ -34,5 +39,6 @@ __all__ = [
     "WebSocketManager",
     "WebSocketMessage",
     "WebSocketMessageType",
+    "get_notification_trigger_service",
     "get_push_notification_service",
 ]

@@ -673,3 +673,52 @@ class BookingRepository:
         stmt = select(sql_func.count()).select_from(Booking).where(and_(*conditions))
         result = await self._session.execute(stmt)
         return result.scalar_one()
+
+    async def get_bookings_in_time_window(
+        self,
+        start_time: datetime,
+        end_time: datetime,
+        *,
+        status: BookingStatus | list[BookingStatus] | None = None,
+        load_relationships: bool = True,
+    ) -> list[Booking]:
+        """Get bookings with scheduled_start within a time window.
+
+        This is useful for finding bookings starting soon to send reminders.
+
+        Args:
+            start_time: Start of the time window.
+            end_time: End of the time window.
+            status: Filter by status (single status or list of statuses).
+            load_relationships: If True, eagerly load related entities.
+
+        Returns:
+            List of Booking records with scheduled_start in [start_time, end_time).
+        """
+        conditions = [
+            Booking.scheduled_start >= start_time,
+            Booking.scheduled_start < end_time,
+        ]
+
+        if status is not None:
+            if isinstance(status, list):
+                conditions.append(Booking.status.in_(status))
+            else:
+                conditions.append(Booking.status == status)
+
+        stmt = (
+            select(Booking)
+            .where(and_(*conditions))
+            .order_by(Booking.scheduled_start.asc())
+        )
+
+        if load_relationships:
+            stmt = stmt.options(
+                joinedload(Booking.client),
+                joinedload(Booking.host),
+                joinedload(Booking.host_profile),
+                joinedload(Booking.dance_style),
+            )
+
+        result = await self._session.execute(stmt)
+        return list(result.unique().scalars().all())

@@ -31,6 +31,7 @@ from app.schemas.review import (
     ReviewUserSummary,
     ReviewWithUserResponse,
 )
+from app.services.notification_triggers import get_notification_trigger_service
 from app.services.stripe import stripe_service
 
 router = APIRouter(prefix="/api/v1/bookings", tags=["bookings"])
@@ -297,6 +298,22 @@ async def create_booking(
     # Reload with relationships for response
     booking = await booking_repo.get_by_id(booking.id, load_relationships=True)
 
+    # Send notification to host about new booking
+    try:
+        notification_service = get_notification_trigger_service(db)
+        client_name = f"{current_user.first_name} {current_user.last_name}"
+        dance_style_name = None
+        if booking.dance_style:
+            dance_style_name = booking.dance_style.name
+        await notification_service.on_booking_created(
+            booking=booking,
+            client_name=client_name,
+            dance_style_name=dance_style_name,
+        )
+    except Exception:
+        # Don't fail the booking if notification fails
+        pass
+
     return _build_booking_response(booking, include_details=True)
 
 
@@ -359,6 +376,18 @@ async def confirm_booking(
 
     # Reload with relationships for response
     booking = await booking_repo.get_by_id(booking_id, load_relationships=True)
+
+    # Send notification to client about confirmed booking
+    try:
+        notification_service = get_notification_trigger_service(db)
+        host_name = f"{current_user.first_name} {current_user.last_name}"
+        await notification_service.on_booking_confirmed(
+            booking=booking,
+            host_name=host_name,
+        )
+    except Exception:
+        # Don't fail the confirmation if notification fails
+        pass
 
     return _build_booking_response(booking, include_details=True)
 
@@ -445,6 +474,21 @@ async def cancel_booking(
 
     # Reload with relationships for response
     booking = await booking_repo.get_by_id(booking_id, load_relationships=True)
+
+    # Send notification to the other party about cancellation
+    try:
+        notification_service = get_notification_trigger_service(db)
+        cancelled_by_name = f"{current_user.first_name} {current_user.last_name}"
+        # Notify the other party (client if host cancelled, host if client cancelled)
+        notify_user_id = UUID(booking.client_id) if is_host else UUID(booking.host_id)
+        await notification_service.on_booking_cancelled(
+            booking=booking,
+            cancelled_by_name=cancelled_by_name,
+            notify_user_id=notify_user_id,
+        )
+    except Exception:
+        # Don't fail the cancellation if notification fails
+        pass
 
     return _build_booking_response(booking, include_details=True)
 

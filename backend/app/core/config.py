@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
 
+    # Task/Cron settings
+    task_secret_key: str = ""  # Secret for authenticating task endpoints
+
     # Logging settings
     log_level: str = "INFO"
     log_format: str = "json"  # "json" or "console"

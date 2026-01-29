@@ -2248,3 +2248,45 @@ strictly-dancing/
 - Linting: All checks passed
 
 **Next**: T070 - Implement Push Notification Triggers
+
+---
+
+### Entry [E-071] 2026-01-29T10:15:00Z
+
+**Task**: T070 - Implement Push Notification Triggers
+**Status**: DONE
+**Progress**: 70/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/services/notification_triggers.py with NotificationTriggerService class:
+  - on_booking_created() - Sends notification to host when a new booking is requested
+  - on_booking_confirmed() - Sends notification to client when host confirms booking
+  - on_booking_cancelled() - Sends notification to the other party when a booking is cancelled
+  - on_session_starting_soon() - Sends 30-minute reminder to both parties
+  - send_session_reminders() - Batch method for processing multiple bookings
+  - on_new_message() - Sends notification when a new message is received
+- Integrated triggers into booking router (bookings.py):
+  - New booking creation triggers host notification
+  - Booking confirmation triggers client notification
+  - Booking cancellation triggers notification to other party
+- Integrated triggers into messaging router (messaging.py):
+  - New message triggers notification to recipient
+- Created backend/app/routers/tasks.py for background job endpoints:
+  - POST /api/v1/tasks/send-session-reminders - Endpoint for cron job to send 30-min reminders
+  - Secured with optional X-Task-Secret header authentication
+- Added get_bookings_in_time_window() method to BookingRepository
+- Added task_secret_key to Settings config
+- Updated services/__init__.py with NotificationTriggerService exports
+- Created 26 comprehensive unit tests (all passing)
+- All 1203 backend tests pass (66 new tests added including task-related tests)
+- Linting passes
+
+**Evidence**:
+- Tests: All passing (1203/1203 total - 26 new trigger tests)
+- Files: app/services/notification_triggers.py, app/routers/tasks.py, app/routers/bookings.py, app/routers/messaging.py
+- Test files: tests/unit/test_push_triggers.py
+- Linting: All checks passed
+- Key tests: TestOnBookingCreated, TestOnBookingConfirmed, TestOnNewMessage, TestOnSessionStartingSoon, TestSendSessionReminders
+
+**Next**: T071 - Implement WebSocket Location Backend
+
