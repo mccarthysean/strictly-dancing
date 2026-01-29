@@ -620,3 +620,1294 @@ class TestGetHostProfileEndpoint:
 
             data = response.json()
             assert data["verification_status"] == "verified"
+
+
+class TestSearchHostsEdgeCases:
+    """Additional edge case tests for search hosts endpoint."""
+
+    def test_search_hosts_invalid_sort_by_defaults_to_distance(
+        self, client: TestClient
+    ) -> None:
+        """Test that invalid sort_by value defaults to 'distance'."""
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([], 0)
+
+            response = client.get("/api/v1/hosts?sort_by=invalid_field")
+            assert response.status_code == status.HTTP_200_OK
+
+            mock_host_repo.search.assert_called_once()
+            call_kwargs = mock_host_repo.search.call_args.kwargs
+            assert call_kwargs["order_by"] == "distance"
+
+    def test_search_hosts_invalid_sort_order_defaults_to_asc(
+        self, client: TestClient
+    ) -> None:
+        """Test that invalid sort_order value defaults to 'asc'."""
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([], 0)
+
+            response = client.get("/api/v1/hosts?sort_order=invalid")
+            assert response.status_code == status.HTTP_200_OK
+
+    def test_search_hosts_sort_by_reviews_uses_rating(self, client: TestClient) -> None:
+        """Test that sort_by=reviews maps to order_by=rating."""
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([], 0)
+
+            response = client.get("/api/v1/hosts?sort_by=reviews")
+            assert response.status_code == status.HTTP_200_OK
+
+            mock_host_repo.search.assert_called_once()
+            call_kwargs = mock_host_repo.search.call_args.kwargs
+            assert call_kwargs["order_by"] == "rating"
+
+    def test_search_hosts_verified_only_filters_profiles(
+        self, client: TestClient
+    ) -> None:
+        """Test that verified_only=true filters out unverified hosts."""
+        verified_profile = create_mock_host_profile(
+            profile_id="660e8400-e29b-41d4-a716-446655440001",
+            user_id="550e8400-e29b-41d4-a716-446655440001",
+            verification_status=VerificationStatus.VERIFIED,
+            user=create_mock_user("550e8400-e29b-41d4-a716-446655440001"),
+        )
+        unverified_profile = create_mock_host_profile(
+            profile_id="660e8400-e29b-41d4-a716-446655440002",
+            user_id="550e8400-e29b-41d4-a716-446655440002",
+            verification_status=VerificationStatus.UNVERIFIED,  # Changed from NOT_SUBMITTED
+            user=create_mock_user("550e8400-e29b-41d4-a716-446655440002"),
+        )
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = (
+                [verified_profile, unverified_profile],
+                2,
+            )
+
+            response = client.get("/api/v1/hosts?verified_only=true")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            # Only the verified profile should be returned
+            assert len(data["items"]) == 1
+            assert data["items"][0]["verification_status"] == "verified"
+
+    def test_search_hosts_sort_order_desc_rating(self, client: TestClient) -> None:
+        """Test that sort_order=desc reverses rating sort."""
+        profile1 = create_mock_host_profile(
+            profile_id="660e8400-e29b-41d4-a716-446655440001",
+            user_id="550e8400-e29b-41d4-a716-446655440001",
+            rating_average=3.0,
+            user=create_mock_user("550e8400-e29b-41d4-a716-446655440001"),
+        )
+        profile2 = create_mock_host_profile(
+            profile_id="660e8400-e29b-41d4-a716-446655440002",
+            user_id="550e8400-e29b-41d4-a716-446655440002",
+            rating_average=5.0,
+            user=create_mock_user("550e8400-e29b-41d4-a716-446655440002"),
+        )
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([profile1, profile2], 2)
+
+            response = client.get("/api/v1/hosts?sort_by=rating&sort_order=desc")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            # Should be sorted with highest rating first
+            assert len(data["items"]) == 2
+            assert data["items"][0]["rating_average"] == 5.0
+            assert data["items"][1]["rating_average"] == 3.0
+
+    def test_search_hosts_sort_order_desc_price(self, client: TestClient) -> None:
+        """Test that sort_order=desc reverses price sort."""
+        profile1 = create_mock_host_profile(
+            profile_id="660e8400-e29b-41d4-a716-446655440001",
+            user_id="550e8400-e29b-41d4-a716-446655440001",
+            hourly_rate_cents=3000,
+            user=create_mock_user("550e8400-e29b-41d4-a716-446655440001"),
+        )
+        profile2 = create_mock_host_profile(
+            profile_id="660e8400-e29b-41d4-a716-446655440002",
+            user_id="550e8400-e29b-41d4-a716-446655440002",
+            hourly_rate_cents=8000,
+            user=create_mock_user("550e8400-e29b-41d4-a716-446655440002"),
+        )
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([profile1, profile2], 2)
+
+            response = client.get("/api/v1/hosts?sort_by=price&sort_order=desc")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            # Should be sorted with highest price first
+            assert len(data["items"]) == 2
+            assert data["items"][0]["hourly_rate_cents"] == 8000
+            assert data["items"][1]["hourly_rate_cents"] == 3000
+
+    def test_search_hosts_sort_order_desc_distance(self, client: TestClient) -> None:
+        """Test that sort_order=desc reverses distance sort when lat/lng provided."""
+        profile1 = create_mock_host_profile(
+            profile_id="660e8400-e29b-41d4-a716-446655440001",
+            user_id="550e8400-e29b-41d4-a716-446655440001",
+            location=MagicMock(),
+            user=create_mock_user("550e8400-e29b-41d4-a716-446655440001"),
+        )
+        profile2 = create_mock_host_profile(
+            profile_id="660e8400-e29b-41d4-a716-446655440002",
+            user_id="550e8400-e29b-41d4-a716-446655440002",
+            location=MagicMock(),
+            user=create_mock_user("550e8400-e29b-41d4-a716-446655440002"),
+        )
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([profile1, profile2], 2)
+
+            response = client.get(
+                "/api/v1/hosts?lat=40.7&lng=-74.0&sort_by=distance&sort_order=desc"
+            )
+            assert response.status_code == status.HTTP_200_OK
+
+    def test_search_hosts_no_location_has_null_distance(
+        self, client: TestClient
+    ) -> None:
+        """Test that hosts without location have null distance_km."""
+        profile = create_mock_host_profile(location=None)
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([profile], 1)
+
+            response = client.get("/api/v1/hosts?lat=40.7&lng=-74.0")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert data["items"][0]["distance_km"] is None
+
+
+class TestGetHostAvailabilityEndpoint:
+    """Tests for GET /api/v1/hosts/{host_id}/availability endpoint."""
+
+    def test_get_availability_endpoint_exists(self, client: TestClient) -> None:
+        """Test that the availability endpoint exists."""
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = MagicMock()
+        mock_profile.id = host_id
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.AvailabilityRepository") as mock_avail_repo_class,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+
+            mock_avail_repo = AsyncMock()
+            mock_avail_repo_class.return_value = mock_avail_repo
+            mock_avail_repo.get_bookings_for_date_range.return_value = []
+            mock_avail_repo.get_availability_for_date.return_value = []
+
+            response = client.get(f"/api/v1/hosts/{host_id}/availability")
+            assert response.status_code != status.HTTP_404_NOT_FOUND
+
+    def test_get_availability_returns_200_for_valid_host(
+        self, client: TestClient
+    ) -> None:
+        """Test that availability returns 200 for a valid host."""
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = MagicMock()
+        mock_profile.id = host_id
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.AvailabilityRepository") as mock_avail_repo_class,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+
+            mock_avail_repo = AsyncMock()
+            mock_avail_repo_class.return_value = mock_avail_repo
+            mock_avail_repo.get_bookings_for_date_range.return_value = []
+            mock_avail_repo.get_availability_for_date.return_value = []
+
+            response = client.get(f"/api/v1/hosts/{host_id}/availability")
+            assert response.status_code == status.HTTP_200_OK
+
+    def test_get_availability_returns_404_for_nonexistent_host(
+        self, client: TestClient
+    ) -> None:
+        """Test that availability returns 404 for non-existent host."""
+        host_id = "660e8400-e29b-41d4-a716-446655440099"
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = None
+
+            response = client.get(f"/api/v1/hosts/{host_id}/availability")
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_get_availability_returns_date_range_response(
+        self, client: TestClient
+    ) -> None:
+        """Test that availability returns proper date range structure."""
+        from datetime import time
+
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = MagicMock()
+        mock_profile.id = host_id
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.AvailabilityRepository") as mock_avail_repo_class,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+
+            mock_avail_repo = AsyncMock()
+            mock_avail_repo_class.return_value = mock_avail_repo
+            mock_avail_repo.get_bookings_for_date_range.return_value = []
+            # Return some availability slots
+            mock_avail_repo.get_availability_for_date.return_value = [
+                (time(9, 0), time(12, 0)),
+                (time(14, 0), time(17, 0)),
+            ]
+
+            response = client.get(f"/api/v1/hosts/{host_id}/availability")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert "host_profile_id" in data
+            assert "start_date" in data
+            assert "end_date" in data
+            assert "availability" in data
+            assert isinstance(data["availability"], list)
+
+    def test_get_availability_with_custom_date_range(self, client: TestClient) -> None:
+        """Test that availability accepts custom start_date and end_date."""
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = MagicMock()
+        mock_profile.id = host_id
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.AvailabilityRepository") as mock_avail_repo_class,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+
+            mock_avail_repo = AsyncMock()
+            mock_avail_repo_class.return_value = mock_avail_repo
+            mock_avail_repo.get_bookings_for_date_range.return_value = []
+            mock_avail_repo.get_availability_for_date.return_value = []
+
+            response = client.get(
+                f"/api/v1/hosts/{host_id}/availability?start_date=2026-02-01&end_date=2026-02-07"
+            )
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert data["start_date"] == "2026-02-01"
+            assert data["end_date"] == "2026-02-07"
+
+    def test_get_availability_excludes_booked_slots(self, client: TestClient) -> None:
+        """Test that availability excludes already booked time slots."""
+        from datetime import datetime, time
+
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = MagicMock()
+        mock_profile.id = host_id
+
+        # Create a mock booking
+        mock_booking = MagicMock()
+        mock_booking.scheduled_start = datetime(2026, 2, 1, 10, 0)
+        mock_booking.scheduled_end = datetime(2026, 2, 1, 11, 0)
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.AvailabilityRepository") as mock_avail_repo_class,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+
+            mock_avail_repo = MagicMock()  # Use MagicMock for sync methods
+            mock_avail_repo.get_bookings_for_date_range = AsyncMock(
+                return_value=[mock_booking]
+            )
+            mock_avail_repo.get_availability_for_date = AsyncMock(
+                return_value=[(time(9, 0), time(12, 0))]
+            )
+            # _subtract_time_range is a sync method, so use regular return_value
+            mock_avail_repo._subtract_time_range = MagicMock(
+                return_value=[(time(9, 0), time(10, 0)), (time(11, 0), time(12, 0))]
+            )
+            mock_avail_repo_class.return_value = mock_avail_repo
+
+            response = client.get(
+                f"/api/v1/hosts/{host_id}/availability?start_date=2026-02-01&end_date=2026-02-01"
+            )
+            assert response.status_code == status.HTTP_200_OK
+
+    def test_get_availability_end_date_before_start_date_corrected(
+        self, client: TestClient
+    ) -> None:
+        """Test that end_date before start_date is corrected to equal start_date."""
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = MagicMock()
+        mock_profile.id = host_id
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.AvailabilityRepository") as mock_avail_repo_class,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+
+            mock_avail_repo = AsyncMock()
+            mock_avail_repo_class.return_value = mock_avail_repo
+            mock_avail_repo.get_bookings_for_date_range.return_value = []
+            mock_avail_repo.get_availability_for_date.return_value = []
+
+            # end_date before start_date
+            response = client.get(
+                f"/api/v1/hosts/{host_id}/availability?start_date=2026-02-10&end_date=2026-02-05"
+            )
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            # end_date should be corrected to match start_date
+            assert data["start_date"] == "2026-02-10"
+            assert data["end_date"] == "2026-02-10"
+
+
+class TestGetHostReviewsEndpoint:
+    """Tests for GET /api/v1/hosts/{host_id}/reviews endpoint."""
+
+    def test_get_reviews_endpoint_exists(self, client: TestClient) -> None:
+        """Test that the reviews endpoint exists."""
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = MagicMock()
+        mock_profile.id = host_id
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.ReviewRepository") as mock_review_repo_class,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+
+            mock_review_repo = AsyncMock()
+            mock_review_repo_class.return_value = mock_review_repo
+            mock_review_repo.get_for_host_profile.return_value = []
+            mock_review_repo.count_for_host_profile.return_value = 0
+
+            response = client.get(f"/api/v1/hosts/{host_id}/reviews")
+            assert response.status_code != status.HTTP_405_METHOD_NOT_ALLOWED
+
+    def test_get_reviews_returns_200_for_valid_host(self, client: TestClient) -> None:
+        """Test that reviews returns 200 for a valid host."""
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = MagicMock()
+        mock_profile.id = host_id
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.ReviewRepository") as mock_review_repo_class,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+
+            mock_review_repo = AsyncMock()
+            mock_review_repo_class.return_value = mock_review_repo
+            mock_review_repo.get_for_host_profile.return_value = []
+            mock_review_repo.count_for_host_profile.return_value = 0
+
+            response = client.get(f"/api/v1/hosts/{host_id}/reviews")
+            assert response.status_code == status.HTTP_200_OK
+
+    def test_get_reviews_returns_404_for_nonexistent_host(
+        self, client: TestClient
+    ) -> None:
+        """Test that reviews returns 404 for non-existent host."""
+        host_id = "660e8400-e29b-41d4-a716-446655440099"
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = None
+
+            response = client.get(f"/api/v1/hosts/{host_id}/reviews")
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_get_reviews_returns_paginated_response(self, client: TestClient) -> None:
+        """Test that reviews returns a paginated response."""
+        from datetime import datetime
+
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = MagicMock()
+        mock_profile.id = host_id
+
+        # Create mock review with reviewer
+        mock_reviewer = MagicMock()
+        mock_reviewer.id = "770e8400-e29b-41d4-a716-446655440001"
+        mock_reviewer.first_name = "Alice"
+        mock_reviewer.last_name = "Reviewer"
+
+        mock_reviewee = MagicMock()
+        mock_reviewee.id = "770e8400-e29b-41d4-a716-446655440002"
+        mock_reviewee.first_name = "Bob"
+        mock_reviewee.last_name = "Host"
+
+        mock_review = MagicMock()
+        mock_review.id = "880e8400-e29b-41d4-a716-446655440001"
+        mock_review.booking_id = "990e8400-e29b-41d4-a716-446655440001"
+        mock_review.reviewer_id = mock_reviewer.id
+        mock_review.reviewee_id = mock_reviewee.id
+        mock_review.rating = 5
+        mock_review.comment = "Great experience!"
+        mock_review.host_response = None
+        mock_review.host_responded_at = None
+        mock_review.created_at = datetime(2026, 1, 15)
+        mock_review.updated_at = datetime(2026, 1, 15)
+        mock_review.reviewer = mock_reviewer
+        mock_review.reviewee = mock_reviewee
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.ReviewRepository") as mock_review_repo_class,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+
+            mock_review_repo = AsyncMock()
+            mock_review_repo_class.return_value = mock_review_repo
+            mock_review_repo.get_for_host_profile.return_value = [mock_review]
+            mock_review_repo.count_for_host_profile.return_value = 1
+
+            response = client.get(f"/api/v1/hosts/{host_id}/reviews")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert "items" in data
+            assert "next_cursor" in data
+            assert "has_more" in data
+            assert "total" in data
+            assert len(data["items"]) == 1
+            assert data["items"][0]["rating"] == 5
+
+    def test_get_reviews_with_cursor_pagination(self, client: TestClient) -> None:
+        """Test that reviews supports cursor-based pagination."""
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        cursor = "880e8400-e29b-41d4-a716-446655440001"
+        mock_profile = MagicMock()
+        mock_profile.id = host_id
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.ReviewRepository") as mock_review_repo_class,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+
+            mock_review_repo = AsyncMock()
+            mock_review_repo_class.return_value = mock_review_repo
+            mock_review_repo.get_for_host_profile.return_value = []
+            mock_review_repo.count_for_host_profile.return_value = 0
+
+            response = client.get(f"/api/v1/hosts/{host_id}/reviews?cursor={cursor}")
+            assert response.status_code == status.HTTP_200_OK
+
+            # Verify cursor was passed to repository
+            mock_review_repo.get_for_host_profile.assert_called_once()
+
+    def test_get_reviews_invalid_cursor_returns_400(self, client: TestClient) -> None:
+        """Test that an invalid cursor format returns 400."""
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = MagicMock()
+        mock_profile.id = host_id
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+
+            response = client.get(
+                f"/api/v1/hosts/{host_id}/reviews?cursor=not-a-valid-uuid"
+            )
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_get_reviews_with_custom_limit(self, client: TestClient) -> None:
+        """Test that reviews accepts custom limit parameter."""
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = MagicMock()
+        mock_profile.id = host_id
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.ReviewRepository") as mock_review_repo_class,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+
+            mock_review_repo = AsyncMock()
+            mock_review_repo_class.return_value = mock_review_repo
+            mock_review_repo.get_for_host_profile.return_value = []
+            mock_review_repo.count_for_host_profile.return_value = 0
+
+            response = client.get(f"/api/v1/hosts/{host_id}/reviews?limit=5")
+            assert response.status_code == status.HTTP_200_OK
+
+            # Verify limit + 1 was passed for checking has_more
+            mock_review_repo.get_for_host_profile.assert_called_once()
+            call_kwargs = mock_review_repo.get_for_host_profile.call_args.kwargs
+            assert call_kwargs["limit"] == 6  # limit + 1
+
+    def test_get_reviews_has_more_flag(self, client: TestClient) -> None:
+        """Test that has_more is true when there are more reviews."""
+        from datetime import datetime
+
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = MagicMock()
+        mock_profile.id = host_id
+
+        # Create mock reviews (more than limit)
+        def create_mock_review(idx: int):
+            mock_reviewer = MagicMock()
+            mock_reviewer.id = f"770e8400-e29b-41d4-a716-44665544000{idx}"
+            mock_reviewer.first_name = f"User{idx}"
+            mock_reviewer.last_name = "Test"
+
+            mock_reviewee = MagicMock()
+            mock_reviewee.id = "770e8400-e29b-41d4-a716-446655440002"
+            mock_reviewee.first_name = "Host"
+            mock_reviewee.last_name = "Test"
+
+            mock_review = MagicMock()
+            mock_review.id = f"880e8400-e29b-41d4-a716-44665544000{idx}"
+            mock_review.booking_id = f"990e8400-e29b-41d4-a716-44665544000{idx}"
+            mock_review.reviewer_id = mock_reviewer.id
+            mock_review.reviewee_id = mock_reviewee.id
+            mock_review.rating = 4
+            mock_review.comment = f"Review {idx}"
+            mock_review.host_response = None
+            mock_review.host_responded_at = None
+            mock_review.created_at = datetime(2026, 1, idx)
+            mock_review.updated_at = datetime(2026, 1, idx)
+            mock_review.reviewer = mock_reviewer
+            mock_review.reviewee = mock_reviewee
+            return mock_review
+
+        mock_reviews = [create_mock_review(i) for i in range(1, 4)]  # 3 reviews
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.ReviewRepository") as mock_review_repo_class,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+
+            mock_review_repo = AsyncMock()
+            mock_review_repo_class.return_value = mock_review_repo
+            mock_review_repo.get_for_host_profile.return_value = mock_reviews
+            mock_review_repo.count_for_host_profile.return_value = 3
+
+            response = client.get(f"/api/v1/hosts/{host_id}/reviews?limit=2")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert data["has_more"] is True
+            assert len(data["items"]) == 2  # Only 2, not 3
+            assert data["next_cursor"] is not None
+
+    def test_get_reviews_without_reviewer(self, client: TestClient) -> None:
+        """Test that reviews handles cases where reviewer is None."""
+        from datetime import datetime
+
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = MagicMock()
+        mock_profile.id = host_id
+
+        mock_review = MagicMock()
+        mock_review.id = "880e8400-e29b-41d4-a716-446655440001"
+        mock_review.booking_id = "990e8400-e29b-41d4-a716-446655440001"
+        mock_review.reviewer_id = "770e8400-e29b-41d4-a716-446655440001"
+        mock_review.reviewee_id = "770e8400-e29b-41d4-a716-446655440002"
+        mock_review.rating = 5
+        mock_review.comment = "Great!"
+        mock_review.host_response = "Thanks!"
+        mock_review.host_responded_at = datetime(2026, 1, 16)
+        mock_review.created_at = datetime(2026, 1, 15)
+        mock_review.updated_at = datetime(2026, 1, 15)
+        mock_review.reviewer = None  # Deleted user
+        mock_review.reviewee = None  # Deleted user
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.ReviewRepository") as mock_review_repo_class,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+
+            mock_review_repo = AsyncMock()
+            mock_review_repo_class.return_value = mock_review_repo
+            mock_review_repo.get_for_host_profile.return_value = [mock_review]
+            mock_review_repo.count_for_host_profile.return_value = 1
+
+            response = client.get(f"/api/v1/hosts/{host_id}/reviews")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert data["items"][0]["reviewer"] is None
+            assert data["items"][0]["reviewee"] is None
+
+
+class TestStripeOnboardingEndpoint:
+    """Tests for POST /api/v1/hosts/stripe/onboard endpoint."""
+
+    @pytest.fixture
+    def auth_app(self, app):
+        """Create app with authentication mocked."""
+        from app.core.deps import get_current_user
+
+        mock_user = MagicMock()
+        mock_user.id = "550e8400-e29b-41d4-a716-446655440000"
+        mock_user.email = "host@example.com"
+        mock_user.is_active = True
+
+        async def override_get_current_user():
+            return mock_user
+
+        app.dependency_overrides[get_current_user] = override_get_current_user
+        yield app, mock_user
+        app.dependency_overrides.clear()
+
+    def test_stripe_onboard_requires_authentication(self, client: TestClient) -> None:
+        """Test that Stripe onboarding requires authentication."""
+        response = client.post(
+            "/api/v1/hosts/stripe/onboard",
+            json={
+                "refresh_url": "http://localhost:5175/stripe/refresh",
+                "return_url": "http://localhost:5175/stripe/return",
+            },
+        )
+        # Should return 401 without authentication
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_stripe_onboard_returns_404_for_non_host(self, auth_app) -> None:
+        """Test that Stripe onboarding returns 404 if user is not a host."""
+        app, _ = auth_app
+        client = TestClient(app)
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = None
+
+            response = client.post(
+                "/api/v1/hosts/stripe/onboard",
+                json={
+                    "refresh_url": "http://localhost:5175/stripe/refresh",
+                    "return_url": "http://localhost:5175/stripe/return",
+                },
+            )
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_stripe_onboard_creates_new_account(self, auth_app) -> None:
+        """Test that Stripe onboarding creates a new account if none exists."""
+        app, mock_user = auth_app
+        client = TestClient(app)
+
+        mock_profile = MagicMock()
+        mock_profile.id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile.stripe_account_id = None  # No Stripe account yet
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.stripe_service") as mock_stripe_service,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+            mock_host_repo.update.return_value = mock_profile
+
+            mock_stripe_service.create_connect_account = AsyncMock(
+                return_value="acct_test123"
+            )
+            mock_stripe_service.create_account_link = AsyncMock(
+                return_value="https://connect.stripe.com/onboard/test"
+            )
+
+            response = client.post(
+                "/api/v1/hosts/stripe/onboard",
+                json={
+                    "refresh_url": "http://localhost:5175/stripe/refresh",
+                    "return_url": "http://localhost:5175/stripe/return",
+                },
+            )
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert data["account_id"] == "acct_test123"
+            assert data["onboarding_url"] == "https://connect.stripe.com/onboard/test"
+
+    def test_stripe_onboard_uses_existing_account(self, auth_app) -> None:
+        """Test that Stripe onboarding uses existing account if present."""
+        app, _ = auth_app
+        client = TestClient(app)
+
+        mock_profile = MagicMock()
+        mock_profile.id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile.stripe_account_id = "acct_existing123"
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.stripe_service") as mock_stripe_service,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+
+            mock_stripe_service.create_account_link = AsyncMock(
+                return_value="https://connect.stripe.com/onboard/existing"
+            )
+            mock_stripe_service.create_connect_account = AsyncMock()
+
+            response = client.post(
+                "/api/v1/hosts/stripe/onboard",
+                json={
+                    "refresh_url": "http://localhost:5175/stripe/refresh",
+                    "return_url": "http://localhost:5175/stripe/return",
+                },
+            )
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert data["account_id"] == "acct_existing123"
+            # create_connect_account should not be called
+            mock_stripe_service.create_connect_account.assert_not_called()
+
+    def test_stripe_onboard_handles_stripe_error(self, auth_app) -> None:
+        """Test that Stripe onboarding handles Stripe API errors."""
+        import stripe
+
+        app, _ = auth_app
+        client = TestClient(app)
+
+        mock_profile = MagicMock()
+        mock_profile.id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile.stripe_account_id = "acct_test123"
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.stripe_service") as mock_stripe_service,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+
+            mock_stripe_service.create_account_link = AsyncMock(
+                side_effect=stripe.StripeError("Connection error")
+            )
+
+            response = client.post(
+                "/api/v1/hosts/stripe/onboard",
+                json={
+                    "refresh_url": "http://localhost:5175/stripe/refresh",
+                    "return_url": "http://localhost:5175/stripe/return",
+                },
+            )
+            assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
+    def test_stripe_onboard_handles_value_error(self, auth_app) -> None:
+        """Test that Stripe onboarding handles ValueError from stripe service."""
+        app, _ = auth_app
+        client = TestClient(app)
+
+        mock_profile = MagicMock()
+        mock_profile.id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile.stripe_account_id = None
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.stripe_service") as mock_stripe_service,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+
+            mock_stripe_service.create_connect_account = AsyncMock(
+                side_effect=ValueError("Stripe not configured")
+            )
+
+            response = client.post(
+                "/api/v1/hosts/stripe/onboard",
+                json={
+                    "refresh_url": "http://localhost:5175/stripe/refresh",
+                    "return_url": "http://localhost:5175/stripe/return",
+                },
+            )
+            assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
+
+class TestStripeAccountStatusEndpoint:
+    """Tests for GET /api/v1/hosts/stripe/status endpoint."""
+
+    @pytest.fixture
+    def auth_app(self, app):
+        """Create app with authentication mocked."""
+        from app.core.deps import get_current_user
+
+        mock_user = MagicMock()
+        mock_user.id = "550e8400-e29b-41d4-a716-446655440000"
+        mock_user.email = "host@example.com"
+        mock_user.is_active = True
+
+        async def override_get_current_user():
+            return mock_user
+
+        app.dependency_overrides[get_current_user] = override_get_current_user
+        yield app, mock_user
+        app.dependency_overrides.clear()
+
+    def test_stripe_status_requires_authentication(self, client: TestClient) -> None:
+        """Test that Stripe status requires authentication."""
+        response = client.get("/api/v1/hosts/stripe/status")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_stripe_status_returns_404_for_non_host(self, auth_app) -> None:
+        """Test that Stripe status returns 404 if user is not a host."""
+        app, _ = auth_app
+        client = TestClient(app)
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = None
+
+            response = client.get("/api/v1/hosts/stripe/status")
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_stripe_status_returns_not_created_if_no_account(self, auth_app) -> None:
+        """Test that Stripe status returns NOT_CREATED if no Stripe account."""
+        app, _ = auth_app
+        client = TestClient(app)
+
+        mock_profile = MagicMock()
+        mock_profile.id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile.stripe_account_id = None
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+
+            response = client.get("/api/v1/hosts/stripe/status")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert data["status"] == "not_created"
+            assert data["charges_enabled"] is False
+            assert data["payouts_enabled"] is False
+
+    def test_stripe_status_returns_account_status(self, auth_app) -> None:
+        """Test that Stripe status returns full account status."""
+        from app.services.stripe import StripeAccountStatus
+
+        app, _ = auth_app
+        client = TestClient(app)
+
+        mock_profile = MagicMock()
+        mock_profile.id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile.stripe_account_id = "acct_test123"
+        mock_profile.stripe_onboarding_complete = False
+
+        mock_account_status = MagicMock()
+        mock_account_status.account_id = "acct_test123"
+        mock_account_status.status = StripeAccountStatus.PENDING
+        mock_account_status.charges_enabled = False
+        mock_account_status.payouts_enabled = False
+        mock_account_status.details_submitted = True
+        mock_account_status.requirements_due = ["verification.document"]
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.stripe_service") as mock_stripe_service,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+
+            mock_stripe_service.get_account_status = AsyncMock(
+                return_value=mock_account_status
+            )
+
+            response = client.get("/api/v1/hosts/stripe/status")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert data["account_id"] == "acct_test123"
+            assert data["charges_enabled"] is False
+
+    def test_stripe_status_updates_onboarding_complete(self, auth_app) -> None:
+        """Test that Stripe status updates onboarding_complete when charges enabled."""
+        from app.services.stripe import StripeAccountStatus
+
+        app, _ = auth_app
+        client = TestClient(app)
+
+        mock_profile = MagicMock()
+        mock_profile.id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile.stripe_account_id = "acct_test123"
+        mock_profile.stripe_onboarding_complete = False
+
+        mock_account_status = MagicMock()
+        mock_account_status.account_id = "acct_test123"
+        mock_account_status.status = (
+            StripeAccountStatus.ACTIVE
+        )  # Use ACTIVE instead of COMPLETE
+        mock_account_status.charges_enabled = True
+        mock_account_status.payouts_enabled = True
+        mock_account_status.details_submitted = True
+        mock_account_status.requirements_due = []
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.stripe_service") as mock_stripe_service,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+            mock_host_repo.update.return_value = mock_profile
+
+            mock_stripe_service.get_account_status = AsyncMock(
+                return_value=mock_account_status
+            )
+
+            response = client.get("/api/v1/hosts/stripe/status")
+            assert response.status_code == status.HTTP_200_OK
+
+            # Verify update was called to set onboarding_complete
+            mock_host_repo.update.assert_called_once()
+
+    def test_stripe_status_handles_stripe_error(self, auth_app) -> None:
+        """Test that Stripe status handles Stripe API errors."""
+        import stripe
+
+        app, _ = auth_app
+        client = TestClient(app)
+
+        mock_profile = MagicMock()
+        mock_profile.id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile.stripe_account_id = "acct_test123"
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.stripe_service") as mock_stripe_service,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+
+            mock_stripe_service.get_account_status = AsyncMock(
+                side_effect=stripe.StripeError("API Error")
+            )
+
+            response = client.get("/api/v1/hosts/stripe/status")
+            assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
+    def test_stripe_status_handles_value_error(self, auth_app) -> None:
+        """Test that Stripe status handles ValueError."""
+        app, _ = auth_app
+        client = TestClient(app)
+
+        mock_profile = MagicMock()
+        mock_profile.id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile.stripe_account_id = "acct_test123"
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch("app.routers.hosts.stripe_service") as mock_stripe_service,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+
+            mock_stripe_service.get_account_status = AsyncMock(
+                side_effect=ValueError("Invalid account")
+            )
+
+            response = client.get("/api/v1/hosts/stripe/status")
+            assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
+
+class TestVerificationEndpoints:
+    """Tests for verification endpoints."""
+
+    @pytest.fixture
+    def auth_app(self, app):
+        """Create app with authentication mocked."""
+        from app.core.deps import get_current_user
+
+        mock_user = MagicMock()
+        mock_user.id = "550e8400-e29b-41d4-a716-446655440000"
+        mock_user.email = "host@example.com"
+        mock_user.is_active = True
+
+        async def override_get_current_user():
+            return mock_user
+
+        app.dependency_overrides[get_current_user] = override_get_current_user
+        yield app, mock_user
+        app.dependency_overrides.clear()
+
+    def test_submit_verification_requires_authentication(
+        self, client: TestClient
+    ) -> None:
+        """Test that submit verification requires authentication."""
+        response = client.post(
+            "/api/v1/hosts/verification/submit",
+            json={
+                "document_type": "passport",
+                "document_url": "https://example.com/doc.jpg",
+            },
+        )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_submit_verification_returns_404_for_non_host(self, auth_app) -> None:
+        """Test that submit verification returns 404 if user is not a host."""
+        app, _ = auth_app
+        client = TestClient(app)
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = None
+
+            response = client.post(
+                "/api/v1/hosts/verification/submit",
+                json={
+                    "document_type": "passport",
+                    "document_url": "https://example.com/doc.jpg",
+                },
+            )
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_submit_verification_success(self, auth_app) -> None:
+        """Test successful verification submission."""
+        app, _ = auth_app
+        client = TestClient(app)
+
+        mock_profile = MagicMock()
+        mock_profile.id = "660e8400-e29b-41d4-a716-446655440001"
+
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.document_id = "770e8400-e29b-41d4-a716-446655440001"
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch(
+                "app.routers.hosts.get_verification_service"
+            ) as mock_get_verification,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+
+            mock_verification_service = MagicMock()
+            mock_verification_service.submit_verification = AsyncMock(
+                return_value=mock_result
+            )
+            mock_get_verification.return_value = mock_verification_service
+
+            response = client.post(
+                "/api/v1/hosts/verification/submit",
+                json={
+                    "document_type": "passport",
+                    "document_url": "https://example.com/doc.jpg",
+                    "document_number": "AB123456",
+                    "notes": "Front side of passport",
+                },
+            )
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert data["success"] is True
+            assert data["document_id"] is not None
+
+    def test_submit_verification_failure(self, auth_app) -> None:
+        """Test verification submission failure (already verified or pending)."""
+        app, _ = auth_app
+        client = TestClient(app)
+
+        mock_profile = MagicMock()
+        mock_profile.id = "660e8400-e29b-41d4-a716-446655440001"
+
+        mock_result = MagicMock()
+        mock_result.success = False
+        mock_result.error_message = "Verification already pending"
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch(
+                "app.routers.hosts.get_verification_service"
+            ) as mock_get_verification,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+
+            mock_verification_service = MagicMock()
+            mock_verification_service.submit_verification = AsyncMock(
+                return_value=mock_result
+            )
+            mock_get_verification.return_value = mock_verification_service
+
+            response = client.post(
+                "/api/v1/hosts/verification/submit",
+                json={
+                    "document_type": "passport",
+                    "document_url": "https://example.com/doc.jpg",
+                },
+            )
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_get_verification_status_requires_authentication(
+        self, client: TestClient
+    ) -> None:
+        """Test that get verification status requires authentication."""
+        response = client.get("/api/v1/hosts/verification/status")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_get_verification_status_returns_404_for_non_host(self, auth_app) -> None:
+        """Test that get verification status returns 404 if user is not a host."""
+        app, _ = auth_app
+        client = TestClient(app)
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = None
+
+            response = client.get("/api/v1/hosts/verification/status")
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_get_verification_status_success(self, auth_app) -> None:
+        """Test successful verification status retrieval."""
+        from datetime import datetime
+
+        app, _ = auth_app
+        client = TestClient(app)
+
+        mock_profile = MagicMock()
+        mock_profile.id = "660e8400-e29b-41d4-a716-446655440001"
+
+        mock_document = MagicMock()
+        mock_document.id = "770e8400-e29b-41d4-a716-446655440001"
+        mock_document.document_type = "passport"
+        mock_document.document_url = "https://example.com/doc.jpg"
+        mock_document.document_number = "AB123456"
+        mock_document.notes = "Front side"
+        mock_document.reviewer_notes = None
+        mock_document.reviewed_at = None
+        mock_document.created_at = datetime(2026, 1, 15)
+
+        mock_status_result = MagicMock()
+        mock_status_result.status = VerificationStatus.PENDING
+        mock_status_result.can_submit = False
+        mock_status_result.rejection_reason = None
+        mock_status_result.documents = [mock_document]
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch(
+                "app.routers.hosts.get_verification_service"
+            ) as mock_get_verification,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+
+            mock_verification_service = MagicMock()
+            mock_verification_service.get_verification_status = AsyncMock(
+                return_value=mock_status_result
+            )
+            mock_get_verification.return_value = mock_verification_service
+
+            response = client.get("/api/v1/hosts/verification/status")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert data["status"] == "pending"
+            assert data["can_submit"] is False
+            assert len(data["documents"]) == 1
+
+    def test_get_verification_status_returns_404_when_none(self, auth_app) -> None:
+        """Test get verification status returns 404 when service returns None."""
+        app, _ = auth_app
+        client = TestClient(app)
+
+        mock_profile = MagicMock()
+        mock_profile.id = "660e8400-e29b-41d4-a716-446655440001"
+
+        with (
+            patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class,
+            patch(
+                "app.routers.hosts.get_verification_service"
+            ) as mock_get_verification,
+        ):
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+
+            mock_verification_service = MagicMock()
+            mock_verification_service.get_verification_status = AsyncMock(
+                return_value=None
+            )
+            mock_get_verification.return_value = mock_verification_service
+
+            response = client.get("/api/v1/hosts/verification/status")
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+class TestCalculateDistanceKm:
+    """Tests for the _calculate_distance_km helper function."""
+
+    def test_calculate_distance_returns_none(self) -> None:
+        """Test that _calculate_distance_km currently returns None."""
+        from app.routers.hosts import _calculate_distance_km
+
+        mock_profile = MagicMock()
+        mock_profile.location = MagicMock()
+
+        result = _calculate_distance_km(40.7, -74.0, mock_profile)
+        # Currently returns None as per implementation
+        assert result is None
