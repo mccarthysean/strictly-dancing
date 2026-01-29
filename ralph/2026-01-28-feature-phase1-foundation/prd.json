@@ -547,14 +547,14 @@
       "id": "T033",
       "title": "Frontend Host Profile Page",
       "description": "Create individual host profile view page.",
-      "passes": false,
+      "passes": true,
       "phase": "phase2-host-profiles",
       "dependencies": ["T031", "T018"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "frontend/src/routes/hosts/$hostId.tsx exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Displays host photo, bio, rating, dance styles", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Book Now button (links to booking flow)", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Message button (links to chat)", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "frontend/src/routes/hosts/$hostId.tsx exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Displays host photo, bio, rating, dance styles", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Book Now button (links to booking flow)", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Message button (links to chat)", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },
