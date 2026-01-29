@@ -2340,3 +2340,43 @@ strictly-dancing/
 
 **Next**: T072 - Frontend Location Tracking
 
+---
+
+### Entry [E-073] 2026-01-29T10:30:00Z
+
+**Task**: T072 - Frontend Location Tracking
+**Status**: DONE
+**Progress**: 72/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created frontend/src/hooks/useLocationTracking.ts custom hook:
+  - Geolocation API permission handling (prompt, granted, denied, unavailable)
+  - requestPermission() to trigger browser permission dialog
+  - checkPermission() to query current permission state
+  - WebSocket connection to /ws/location/{bookingId} endpoint
+  - JWT token authentication via query parameter
+  - startTracking() to begin location sharing
+  - stopTracking() to end location sharing
+  - Automatic location updates every 30 seconds (configurable interval)
+  - Receives partner's location updates via WebSocket
+  - Handles session_ended message for cleanup
+  - Error handling for geolocation and WebSocket errors
+- Created frontend/src/components/LocationMap.tsx component:
+  - Displays both user locations as markers on visual map
+  - Calculates and shows distance between users (Haversine formula)
+  - Shows accuracy circles around location markers
+  - Displays coordinates and last update timestamps
+  - "View in Google Maps" buttons for both locations
+  - Relative position visualization (scaled to ~5km max)
+  - Loading state when waiting for location data
+- TypeScript compiles with no errors
+- Frontend builds successfully (122.93 KB gzipped bundle)
+
+**Evidence**:
+- Files: frontend/src/hooks/useLocationTracking.ts, frontend/src/components/LocationMap.tsx
+- TypeScript: tsc --noEmit passes with no errors
+- Build: vite build completes successfully (122.93 KB gzipped)
+- Key features: geolocation permission handling, WebSocket connection, 30s interval, map display
+
+**Next**: T073 - Frontend Active Session Screen
+

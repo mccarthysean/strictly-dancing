@@ -1133,14 +1133,14 @@
       "id": "T072",
       "title": "Frontend Location Tracking",
       "description": "Implement location sharing during active sessions.",
-      "passes": false,
+      "passes": true,
       "phase": "phase4-realtime",
       "dependencies": ["T071", "T018"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "Geolocation API permission handling", "verification": "code_review", "met": false},
-        {"id": "AC02", "criterion": "WebSocket connection for location updates", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Send location every 30 seconds during session", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Display partner location on map", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "Geolocation API permission handling", "verification": "code_review", "met": true},
+        {"id": "AC02", "criterion": "WebSocket connection for location updates", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Send location every 30 seconds during session", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Display partner location on map", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },
