@@ -12,6 +12,7 @@ from app.models.conversation import Conversation, Message, MessageType
 from app.models.dance_style import DanceStyle, DanceStyleCategory
 from app.models.host_dance_style import HostDanceStyle
 from app.models.host_profile import HostProfile, VerificationStatus
+from app.models.review import Review
 from app.models.user import User, UserType
 
 __all__ = [
@@ -29,6 +30,7 @@ __all__ = [
     "Message",
     "MessageType",
     "RecurringAvailability",
+    "Review",
     "User",
     "UserType",
     "VerificationStatus",

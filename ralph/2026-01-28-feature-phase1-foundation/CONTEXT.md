@@ -1644,3 +1644,35 @@ strictly-dancing/
 
 **Next**: T055 - Create Review Model
 
+---
+
+### Entry [E-056] 2026-01-29T09:00:00Z
+
+**Task**: T055 - Create Review Model
+**Status**: DONE
+**Progress**: 55/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/models/review.py with Review model
+- Fields implemented: booking_id (unique), reviewer_id, reviewee_id, rating (1-5), comment
+- Added host_response field for host replies with host_responded_at timestamp
+- Added CHECK constraint for rating range (1-5)
+- Booking_id has unique constraint (one review per booking)
+- Created relationships to Booking, User (reviewer), User (reviewee)
+- Created Alembic migration (000000000009) with:
+  - reviews table with all indexes
+  - PostgreSQL trigger function `update_host_rating_stats()` to update host_profile.rating_average on insert
+  - Trigger for insert, update (rating change), and delete
+- Updated models/__init__.py to export Review
+- Created 41 comprehensive unit tests (all passing)
+- All 998 backend tests pass
+- Linting passes
+
+**Evidence**:
+- Tests: All passing (998/998 total - 41 new tests added)
+- Files: app/models/review.py, app/models/__init__.py, alembic/versions/20260129_080000_create_reviews_table.py, tests/unit/test_review_model.py
+- Linting: All checks passed
+- Alembic heads: 000000000009 recognized
+
+**Next**: T056 - Implement Review Repository
+
