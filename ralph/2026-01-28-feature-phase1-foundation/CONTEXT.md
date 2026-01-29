@@ -2834,3 +2834,43 @@ strictly-dancing/
 - Key features: tabs, status badges, pull-to-refresh, pagination
 
 **Next**: T085 - Mobile Chat Screen
+
+---
+
+### Entry [E-086] 2026-01-29T12:30:00Z
+
+**Task**: T085 - Mobile Chat Screen
+**Status**: DONE
+**Progress**: 85/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created apps/mobile/app/messages/[id].tsx with real-time chat:
+  - FlatList with inverted scroll for message display
+  - Messages sorted newest first
+  - Date separators (Today, Yesterday, or full date)
+  - Own messages styled in rose, other messages in white
+- KeyboardAvoidingView:
+  - Proper keyboard offset on iOS and Android
+  - Input stays visible when keyboard opens
+- WebSocket connection for real-time:
+  - Connects to /ws/chat/{conversationId} with auth token
+  - Connection status indicator (connecting/connected/disconnected/error)
+  - Receives new messages in real-time
+  - Duplicate message prevention
+- Text input with send button:
+  - Multiline TextInput with 2000 char limit
+  - Send button with icon (disabled when empty)
+  - Loading state while sending
+  - Scrolls to latest message on send
+- Additional features:
+  - Loads conversation with initial messages
+  - Marks conversation as read on open
+  - Cursor-based pagination for older messages
+  - Empty state when no messages
+
+**Evidence**:
+- File: apps/mobile/app/messages/[id].tsx
+- TypeScript: tsc --noEmit passes with no errors
+- Key features: real-time WebSocket, keyboard avoiding, message bubbles
+
+**Next**: T086 - Mobile Messages List Screen
