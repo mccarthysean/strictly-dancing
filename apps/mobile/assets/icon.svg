@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Strictly Dancing App Icon Placeholder -->
+  <!-- Replace with actual icon before production -->
+  <rect width="1024" height="1024" fill="#7C3AED"/>
+  <circle cx="512" cy="400" r="150" fill="white"/>
+  <path d="M350 550 L512 800 L674 550" fill="white"/>
+  <text x="512" y="950" text-anchor="middle" fill="white" font-family="Arial" font-size="80" font-weight="bold">SD</text>
+</svg>

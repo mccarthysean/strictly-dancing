@@ -16,6 +16,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.strictlydancing.mobile",
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": []
+      },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We need your location to find dance hosts near you and for session tracking.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location for session tracking during active dance sessions.",

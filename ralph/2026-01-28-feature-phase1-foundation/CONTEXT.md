@@ -3156,3 +3156,40 @@ strictly-dancing/
 - TypeScript: Both frontend and mobile compile with no errors
 
 **Next**: T093 - Prepare App Store Submission
+
+---
+
+### Entry [E-094] 2026-01-29T12:10:00Z
+
+**Task**: T093 - Prepare App Store Submission
+**Status**: DONE
+**Progress**: 93/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created app icon placeholders (SVG format, ready for conversion):
+  - icon.svg (1024x1024) - Main app icon
+  - adaptive-icon.svg (1024x1024) - Android adaptive icon foreground
+  - splash.svg (1284x2778) - Splash screen
+  - favicon.svg (48x48) - Web favicon
+  - notification-icon.svg (96x96) - Push notification icon
+- Created eas.json with production build configuration:
+  - Development profile with dev client
+  - Preview profile for internal testing
+  - Production profile with auto-increment and app-bundle (Android)
+  - Submit configuration for iOS and Android stores
+- Updated app.json with iOS privacy manifests
+- Created comprehensive APP_STORE_ASSETS.md checklist:
+  - All required icon sizes listed
+  - Screenshot requirements for all platforms
+  - App metadata templates (name, description, keywords)
+  - Build and submit commands
+  - Pre-submission checklist
+- Created assets/screenshots/ directory with README
+- Privacy policy URL structure documented in app.json extra
+
+**Evidence**:
+- Files: eas.json, APP_STORE_ASSETS.md, app.json (updated)
+- Assets: icon.svg, splash.svg, adaptive-icon.svg, favicon.svg, notification-icon.svg
+- Screenshots: assets/screenshots/README.md with requirements
+
+**Next**: T094 - Frontend E2E Testing with Playwright

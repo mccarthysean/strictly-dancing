@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1284" height="2778" viewBox="0 0 1284 2778">
+  <!-- Strictly Dancing Splash Screen Placeholder -->
+  <!-- Replace with actual splash screen before production -->
+  <rect width="1284" height="2778" fill="white"/>
+  <circle cx="642" cy="1200" r="200" fill="#7C3AED"/>
+  <path d="M450 1350 L642 1700 L834 1350" fill="#7C3AED"/>
+  <text x="642" y="1950" text-anchor="middle" fill="#7C3AED" font-family="Arial" font-size="80" font-weight="bold">Strictly Dancing</text>
+</svg>

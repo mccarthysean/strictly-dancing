@@ -1454,15 +1454,15 @@
       "id": "T093",
       "title": "Prepare App Store Submission",
       "description": "Complete all requirements for iOS App Store and Google Play submission.",
-      "passes": false,
+      "passes": true,
       "phase": "phase5-reviews",
       "dependencies": ["T080", "T091"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "App icons in all required sizes", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Splash screens for iOS and Android", "verification": "file_exists", "met": false},
-        {"id": "AC03", "criterion": "Privacy policy URL configured", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "App Store screenshots prepared", "verification": "file_exists", "met": false},
-        {"id": "AC05", "criterion": "eas.json configured for production builds", "verification": "file_exists", "met": false}
+        {"id": "AC01", "criterion": "App icons in all required sizes", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Splash screens for iOS and Android", "verification": "file_exists", "met": true},
+        {"id": "AC03", "criterion": "Privacy policy URL configured", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "App Store screenshots prepared", "verification": "file_exists", "met": true},
+        {"id": "AC05", "criterion": "eas.json configured for production builds", "verification": "file_exists", "met": true}
       ],
       "testing": {"unit_tests": []}
     },

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Android Adaptive Icon Foreground Layer -->
+  <!-- Replace with actual icon before production -->
+  <!-- Note: Background color is set in app.json -->
+  <circle cx="512" cy="400" r="150" fill="#7C3AED"/>
+  <path d="M350 550 L512 800 L674 550" fill="#7C3AED"/>
+  <text x="512" y="950" text-anchor="middle" fill="#7C3AED" font-family="Arial" font-size="80" font-weight="bold">SD</text>
+</svg>

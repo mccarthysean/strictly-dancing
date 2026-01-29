@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <!-- Notification Icon Placeholder (should be white with transparency) -->
+  <circle cx="48" cy="38" r="15" fill="white"/>
+  <path d="M35 52 L48 76 L61 52" fill="white"/>
+</svg>
