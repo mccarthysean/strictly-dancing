@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "mcp-postgres": {
+      "type": "http",
+      "url": "http://localhost:5005/mcp"
+    }
+  }
+}

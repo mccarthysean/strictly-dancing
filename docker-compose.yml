@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  # MCP PostgreSQL server for database queries
+  mcp-postgres:
+    build:
+      context: ./mcp-postgres-server
+      dockerfile: Dockerfile
+    container_name: strictly-dancing-mcp-postgres
+    ports:
+      - "5005:5005"
+    environment:
+      - MCP_SERVER_HOST=0.0.0.0
+      - MCP_SERVER_PORT=5005
+      - DB_HOST_DEV=ijack-dev.c9lvkaunz4dq.us-west-2.rds.amazonaws.com
+      - DB_PORT_DEV=5432
+      - DB_USER_DEV=master
+      - DB_NAME_DEV=strictly_dancing
+      - DB_HOST_PROD=ijack.c9lvkaunz4dq.us-west-2.rds.amazonaws.com
+      - DB_PORT_PROD=5432
+      - DB_USER_PROD=master
+      - DB_NAME_PROD=strictly_dancing
+    env_file:
+      - ./mcp-postgres-server/.env
+    networks:
+      - strictly-dancing-network
+    restart: unless-stopped
+
+  # Redis for caching, sessions, and WebSocket pub/sub
+  redis:
+    image: redis:7-alpine
+    container_name: strictly-dancing-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - strictly-dancing-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+networks:
+  strictly-dancing-network:
+    driver: bridge
+
+volumes:
+  redis-data:
