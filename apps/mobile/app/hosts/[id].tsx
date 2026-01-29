@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient, ApiError } from '@/lib/api/client';
 import type { components } from '@/types/api.gen';
@@ -126,13 +126,8 @@ export default function HostProfileScreen() {
 
   // Navigate to booking flow
   const handleBookNow = useCallback(() => {
-    // Booking flow will be implemented in T083
-    Alert.alert(
-      'Coming Soon',
-      'The booking feature will be available soon!',
-      [{ text: 'OK' }]
-    );
-  }, []);
+    router.push(`/book/${id}` as any);
+  }, [id]);
 
   // Navigate to messages
   const handleMessage = useCallback(() => {

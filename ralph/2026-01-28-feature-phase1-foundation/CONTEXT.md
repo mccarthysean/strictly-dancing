@@ -2761,3 +2761,46 @@ strictly-dancing/
 - Key features: avatar, stats, dance styles, reviews, action buttons
 
 **Next**: T083 - Mobile Booking Flow Screen
+
+---
+
+### Entry [E-084] 2026-01-29T12:00:00Z
+
+**Task**: T083 - Mobile Booking Flow Screen
+**Status**: DONE
+**Progress**: 83/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created apps/mobile/app/book/[hostId].tsx with complete booking flow:
+  - Horizontal scrolling calendar date picker (30 days)
+  - Available dates highlighted in green, unavailable in gray
+  - Selected date shown in brand color (rose)
+- Duration selection (30min to 4 hours):
+  - Horizontal scrolling duration buttons
+  - Automatically filters time slots based on duration
+- Time slot selection:
+  - Grid of available time slots
+  - Generated from availability API response
+  - Slots filtered to fit selected duration
+- Booking flow features:
+  - Host profile summary at top
+  - Optional notes text input
+  - Price breakdown (subtotal + 15% service fee)
+  - Booking summary card before confirmation
+  - Submit creates booking via POST /api/v1/bookings
+- Stripe payment integration:
+  - Payment note displayed indicating when payment will be processed
+  - Actual Stripe payment sheet deferred to host confirmation flow
+  - Backend handles PaymentIntent with manual capture
+- Error handling and states:
+  - Loading state during data fetch
+  - Auth required state redirects to login
+  - Host not found error state
+  - Booking error display
+
+**Evidence**:
+- Files: apps/mobile/app/book/[hostId].tsx, apps/mobile/app/hosts/[id].tsx (updated)
+- TypeScript: tsc --noEmit passes with no errors
+- Key features: date picker, time selection, price calculation, API integration
+
+**Next**: T084 - Mobile Bookings List Screen

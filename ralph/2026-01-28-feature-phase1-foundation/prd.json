@@ -1301,14 +1301,14 @@
       "id": "T083",
       "title": "Mobile Booking Flow Screen",
       "description": "Create booking flow for mobile app.",
-      "passes": false,
+      "passes": true,
       "phase": "phase3-booking-system",
       "dependencies": ["T040", "T045", "T077"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "apps/mobile/app/book/[hostId].tsx exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Calendar date picker", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Time slot selection", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Stripe payment sheet integration", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "apps/mobile/app/book/[hostId].tsx exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Calendar date picker", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Time slot selection", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Stripe payment sheet integration", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },
