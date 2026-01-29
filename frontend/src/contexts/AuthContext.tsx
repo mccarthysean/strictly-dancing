@@ -20,11 +20,23 @@ interface AuthContextValue {
   logout: () => Promise<void>
   register: (data: RegisterData) => Promise<void>
   refreshAuth: () => Promise<void>
+  // Magic link authentication
+  requestMagicLink: (email: string) => Promise<void>
+  verifyMagicLink: (email: string, code: string) => Promise<void>
+  registerWithMagicLink: (data: RegisterWithMagicLinkData) => Promise<void>
+  verifyRegistration: (email: string, code: string) => Promise<void>
 }
 
 interface RegisterData {
   email: string
   password: string
+  first_name: string
+  last_name: string
+  user_type?: UserType
+}
+
+interface RegisterWithMagicLinkData {
+  email: string
   first_name: string
   last_name: string
   user_type?: UserType
@@ -177,7 +189,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null)
   }, [])
 
-  // Register function
+  // Register function (legacy password-based)
   const register = useCallback(async (data: RegisterData) => {
     const response = await fetch(
       `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8001'}/api/v1/auth/register`,
@@ -204,6 +216,116 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Registration successful - user should login
   }, [])
 
+  // Request magic link for login
+  const requestMagicLink = useCallback(async (email: string) => {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8001'}/api/v1/auth/magic-link/request`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      }
+    )
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.detail ?? 'Failed to send magic link')
+    }
+  }, [])
+
+  // Verify magic link code for login
+  const verifyMagicLink = useCallback(
+    async (email: string, code: string) => {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8001'}/api/v1/auth/magic-link/verify`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, code }),
+        }
+      )
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail ?? 'Invalid or expired code')
+      }
+
+      const data = (await response.json()) as {
+        access_token: string
+        refresh_token: string
+      }
+      setTokens(data.access_token, data.refresh_token)
+
+      // Fetch user profile after login
+      await fetchUser()
+    },
+    [fetchUser]
+  )
+
+  // Register with magic link (passwordless)
+  const registerWithMagicLink = useCallback(
+    async (data: RegisterWithMagicLinkData) => {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8001'}/api/v1/auth/register/magic-link`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: data.email,
+            first_name: data.first_name,
+            last_name: data.last_name,
+            user_type: data.user_type ?? 'client',
+          }),
+        }
+      )
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail ?? 'Registration failed')
+      }
+
+      // Registration initiated - user needs to verify with code
+    },
+    []
+  )
+
+  // Verify registration magic link
+  const verifyRegistration = useCallback(
+    async (email: string, code: string) => {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8001'}/api/v1/auth/register/verify`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, code }),
+        }
+      )
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail ?? 'Invalid or expired code')
+      }
+
+      const data = (await response.json()) as {
+        access_token: string
+        refresh_token: string
+      }
+      setTokens(data.access_token, data.refresh_token)
+
+      // Fetch user profile after registration
+      await fetchUser()
+    },
+    [fetchUser]
+  )
+
   // Auto-refresh on page load if token exists
   useEffect(() => {
     fetchUser()
@@ -217,6 +339,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     register,
     refreshAuth,
+    requestMagicLink,
+    verifyMagicLink,
+    registerWithMagicLink,
+    verifyRegistration,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

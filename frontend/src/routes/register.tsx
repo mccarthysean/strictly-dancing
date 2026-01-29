@@ -1,4 +1,4 @@
-import { useState, useMemo, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -6,37 +6,19 @@ export const Route = createFileRoute('/register')({
   component: RegisterPage,
 })
 
-interface PasswordStrength {
-  score: number
-  label: string
-  color: string
-}
-
-function getPasswordStrength(password: string): PasswordStrength {
-  let score = 0
-
-  if (password.length >= 8) score += 1
-  if (password.length >= 12) score += 1
-  if (/[A-Z]/.test(password)) score += 1
-  if (/[a-z]/.test(password)) score += 1
-  if (/[0-9]/.test(password)) score += 1
-  if (/[^A-Za-z0-9]/.test(password)) score += 1
-
-  if (score <= 2) return { score, label: 'Weak', color: '#ef4444' }
-  if (score <= 4) return { score, label: 'Medium', color: '#f59e0b' }
-  return { score, label: 'Strong', color: '#22c55e' }
-}
+type RegisterStep = 'info' | 'code'
 
 function RegisterPage() {
   const navigate = useNavigate()
-  const { register, isAuthenticated } = useAuth()
+  const { registerWithMagicLink, verifyRegistration, isAuthenticated } = useAuth()
+  const [step, setStep] = useState<RegisterStep>('info')
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -44,45 +26,24 @@ function RegisterPage() {
     return null
   }
 
-  const passwordStrength = useMemo(() => getPasswordStrength(password), [password])
+  const isEmailValid = email.includes('@') && email.length > 5
+  const isFormValid = isEmailValid && firstName.length > 0 && lastName.length > 0
+  const isCodeValid = code.length === 6 && /^\d{6}$/.test(code)
 
-  const passwordsMatch = password === confirmPassword
-  const hasUppercase = /[A-Z]/.test(password)
-  const hasLowercase = /[a-z]/.test(password)
-  const hasNumber = /[0-9]/.test(password)
-  const isPasswordValid = password.length >= 8 && hasUppercase && hasLowercase && hasNumber
-
-  const isFormValid =
-    email.length > 0 &&
-    firstName.length > 0 &&
-    lastName.length > 0 &&
-    isPasswordValid &&
-    passwordsMatch
-
-  const handleSubmit = async (e: FormEvent) => {
+  const handleRequestRegistration = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
-
-    if (!passwordsMatch) {
-      setError('Passwords do not match')
-      return
-    }
-
-    if (!isPasswordValid) {
-      setError('Password must be at least 8 characters with uppercase, lowercase, and number')
-      return
-    }
-
+    setSuccessMessage(null)
     setIsLoading(true)
 
     try {
-      await register({
+      await registerWithMagicLink({
         email,
-        password,
         first_name: firstName,
         last_name: lastName,
       })
-      void navigate({ to: '/login' })
+      setSuccessMessage('Check your email for a 6-digit verification code')
+      setStep('code')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed')
     } finally {
@@ -90,52 +51,193 @@ function RegisterPage() {
     }
   }
 
+  const handleVerifyCode = async (e: FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setIsLoading(true)
+
+    try {
+      await verifyRegistration(email, code)
+      void navigate({ to: '/' })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Invalid or expired code')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleResendCode = async () => {
+    setError(null)
+    setIsLoading(true)
+
+    try {
+      await registerWithMagicLink({
+        email,
+        first_name: firstName,
+        last_name: lastName,
+      })
+      setSuccessMessage('A new verification code has been sent to your email')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to resend code')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleBackToInfo = () => {
+    setStep('info')
+    setCode('')
+    setError(null)
+    setSuccessMessage(null)
+  }
+
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '60vh',
-      padding: '1rem',
-    }}>
-      <div style={{
-        width: '100%',
-        maxWidth: '400px',
-        padding: '2rem',
-        backgroundColor: '#ffffff',
-        borderRadius: '0.5rem',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-      }}>
-        <h1 style={{
-          fontSize: '1.5rem',
-          fontWeight: 'bold',
-          color: '#1f2937',
-          marginBottom: '1.5rem',
-          textAlign: 'center',
-        }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '60vh',
+        padding: '1rem',
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '400px',
+          padding: '2rem',
+          backgroundColor: '#ffffff',
+          borderRadius: '0.5rem',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+        }}
+      >
+        <h1
+          style={{
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            color: '#1f2937',
+            marginBottom: '0.5rem',
+            textAlign: 'center',
+          }}
+        >
           Create Account
         </h1>
+        <p
+          style={{
+            fontSize: '0.875rem',
+            color: '#6b7280',
+            marginBottom: '1.5rem',
+            textAlign: 'center',
+          }}
+        >
+          {step === 'info'
+            ? 'Enter your details to get started'
+            : `Enter the 6-digit code sent to ${email}`}
+        </p>
 
         {error && (
-          <div style={{
-            padding: '0.75rem',
-            marginBottom: '1rem',
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '0.375rem',
-            color: '#dc2626',
-            fontSize: '0.875rem',
-          }}>
+          <div
+            style={{
+              padding: '0.75rem',
+              marginBottom: '1rem',
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '0.375rem',
+              color: '#dc2626',
+              fontSize: '0.875rem',
+            }}
+          >
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-            <div style={{ flex: 1 }}>
+        {successMessage && (
+          <div
+            style={{
+              padding: '0.75rem',
+              marginBottom: '1rem',
+              backgroundColor: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: '0.375rem',
+              color: '#16a34a',
+              fontSize: '0.875rem',
+            }}
+          >
+            {successMessage}
+          </div>
+        )}
+
+        {step === 'info' ? (
+          <form onSubmit={handleRequestRegistration}>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{ flex: 1 }}>
+                <label
+                  htmlFor="firstName"
+                  style={{
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    color: '#374151',
+                  }}
+                >
+                  First Name
+                </label>
+                <input
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="John"
+                  required
+                  disabled={isLoading}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.375rem',
+                    fontSize: '1rem',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label
+                  htmlFor="lastName"
+                  style={{
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    color: '#374151',
+                  }}
+                >
+                  Last Name
+                </label>
+                <input
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Doe"
+                  required
+                  disabled={isLoading}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.375rem',
+                    fontSize: '1rem',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
               <label
-                htmlFor="firstName"
+                htmlFor="email"
                 style={{
                   display: 'block',
                   marginBottom: '0.5rem',
@@ -144,14 +246,14 @@ function RegisterPage() {
                   color: '#374151',
                 }}
               >
-                First Name
+                Email
               </label>
               <input
-                id="firstName"
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="John"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
                 required
                 disabled={isLoading}
                 style={{
@@ -163,216 +265,141 @@ function RegisterPage() {
                   boxSizing: 'border-box',
                 }}
               />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label
-                htmlFor="lastName"
+              <p
                 style={{
-                  display: 'block',
-                  marginBottom: '0.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#374151',
-                }}
-              >
-                Last Name
-              </label>
-              <input
-                id="lastName"
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Doe"
-                required
-                disabled={isLoading}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.375rem',
-                  fontSize: '1rem',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <label
-              htmlFor="email"
-              style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                color: '#374151',
-              }}
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-              disabled={isLoading}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.375rem',
-                fontSize: '1rem',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <label
-              htmlFor="password"
-              style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                color: '#374151',
-              }}
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Create a password"
-              required
-              minLength={8}
-              disabled={isLoading}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.375rem',
-                fontSize: '1rem',
-                boxSizing: 'border-box',
-              }}
-            />
-            {password.length > 0 && (
-              <>
-                <div style={{
-                  marginTop: '0.5rem',
-                  height: '4px',
-                  backgroundColor: '#e5e7eb',
-                  borderRadius: '2px',
-                  overflow: 'hidden',
-                }}>
-                  <div style={{
-                    height: '100%',
-                    width: `${(passwordStrength.score / 6) * 100}%`,
-                    backgroundColor: passwordStrength.color,
-                    transition: 'width 0.3s, background-color 0.3s',
-                  }} />
-                </div>
-                <p style={{
-                  marginTop: '0.25rem',
-                  fontSize: '0.75rem',
-                  color: passwordStrength.color,
-                }}>
-                  Password strength: {passwordStrength.label}
-                </p>
-                <ul style={{
                   marginTop: '0.5rem',
                   fontSize: '0.75rem',
                   color: '#6b7280',
-                  paddingLeft: '1rem',
-                }}>
-                  <li style={{ color: password.length >= 8 ? '#22c55e' : '#6b7280' }}>
-                    At least 8 characters
-                  </li>
-                  <li style={{ color: hasUppercase ? '#22c55e' : '#6b7280' }}>
-                    One uppercase letter
-                  </li>
-                  <li style={{ color: hasLowercase ? '#22c55e' : '#6b7280' }}>
-                    One lowercase letter
-                  </li>
-                  <li style={{ color: hasNumber ? '#22c55e' : '#6b7280' }}>
-                    One number
-                  </li>
-                </ul>
-              </>
-            )}
-          </div>
+                }}
+              >
+                We'll send a verification code to this email
+              </p>
+            </div>
 
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label
-              htmlFor="confirmPassword"
-              style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                color: '#374151',
-              }}
-            >
-              Confirm Password
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm your password"
-              required
-              minLength={8}
-              disabled={isLoading}
+            <button
+              type="submit"
+              disabled={isLoading || !isFormValid}
               style={{
                 width: '100%',
                 padding: '0.75rem',
-                border: confirmPassword.length > 0 && !passwordsMatch ? '1px solid #ef4444' : '1px solid #d1d5db',
+                backgroundColor: isLoading || !isFormValid ? '#9ca3af' : '#6366f1',
+                color: '#ffffff',
+                border: 'none',
                 borderRadius: '0.375rem',
                 fontSize: '1rem',
-                boxSizing: 'border-box',
+                fontWeight: '500',
+                cursor: isLoading || !isFormValid ? 'not-allowed' : 'pointer',
               }}
-            />
-            {confirmPassword.length > 0 && !passwordsMatch && (
-              <p style={{
-                marginTop: '0.25rem',
-                fontSize: '0.75rem',
-                color: '#ef4444',
-              }}>
-                Passwords do not match
-              </p>
-            )}
-          </div>
+            >
+              {isLoading ? 'Creating account...' : 'Create Account'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyCode}>
+            <div style={{ marginBottom: '1rem' }}>
+              <label
+                htmlFor="code"
+                style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  color: '#374151',
+                }}
+              >
+                6-Digit Verification Code
+              </label>
+              <input
+                id="code"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                required
+                disabled={isLoading}
+                autoComplete="one-time-code"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.375rem',
+                  fontSize: '1.5rem',
+                  textAlign: 'center',
+                  letterSpacing: '0.5rem',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={isLoading || !isFormValid}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              backgroundColor: isLoading || !isFormValid ? '#9ca3af' : '#6366f1',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '0.375rem',
-              fontSize: '1rem',
-              fontWeight: '500',
-              cursor: isLoading || !isFormValid ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {isLoading ? 'Creating account...' : 'Create Account'}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={isLoading || !isCodeValid}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                backgroundColor: isLoading || !isCodeValid ? '#9ca3af' : '#6366f1',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '0.375rem',
+                fontSize: '1rem',
+                fontWeight: '500',
+                cursor: isLoading || !isCodeValid ? 'not-allowed' : 'pointer',
+                marginBottom: '1rem',
+              }}
+            >
+              {isLoading ? 'Verifying...' : 'Complete Registration'}
+            </button>
 
-        <p style={{
-          marginTop: '1.5rem',
-          textAlign: 'center',
-          fontSize: '0.875rem',
-          color: '#6b7280',
-        }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: '0.875rem',
+              }}
+            >
+              <button
+                type="button"
+                onClick={handleBackToInfo}
+                disabled={isLoading}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#6366f1',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                Edit info
+              </button>
+              <button
+                type="button"
+                onClick={handleResendCode}
+                disabled={isLoading}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#6366f1',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                Resend code
+              </button>
+            </div>
+          </form>
+        )}
+
+        <p
+          style={{
+            marginTop: '1.5rem',
+            textAlign: 'center',
+            fontSize: '0.875rem',
+            color: '#6b7280',
+          }}
+        >
           Already have an account?{' '}
           <Link
             to="/login"

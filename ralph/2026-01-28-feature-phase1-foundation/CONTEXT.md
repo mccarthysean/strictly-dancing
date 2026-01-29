@@ -3759,3 +3759,48 @@ All 94 tasks have been completed:
 **Next**: T114, T120, T121, or T115
 
 ---
+
+### Entry [E-020] 2026-01-29T18:00:00Z
+
+**Task**: T120 - Update Frontend for Passwordless Auth
+**Status**: DONE
+**Progress**: 105/121 tasks | Blockers: 0
+
+**Accomplished**:
+- Updated `AuthContext.tsx`:
+  - Added `requestMagicLink()` function for login magic link request
+  - Added `verifyMagicLink()` function for login code verification
+  - Added `registerWithMagicLink()` function for passwordless registration
+  - Added `verifyRegistration()` function for registration code verification
+  - Added new interface types (`RegisterWithMagicLinkData`)
+- Updated `login.tsx`:
+  - Removed password field completely
+  - Added two-step flow: email entry → 6-digit code entry
+  - "Send Magic Link" button triggers code request
+  - Code input with numeric keyboard, centered styling
+  - "Use different email" and "Resend code" buttons
+  - Loading states for all async operations
+  - Success/error message display
+- Updated `register.tsx`:
+  - Removed password and confirm password fields
+  - Added two-step flow: info entry → 6-digit code verification
+  - Name + email form submits to get verification code
+  - Code input screen for completing registration
+  - "Edit info" and "Resend code" buttons
+  - Loading states and error handling
+- TypeScript compiles without errors
+
+**Evidence**:
+- Files: frontend/src/contexts/AuthContext.tsx
+- Files: frontend/src/routes/login.tsx
+- Files: frontend/src/routes/register.tsx
+- TypeScript: Compiles without errors
+- AC01: Login screen shows email input and 'Send Magic Link' button ✓
+- AC02: After sending, show code input screen for 6-digit code ✓
+- AC03: Register screen removes password fields ✓
+- AC04: AuthContext updated for magic link flow ✓
+- AC05: Loading states and error handling ✓
+
+**Next**: T121, T114, or T115
+
+---

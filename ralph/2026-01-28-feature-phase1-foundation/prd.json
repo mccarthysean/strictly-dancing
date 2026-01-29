@@ -4831,7 +4831,7 @@
       "id": "T120",
       "title": "Update Frontend for Passwordless Auth",
       "description": "Modify PWA login/register screens to use magic link flow instead of passwords.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": [
         "T106",
@@ -4842,31 +4842,31 @@
           "id": "AC01",
           "criterion": "Login screen shows email input and 'Send Magic Link' button",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC02",
           "criterion": "After sending, show code input screen for 6-digit code",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC03",
           "criterion": "Register screen removes password fields",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC04",
           "criterion": "AuthContext updated for magic link flow",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC05",
           "criterion": "Loading states and error handling",
           "verification": "code_review",
-          "met": false
+          "met": true
         }
       ],
       "testing": {
