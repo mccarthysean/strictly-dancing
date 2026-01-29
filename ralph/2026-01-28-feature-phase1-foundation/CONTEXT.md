@@ -839,3 +839,28 @@ strictly-dancing/
 
 **Next**: T029 - Implement Host Profile CRUD Endpoints
 
+---
+
+### Entry [E-030] 2026-01-29T06:55:00Z
+
+**Task**: T029 - Implement Host Profile CRUD Endpoints
+**Status**: DONE
+**Progress**: 29/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Implemented GET /api/v1/users/me/host-profile endpoint to return authenticated user's host profile
+- Implemented PATCH /api/v1/users/me/host-profile endpoint to update profile fields
+- Implemented POST /api/v1/users/me/host-profile/dance-styles endpoint to add dance styles
+- Implemented DELETE /api/v1/users/me/host-profile/dance-styles/{id} endpoint to remove dance styles
+- All endpoints require authentication and return 404 if user doesn't have a host profile
+- Created helper function _build_profile_response() to construct consistent responses
+- Added 19 unit tests for new endpoints (all passing)
+
+**Evidence**:
+- Tests: All passing (379/379 total - 19 new tests added)
+- Files: app/routers/users.py, tests/unit/test_users_router.py
+- Linting: All checks passed
+- Key tests: test_get_host_profile_returns_profile, test_update_host_profile_updates_fields, test_add_dance_style_creates_association, test_remove_dance_style_removes_association
+
+**Next**: T030 - Implement Host Search Endpoint
+

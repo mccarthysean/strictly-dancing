@@ -438,3 +438,529 @@ class TestBecomeHostEndpoint:
             call_kwargs = mock_host_repo.create.call_args.kwargs
             assert call_kwargs["latitude"] == 40.7128
             assert call_kwargs["longitude"] == -74.0060
+
+
+def create_mock_dance_style(
+    dance_style_id: str = "770e8400-e29b-41d4-a716-446655440002",
+    name: str = "Salsa",
+    slug: str = "salsa",
+    category: str = "latin",
+) -> MagicMock:
+    """Create a mock dance style for testing."""
+    mock_style = MagicMock()
+    mock_style.id = dance_style_id
+    mock_style.name = name
+    mock_style.slug = slug
+    mock_style.category = category
+    mock_style.description = f"A popular {category} dance"
+    return mock_style
+
+
+def create_mock_host_dance_style(
+    dance_style_id: str = "770e8400-e29b-41d4-a716-446655440002",
+    skill_level: int = 3,
+    dance_style: MagicMock | None = None,
+) -> MagicMock:
+    """Create a mock host dance style junction for testing."""
+    mock_hds = MagicMock()
+    mock_hds.dance_style_id = dance_style_id
+    mock_hds.skill_level = skill_level
+    mock_hds.dance_style = dance_style or create_mock_dance_style(dance_style_id)
+    return mock_hds
+
+
+class TestGetMyHostProfileEndpoint:
+    """Tests for GET /api/v1/users/me/host-profile endpoint."""
+
+    def test_get_host_profile_endpoint_exists(self, client: TestClient) -> None:
+        """Test that the get-host-profile endpoint exists and accepts GET."""
+        # Without auth, should get 401, not 404
+        response = client.get("/api/v1/users/me/host-profile")
+        assert response.status_code != status.HTTP_404_NOT_FOUND
+
+    def test_get_host_profile_requires_authentication(self, client: TestClient) -> None:
+        """Test that get-host-profile requires authentication."""
+        response = client.get("/api/v1/users/me/host-profile")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_get_host_profile_returns_profile(self, client: TestClient) -> None:
+        """Test that get-host-profile returns the user's host profile."""
+        mock_user = create_mock_user(user_type=UserType.HOST)
+        mock_profile = create_mock_host_profile(user_id=mock_user.id)
+        mock_dance_style = create_mock_dance_style()
+        mock_hds = create_mock_host_dance_style(dance_style=mock_dance_style)
+
+        with (
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.core.deps.UserRepository") as mock_user_repo_class,
+            patch("app.routers.users.HostProfileRepository") as mock_host_repo_class,
+        ):
+            # Set up auth mocks
+            mock_token_payload = MagicMock()
+            mock_token_payload.sub = mock_user.id
+            mock_token_payload.token_type = "access"
+            mock_token_service.verify_token.return_value = mock_token_payload
+
+            mock_user_repo = AsyncMock()
+            mock_user_repo_class.return_value = mock_user_repo
+            mock_user_repo.get_by_id.return_value = mock_user
+
+            # Set up host profile repo mocks
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+            mock_host_repo.get_dance_styles.return_value = [mock_hds]
+
+            response = client.get(
+                "/api/v1/users/me/host-profile",
+                headers={"Authorization": "Bearer valid_token"},
+            )
+
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            assert data["id"] == mock_profile.id
+            assert data["user_id"] == mock_profile.user_id
+            assert len(data["dance_styles"]) == 1
+            assert data["dance_styles"][0]["dance_style"]["name"] == "Salsa"
+
+    def test_get_host_profile_returns_404_if_not_host(self, client: TestClient) -> None:
+        """Test that get-host-profile returns 404 if user doesn't have profile."""
+        mock_user = create_mock_user(user_type=UserType.CLIENT)
+
+        with (
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.core.deps.UserRepository") as mock_user_repo_class,
+            patch("app.routers.users.HostProfileRepository") as mock_host_repo_class,
+        ):
+            # Set up auth mocks
+            mock_token_payload = MagicMock()
+            mock_token_payload.sub = mock_user.id
+            mock_token_payload.token_type = "access"
+            mock_token_service.verify_token.return_value = mock_token_payload
+
+            mock_user_repo = AsyncMock()
+            mock_user_repo_class.return_value = mock_user_repo
+            mock_user_repo.get_by_id.return_value = mock_user
+
+            # No host profile
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = None
+
+            response = client.get(
+                "/api/v1/users/me/host-profile",
+                headers={"Authorization": "Bearer valid_token"},
+            )
+
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+            assert "host profile" in response.json()["detail"].lower()
+
+
+class TestUpdateMyHostProfileEndpoint:
+    """Tests for PATCH /api/v1/users/me/host-profile endpoint."""
+
+    def test_update_host_profile_endpoint_exists(self, client: TestClient) -> None:
+        """Test that the update-host-profile endpoint exists and accepts PATCH."""
+        # Without auth, should get 401, not 404
+        response = client.patch("/api/v1/users/me/host-profile")
+        assert response.status_code != status.HTTP_404_NOT_FOUND
+
+    def test_update_host_profile_requires_authentication(
+        self, client: TestClient
+    ) -> None:
+        """Test that update-host-profile requires authentication."""
+        response = client.patch("/api/v1/users/me/host-profile")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_update_host_profile_updates_fields(self, client: TestClient) -> None:
+        """Test that update-host-profile updates the provided fields."""
+        mock_user = create_mock_user(user_type=UserType.HOST)
+        mock_profile = create_mock_host_profile(user_id=mock_user.id)
+        updated_profile = create_mock_host_profile(user_id=mock_user.id)
+        updated_profile.bio = "Updated bio"
+        updated_profile.headline = "Updated headline"
+        updated_profile.hourly_rate_cents = 10000
+
+        with (
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.core.deps.UserRepository") as mock_user_repo_class,
+            patch("app.routers.users.HostProfileRepository") as mock_host_repo_class,
+        ):
+            # Set up auth mocks
+            mock_token_payload = MagicMock()
+            mock_token_payload.sub = mock_user.id
+            mock_token_payload.token_type = "access"
+            mock_token_service.verify_token.return_value = mock_token_payload
+
+            mock_user_repo = AsyncMock()
+            mock_user_repo_class.return_value = mock_user_repo
+            mock_user_repo.get_by_id.return_value = mock_user
+
+            # Set up host profile repo mocks
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+            mock_host_repo.update.return_value = updated_profile
+            mock_host_repo.get_dance_styles.return_value = []
+
+            response = client.patch(
+                "/api/v1/users/me/host-profile",
+                headers={"Authorization": "Bearer valid_token"},
+                json={
+                    "bio": "Updated bio",
+                    "headline": "Updated headline",
+                    "hourly_rate_cents": 10000,
+                },
+            )
+
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            assert data["bio"] == "Updated bio"
+            assert data["headline"] == "Updated headline"
+            assert data["hourly_rate_cents"] == 10000
+
+    def test_update_host_profile_returns_404_if_not_host(
+        self, client: TestClient
+    ) -> None:
+        """Test that update-host-profile returns 404 if user isn't a host."""
+        mock_user = create_mock_user(user_type=UserType.CLIENT)
+
+        with (
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.core.deps.UserRepository") as mock_user_repo_class,
+            patch("app.routers.users.HostProfileRepository") as mock_host_repo_class,
+        ):
+            # Set up auth mocks
+            mock_token_payload = MagicMock()
+            mock_token_payload.sub = mock_user.id
+            mock_token_payload.token_type = "access"
+            mock_token_service.verify_token.return_value = mock_token_payload
+
+            mock_user_repo = AsyncMock()
+            mock_user_repo_class.return_value = mock_user_repo
+            mock_user_repo.get_by_id.return_value = mock_user
+
+            # No host profile
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = None
+
+            response = client.patch(
+                "/api/v1/users/me/host-profile",
+                headers={"Authorization": "Bearer valid_token"},
+                json={"bio": "Updated bio"},
+            )
+
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_update_host_profile_with_location(self, client: TestClient) -> None:
+        """Test that update-host-profile can update location."""
+        mock_user = create_mock_user(user_type=UserType.HOST)
+        mock_profile = create_mock_host_profile(user_id=mock_user.id)
+
+        with (
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.core.deps.UserRepository") as mock_user_repo_class,
+            patch("app.routers.users.HostProfileRepository") as mock_host_repo_class,
+        ):
+            # Set up auth mocks
+            mock_token_payload = MagicMock()
+            mock_token_payload.sub = mock_user.id
+            mock_token_payload.token_type = "access"
+            mock_token_service.verify_token.return_value = mock_token_payload
+
+            mock_user_repo = AsyncMock()
+            mock_user_repo_class.return_value = mock_user_repo
+            mock_user_repo.get_by_id.return_value = mock_user
+
+            # Set up host profile repo mocks
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+            mock_host_repo.update.return_value = mock_profile
+            mock_host_repo.get_dance_styles.return_value = []
+
+            response = client.patch(
+                "/api/v1/users/me/host-profile",
+                headers={"Authorization": "Bearer valid_token"},
+                json={
+                    "location": {
+                        "latitude": 40.7128,
+                        "longitude": -74.0060,
+                    }
+                },
+            )
+
+            assert response.status_code == status.HTTP_200_OK
+            # Verify update was called with location
+            mock_host_repo.update.assert_called_once()
+            call_kwargs = mock_host_repo.update.call_args.kwargs
+            assert call_kwargs["latitude"] == 40.7128
+            assert call_kwargs["longitude"] == -74.0060
+            assert call_kwargs["_update_location"] is True
+
+
+class TestAddDanceStyleEndpoint:
+    """Tests for POST /api/v1/users/me/host-profile/dance-styles endpoint."""
+
+    def test_add_dance_style_endpoint_exists(self, client: TestClient) -> None:
+        """Test that the add-dance-style endpoint exists and accepts POST."""
+        # Without auth, should get 401, not 404
+        response = client.post("/api/v1/users/me/host-profile/dance-styles")
+        assert response.status_code != status.HTTP_404_NOT_FOUND
+
+    def test_add_dance_style_requires_authentication(self, client: TestClient) -> None:
+        """Test that add-dance-style requires authentication."""
+        response = client.post("/api/v1/users/me/host-profile/dance-styles")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_add_dance_style_creates_association(self, client: TestClient) -> None:
+        """Test that add-dance-style creates a host-dance style association."""
+        mock_user = create_mock_user(user_type=UserType.HOST)
+        mock_profile = create_mock_host_profile(user_id=mock_user.id)
+        mock_dance_style = create_mock_dance_style()
+        mock_hds = create_mock_host_dance_style(
+            dance_style_id=mock_dance_style.id,
+            skill_level=4,
+            dance_style=mock_dance_style,
+        )
+
+        with (
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.core.deps.UserRepository") as mock_user_repo_class,
+            patch("app.routers.users.HostProfileRepository") as mock_host_repo_class,
+        ):
+            # Set up auth mocks
+            mock_token_payload = MagicMock()
+            mock_token_payload.sub = mock_user.id
+            mock_token_payload.token_type = "access"
+            mock_token_service.verify_token.return_value = mock_token_payload
+
+            mock_user_repo = AsyncMock()
+            mock_user_repo_class.return_value = mock_user_repo
+            mock_user_repo.get_by_id.return_value = mock_user
+
+            # Set up host profile repo mocks
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+            mock_host_repo.get_dance_style_by_id.return_value = mock_dance_style
+            mock_host_repo.add_dance_style.return_value = mock_hds
+
+            response = client.post(
+                "/api/v1/users/me/host-profile/dance-styles",
+                headers={"Authorization": "Bearer valid_token"},
+                json={
+                    "dance_style_id": mock_dance_style.id,
+                    "skill_level": 4,
+                },
+            )
+
+            assert response.status_code == status.HTTP_201_CREATED
+            data = response.json()
+            assert data["dance_style_id"] == mock_dance_style.id
+            assert data["skill_level"] == 4
+            assert data["dance_style"]["name"] == "Salsa"
+
+    def test_add_dance_style_returns_404_if_not_host(self, client: TestClient) -> None:
+        """Test that add-dance-style returns 404 if user isn't a host."""
+        mock_user = create_mock_user(user_type=UserType.CLIENT)
+
+        with (
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.core.deps.UserRepository") as mock_user_repo_class,
+            patch("app.routers.users.HostProfileRepository") as mock_host_repo_class,
+        ):
+            # Set up auth mocks
+            mock_token_payload = MagicMock()
+            mock_token_payload.sub = mock_user.id
+            mock_token_payload.token_type = "access"
+            mock_token_service.verify_token.return_value = mock_token_payload
+
+            mock_user_repo = AsyncMock()
+            mock_user_repo_class.return_value = mock_user_repo
+            mock_user_repo.get_by_id.return_value = mock_user
+
+            # No host profile
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = None
+
+            response = client.post(
+                "/api/v1/users/me/host-profile/dance-styles",
+                headers={"Authorization": "Bearer valid_token"},
+                json={
+                    "dance_style_id": "770e8400-e29b-41d4-a716-446655440002",
+                    "skill_level": 3,
+                },
+            )
+
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+            assert "host profile" in response.json()["detail"].lower()
+
+    def test_add_dance_style_returns_404_if_style_not_found(
+        self, client: TestClient
+    ) -> None:
+        """Test that add-dance-style returns 404 if dance style doesn't exist."""
+        mock_user = create_mock_user(user_type=UserType.HOST)
+        mock_profile = create_mock_host_profile(user_id=mock_user.id)
+
+        with (
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.core.deps.UserRepository") as mock_user_repo_class,
+            patch("app.routers.users.HostProfileRepository") as mock_host_repo_class,
+        ):
+            # Set up auth mocks
+            mock_token_payload = MagicMock()
+            mock_token_payload.sub = mock_user.id
+            mock_token_payload.token_type = "access"
+            mock_token_service.verify_token.return_value = mock_token_payload
+
+            mock_user_repo = AsyncMock()
+            mock_user_repo_class.return_value = mock_user_repo
+            mock_user_repo.get_by_id.return_value = mock_user
+
+            # Dance style not found
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+            mock_host_repo.get_dance_style_by_id.return_value = None
+
+            response = client.post(
+                "/api/v1/users/me/host-profile/dance-styles",
+                headers={"Authorization": "Bearer valid_token"},
+                json={
+                    "dance_style_id": "770e8400-e29b-41d4-a716-446655440002",
+                    "skill_level": 3,
+                },
+            )
+
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+            assert "dance style" in response.json()["detail"].lower()
+
+
+class TestRemoveDanceStyleEndpoint:
+    """Tests for DELETE /api/v1/users/me/host-profile/dance-styles/{id} endpoint."""
+
+    def test_remove_dance_style_endpoint_exists(self, client: TestClient) -> None:
+        """Test that the remove-dance-style endpoint exists and accepts DELETE."""
+        # Without auth, should get 401, not 404
+        response = client.delete(
+            "/api/v1/users/me/host-profile/dance-styles/770e8400-e29b-41d4-a716-446655440002"
+        )
+        assert response.status_code != status.HTTP_404_NOT_FOUND
+
+    def test_remove_dance_style_requires_authentication(
+        self, client: TestClient
+    ) -> None:
+        """Test that remove-dance-style requires authentication."""
+        response = client.delete(
+            "/api/v1/users/me/host-profile/dance-styles/770e8400-e29b-41d4-a716-446655440002"
+        )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_remove_dance_style_removes_association(self, client: TestClient) -> None:
+        """Test that remove-dance-style removes the dance style association."""
+        mock_user = create_mock_user(user_type=UserType.HOST)
+        mock_profile = create_mock_host_profile(user_id=mock_user.id)
+        dance_style_id = "770e8400-e29b-41d4-a716-446655440002"
+
+        with (
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.core.deps.UserRepository") as mock_user_repo_class,
+            patch("app.routers.users.HostProfileRepository") as mock_host_repo_class,
+        ):
+            # Set up auth mocks
+            mock_token_payload = MagicMock()
+            mock_token_payload.sub = mock_user.id
+            mock_token_payload.token_type = "access"
+            mock_token_service.verify_token.return_value = mock_token_payload
+
+            mock_user_repo = AsyncMock()
+            mock_user_repo_class.return_value = mock_user_repo
+            mock_user_repo.get_by_id.return_value = mock_user
+
+            # Set up host profile repo mocks
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+            mock_host_repo.remove_dance_style.return_value = True
+
+            response = client.delete(
+                f"/api/v1/users/me/host-profile/dance-styles/{dance_style_id}",
+                headers={"Authorization": "Bearer valid_token"},
+            )
+
+            assert response.status_code == status.HTTP_204_NO_CONTENT
+            mock_host_repo.remove_dance_style.assert_called_once()
+
+    def test_remove_dance_style_returns_404_if_not_host(
+        self, client: TestClient
+    ) -> None:
+        """Test that remove-dance-style returns 404 if user isn't a host."""
+        mock_user = create_mock_user(user_type=UserType.CLIENT)
+        dance_style_id = "770e8400-e29b-41d4-a716-446655440002"
+
+        with (
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.core.deps.UserRepository") as mock_user_repo_class,
+            patch("app.routers.users.HostProfileRepository") as mock_host_repo_class,
+        ):
+            # Set up auth mocks
+            mock_token_payload = MagicMock()
+            mock_token_payload.sub = mock_user.id
+            mock_token_payload.token_type = "access"
+            mock_token_service.verify_token.return_value = mock_token_payload
+
+            mock_user_repo = AsyncMock()
+            mock_user_repo_class.return_value = mock_user_repo
+            mock_user_repo.get_by_id.return_value = mock_user
+
+            # No host profile
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = None
+
+            response = client.delete(
+                f"/api/v1/users/me/host-profile/dance-styles/{dance_style_id}",
+                headers={"Authorization": "Bearer valid_token"},
+            )
+
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_remove_dance_style_returns_404_if_not_found(
+        self, client: TestClient
+    ) -> None:
+        """Test that remove-dance-style returns 404 if dance style not found."""
+        mock_user = create_mock_user(user_type=UserType.HOST)
+        mock_profile = create_mock_host_profile(user_id=mock_user.id)
+        dance_style_id = "770e8400-e29b-41d4-a716-446655440002"
+
+        with (
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.core.deps.UserRepository") as mock_user_repo_class,
+            patch("app.routers.users.HostProfileRepository") as mock_host_repo_class,
+        ):
+            # Set up auth mocks
+            mock_token_payload = MagicMock()
+            mock_token_payload.sub = mock_user.id
+            mock_token_payload.token_type = "access"
+            mock_token_service.verify_token.return_value = mock_token_payload
+
+            mock_user_repo = AsyncMock()
+            mock_user_repo_class.return_value = mock_user_repo
+            mock_user_repo.get_by_id.return_value = mock_user
+
+            # Dance style not on profile
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_user_id.return_value = mock_profile
+            mock_host_repo.remove_dance_style.return_value = False
+
+            response = client.delete(
+                f"/api/v1/users/me/host-profile/dance-styles/{dance_style_id}",
+                headers={"Authorization": "Bearer valid_token"},
+            )
+
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+            assert "not found" in response.json()["detail"].lower()

@@ -487,14 +487,14 @@
       "id": "T029",
       "title": "Implement Host Profile CRUD Endpoints",
       "description": "Create endpoints for host profile management.",
-      "passes": false,
+      "passes": true,
       "phase": "phase2-host-profiles",
       "dependencies": ["T028"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "GET /api/v1/users/me/host-profile returns profile", "verification": "test", "met": false},
-        {"id": "AC02", "criterion": "PATCH /api/v1/users/me/host-profile updates profile", "verification": "test", "met": false},
-        {"id": "AC03", "criterion": "POST/DELETE /api/v1/users/me/host-profile/dance-styles manages styles", "verification": "test", "met": false},
-        {"id": "AC04", "criterion": "All endpoints require host authentication", "verification": "test", "met": false}
+        {"id": "AC01", "criterion": "GET /api/v1/users/me/host-profile returns profile", "verification": "test", "met": true},
+        {"id": "AC02", "criterion": "PATCH /api/v1/users/me/host-profile updates profile", "verification": "test", "met": true},
+        {"id": "AC03", "criterion": "POST/DELETE /api/v1/users/me/host-profile/dance-styles manages styles", "verification": "test", "met": true},
+        {"id": "AC04", "criterion": "All endpoints require host authentication", "verification": "test", "met": true}
       ],
       "testing": {"unit_tests": ["test_host_profile_crud_endpoints"]}
     },
