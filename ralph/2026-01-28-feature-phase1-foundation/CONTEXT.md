@@ -660,3 +660,33 @@ strictly-dancing/
 - Features: responsive typography, auth-aware content, navigation links
 
 **Next**: Phase 1 Foundation Complete - All backend and frontend foundation tasks done
+
+---
+
+### Entry [E-024] 2026-01-29T06:35:00Z
+
+**Task**: T023 - Create Dance Styles Model and Seed Data
+**Status**: DONE
+**Progress**: 23/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/models/dance_style.py with DanceStyle model
+- DanceStyle has: id (UUID), name, slug, category, description, created_at, updated_at
+- DanceStyleCategory enum with 5 categories: Latin, Ballroom, Swing, Social, Other
+- Name and slug columns have unique constraints and indexes
+- Created Alembic migration (000000000003) with 26 seed dance styles across all categories:
+  - Latin: Salsa, Bachata, Merengue, Cha-Cha, Rumba, Samba, Mambo (7)
+  - Ballroom: Waltz, Foxtrot, Tango, Viennese Waltz, Quickstep (5)
+  - Swing: East Coast Swing, West Coast Swing, Lindy Hop, Jive, Boogie Woogie (5)
+  - Social: Two-Step, Hustle, Night Club Two-Step, Cumbia, Zouk, Kizomba (6)
+  - Other: Argentine Tango, Bolero, Paso Doble (3)
+- Updated app/models/__init__.py with new exports
+- Created 21 unit tests for DanceStyle model and DanceStyleCategory enum (all passing)
+
+**Evidence**:
+- Tests: All passing (209/209 total - 21 new tests added)
+- Files: app/models/dance_style.py, alembic/versions/20260129_020000_create_dance_styles_table.py, tests/unit/test_dance_style_model.py
+- Linting: All checks passed
+- Alembic heads: 000000000003 recognized
+
+**Next**: T024 - Create Host Profile Model
