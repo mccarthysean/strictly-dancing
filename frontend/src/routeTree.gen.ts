@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
@@ -21,6 +22,11 @@ import { Route as HostDashboardRouteImport } from './routes/host/dashboard'
 import { Route as BookingsBookingIdRouteImport } from './routes/bookings/$bookingId'
 import { Route as HostsHostIdBookRouteImport } from './routes/hosts/$hostId/book'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
   '/host/dashboard': typeof HostDashboardRoute
   '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
   '/host/dashboard': typeof HostDashboardRoute
   '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
@@ -108,6 +116,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
   '/host/dashboard': typeof HostDashboardRoute
   '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/settings'
     | '/bookings/$bookingId'
     | '/host/dashboard'
     | '/hosts/$hostId'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/settings'
     | '/bookings/$bookingId'
     | '/host/dashboard'
     | '/hosts/$hostId'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/settings'
     | '/bookings/$bookingId'
     | '/host/dashboard'
     | '/hosts/$hostId'
@@ -163,6 +175,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  SettingsRoute: typeof SettingsRoute
   BookingsBookingIdRoute: typeof BookingsBookingIdRoute
   HostDashboardRoute: typeof HostDashboardRoute
   HostsHostIdRoute: typeof HostsHostIdRouteWithChildren
@@ -174,6 +187,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -270,6 +290,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  SettingsRoute: SettingsRoute,
   BookingsBookingIdRoute: BookingsBookingIdRoute,
   HostDashboardRoute: HostDashboardRoute,
   HostsHostIdRoute: HostsHostIdRouteWithChildren,

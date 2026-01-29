@@ -1864,3 +1864,43 @@ strictly-dancing/
 
 **Next**: T061 - Implement Settings Page
 
+---
+
+### Entry [E-062] 2026-01-29T09:30:00Z
+
+**Task**: T061 - Implement Settings Page
+**Status**: DONE
+**Progress**: 61/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created frontend/src/routes/settings.tsx with full settings page
+- Account section with profile editing:
+  - User avatar, name, email display
+  - Edit button to modify first/last name
+  - Edit form with cancel/save actions
+  - Email verification status badge
+  - Link to Host Dashboard (for hosts)
+- Notifications preferences section:
+  - Email notifications: Booking updates, Messages, Marketing
+  - Push notifications: Booking updates, Messages
+  - Toggle switches with smooth animations
+  - Settings stored in local state (no backend yet)
+- Session section with logout button:
+  - Red styled logout button
+  - Loading state during logout
+  - Navigates to home after logout
+- Additional features:
+  - App version info at bottom
+  - Auth check with login redirect
+  - Responsive mobile-friendly layout
+- TypeScript compiles with no errors
+- Frontend builds successfully (382.80 KB bundle)
+
+**Evidence**:
+- Files: frontend/src/routes/settings.tsx
+- TypeScript: tsc --noEmit passes with no errors
+- Build: vite build completes successfully
+- Key features: account editing, notifications toggles, logout button
+
+**Next**: T062 - Implement Error Handling
+
