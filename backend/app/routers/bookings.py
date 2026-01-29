@@ -1,5 +1,6 @@
 """Bookings router for booking management operations."""
 
+import contextlib
 from datetime import timedelta
 from typing import Annotated
 from uuid import UUID
@@ -18,6 +19,7 @@ from app.repositories.host_profile import HostProfileRepository
 from app.schemas.booking import (
     BookingResponse,
     BookingWithDetailsResponse,
+    CancelBookingRequest,
     CreateBookingRequest,
     DanceStyleSummaryResponse,
     UserSummaryResponse,
@@ -347,6 +349,92 @@ async def confirm_booking(
 
     # Update the status to confirmed
     booking = await booking_repo.update_status(booking_id, BookingStatus.CONFIRMED)
+
+    # Reload with relationships for response
+    booking = await booking_repo.get_by_id(booking_id, load_relationships=True)
+
+    return _build_booking_response(booking, include_details=True)
+
+
+@router.post(
+    "/{booking_id}/cancel",
+    response_model=BookingWithDetailsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Cancel a booking",
+    description="Client or host cancels a pending or confirmed booking.",
+)
+async def cancel_booking(
+    booking_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+    request: CancelBookingRequest | None = None,
+) -> BookingWithDetailsResponse:
+    """Cancel a booking and release payment authorization.
+
+    This endpoint allows either the client or host to cancel a booking.
+    When cancelled:
+    - The Stripe PaymentIntent authorization is released
+    - The booking status is set to CANCELLED
+    - The cancellation details are recorded
+
+    Args:
+        booking_id: The booking's unique identifier.
+        db: The database session (injected).
+        current_user: The authenticated user (injected).
+        request: Optional cancellation request with reason.
+
+    Returns:
+        BookingWithDetailsResponse with the cancelled booking.
+
+    Raises:
+        HTTPException: 400 if booking cannot be cancelled (already cancelled/completed).
+        HTTPException: 403 if user is not the client or host of the booking.
+        HTTPException: 404 if booking not found.
+    """
+    settings = get_settings()
+    booking_repo = BookingRepository(db)
+
+    # Get the booking
+    booking = await booking_repo.get_by_id(booking_id, load_relationships=True)
+    if booking is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Booking not found",
+        )
+
+    # Verify that the current user is either the client or the host
+    user_id_str = str(current_user.id)
+    is_client = booking.client_id == user_id_str
+    is_host = booking.host_id == user_id_str
+
+    if not is_client and not is_host:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the client or host can cancel this booking",
+        )
+
+    # Verify the booking can be cancelled (pending or confirmed)
+    cancellable_statuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED]
+    if booking.status not in cancellable_statuses:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot cancel a booking with status '{booking.status.value}'",
+        )
+
+    # Release the Stripe authorization if there's a payment intent
+    # If cancellation fails, the authorization will expire anyway
+    if booking.stripe_payment_intent_id and settings.stripe_secret_key:
+        with contextlib.suppress(stripe.StripeError):
+            await stripe_service.cancel_payment_intent(booking.stripe_payment_intent_id)
+
+    # Update the booking status to cancelled
+    cancellation_reason = request.reason if request else None
+    booking = await booking_repo.update_status(
+        booking_id,
+        BookingStatus.CANCELLED,
+        cancelled_by_id=current_user.id,
+        cancellation_reason=cancellation_reason,
+    )
 
     # Reload with relationships for response
     booking = await booking_repo.get_by_id(booking_id, load_relationships=True)

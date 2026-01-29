@@ -1388,3 +1388,733 @@ class TestConfirmBookingEndpoint:
         assert "client" in data  # Includes details
         assert "host" in data  # Includes details
         assert data["status"] == BookingStatus.CONFIRMED.value
+
+
+class TestCancelBookingEndpoint:
+    """Tests for POST /api/v1/bookings/{id}/cancel endpoint."""
+
+    @pytest.fixture
+    def cancelled_booking(self, sample_booking, sample_user):
+        """Create a cancelled version of the sample booking."""
+        cancelled = MagicMock()
+        cancelled.id = sample_booking.id
+        cancelled.client_id = sample_booking.client_id
+        cancelled.host_id = sample_booking.host_id
+        cancelled.host_profile_id = sample_booking.host_profile_id
+        cancelled.dance_style_id = sample_booking.dance_style_id
+        cancelled.status = BookingStatus.CANCELLED
+        cancelled.scheduled_start = sample_booking.scheduled_start
+        cancelled.scheduled_end = sample_booking.scheduled_end
+        cancelled.actual_start = None
+        cancelled.actual_end = None
+        cancelled.duration_minutes = sample_booking.duration_minutes
+        cancelled.hourly_rate_cents = sample_booking.hourly_rate_cents
+        cancelled.amount_cents = sample_booking.amount_cents
+        cancelled.platform_fee_cents = sample_booking.platform_fee_cents
+        cancelled.host_payout_cents = sample_booking.host_payout_cents
+        cancelled.location = None
+        cancelled.location_name = sample_booking.location_name
+        cancelled.location_notes = sample_booking.location_notes
+        cancelled.client_notes = sample_booking.client_notes
+        cancelled.host_notes = None
+        cancelled.cancellation_reason = "Changed my plans"
+        cancelled.cancelled_by_id = str(sample_user.id)
+        cancelled.cancelled_at = datetime.now(UTC)
+        cancelled.stripe_payment_intent_id = sample_booking.stripe_payment_intent_id
+        cancelled.created_at = sample_booking.created_at
+        cancelled.updated_at = datetime.now(UTC)
+        cancelled.client = sample_booking.client
+        cancelled.host = sample_booking.host
+        cancelled.host_profile = sample_booking.host_profile
+        cancelled.dance_style = sample_booking.dance_style
+        return cancelled
+
+    @pytest.mark.asyncio
+    async def test_cancel_booking_endpoint_exists(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+        cancelled_booking,
+    ):
+        """Test that the cancel booking endpoint exists and returns 200."""
+        sample_booking.status = BookingStatus.PENDING
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.stripe_service") as mock_stripe,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.side_effect = [
+                    sample_booking,
+                    cancelled_booking,
+                ]
+                mock_booking_repo.update_status.return_value = cancelled_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                mock_stripe.cancel_payment_intent = AsyncMock(return_value=True)
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/cancel",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.asyncio
+    async def test_cancel_booking_client_can_cancel(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+        cancelled_booking,
+    ):
+        """Test that the client can cancel their booking."""
+        sample_booking.status = BookingStatus.PENDING
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.stripe_service") as mock_stripe,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.side_effect = [
+                    sample_booking,
+                    cancelled_booking,
+                ]
+                mock_booking_repo.update_status.return_value = cancelled_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                mock_stripe.cancel_payment_intent = AsyncMock(return_value=True)
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/cancel",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["status"] == BookingStatus.CANCELLED.value
+
+    @pytest.mark.asyncio
+    async def test_cancel_booking_host_can_cancel(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that the host can cancel their booking."""
+        sample_booking.status = BookingStatus.PENDING
+
+        # Create cancelled booking with host as canceller
+        cancelled_booking = MagicMock()
+        cancelled_booking.id = sample_booking.id
+        cancelled_booking.client_id = sample_booking.client_id
+        cancelled_booking.host_id = sample_booking.host_id
+        cancelled_booking.host_profile_id = sample_booking.host_profile_id
+        cancelled_booking.dance_style_id = sample_booking.dance_style_id
+        cancelled_booking.status = BookingStatus.CANCELLED
+        cancelled_booking.scheduled_start = sample_booking.scheduled_start
+        cancelled_booking.scheduled_end = sample_booking.scheduled_end
+        cancelled_booking.actual_start = None
+        cancelled_booking.actual_end = None
+        cancelled_booking.duration_minutes = sample_booking.duration_minutes
+        cancelled_booking.hourly_rate_cents = sample_booking.hourly_rate_cents
+        cancelled_booking.amount_cents = sample_booking.amount_cents
+        cancelled_booking.platform_fee_cents = sample_booking.platform_fee_cents
+        cancelled_booking.host_payout_cents = sample_booking.host_payout_cents
+        cancelled_booking.location = None
+        cancelled_booking.location_name = sample_booking.location_name
+        cancelled_booking.location_notes = sample_booking.location_notes
+        cancelled_booking.client_notes = sample_booking.client_notes
+        cancelled_booking.host_notes = None
+        cancelled_booking.cancellation_reason = None
+        cancelled_booking.cancelled_by_id = str(sample_host_user.id)
+        cancelled_booking.cancelled_at = datetime.now(UTC)
+        cancelled_booking.stripe_payment_intent_id = (
+            sample_booking.stripe_payment_intent_id
+        )
+        cancelled_booking.created_at = sample_booking.created_at
+        cancelled_booking.updated_at = datetime.now(UTC)
+        cancelled_booking.client = sample_booking.client
+        cancelled_booking.host = sample_booking.host
+        cancelled_booking.host_profile = sample_booking.host_profile
+        cancelled_booking.dance_style = sample_booking.dance_style
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.stripe_service") as mock_stripe,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.side_effect = [
+                    sample_booking,
+                    cancelled_booking,
+                ]
+                mock_booking_repo.update_status.return_value = cancelled_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                mock_stripe.cancel_payment_intent = AsyncMock(return_value=True)
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/cancel",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["status"] == BookingStatus.CANCELLED.value
+
+    @pytest.mark.asyncio
+    async def test_cancel_booking_unrelated_user_returns_403(
+        self,
+        mock_db,
+        sample_booking,
+    ):
+        """Test that an unrelated user cannot cancel the booking."""
+        sample_booking.status = BookingStatus.PENDING
+
+        # Create a random user who is neither client nor host
+        random_user = MagicMock(spec=User)
+        random_user.id = uuid4()
+        random_user.email = "random@test.com"
+        random_user.first_name = "Random"
+        random_user.last_name = "User"
+        random_user.user_type = UserType.CLIENT
+        random_user.is_active = True
+        random_user.email_verified = True
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(random_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = random_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/cancel",
+                        headers=get_auth_header(random_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert "client or host" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_cancel_booking_releases_stripe_authorization(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+        cancelled_booking,
+    ):
+        """Test that cancellation releases the Stripe payment authorization."""
+        sample_booking.status = BookingStatus.PENDING
+
+        cancel_calls = []
+
+        async def mock_cancel_payment_intent(payment_intent_id):
+            cancel_calls.append(payment_intent_id)
+            return True
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.stripe_service") as mock_stripe,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.side_effect = [
+                    sample_booking,
+                    cancelled_booking,
+                ]
+                mock_booking_repo.update_status.return_value = cancelled_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                mock_stripe.cancel_payment_intent = mock_cancel_payment_intent
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/cancel",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        # Verify Stripe cancel was called with the payment intent ID
+        assert len(cancel_calls) == 1
+        assert cancel_calls[0] == sample_booking.stripe_payment_intent_id
+
+    @pytest.mark.asyncio
+    async def test_cancel_booking_updates_status_to_cancelled(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+        cancelled_booking,
+    ):
+        """Test that cancel updates booking status to CANCELLED."""
+        sample_booking.status = BookingStatus.PENDING
+
+        update_calls = []
+
+        async def mock_update_status(booking_id, new_status, **kwargs):
+            update_calls.append((booking_id, new_status, kwargs))
+            return cancelled_booking
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.stripe_service") as mock_stripe,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.side_effect = [
+                    sample_booking,
+                    cancelled_booking,
+                ]
+                mock_booking_repo.update_status = mock_update_status
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                mock_stripe.cancel_payment_intent = AsyncMock(return_value=True)
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/cancel",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["status"] == BookingStatus.CANCELLED.value
+
+        # Verify update_status was called with CANCELLED status
+        assert len(update_calls) == 1
+        _, new_status, kwargs = update_calls[0]
+        assert new_status == BookingStatus.CANCELLED
+        assert "cancelled_by_id" in kwargs
+
+    @pytest.mark.asyncio
+    async def test_cancel_booking_with_reason(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+        cancelled_booking,
+    ):
+        """Test that cancellation reason is saved."""
+        sample_booking.status = BookingStatus.PENDING
+        cancelled_booking.cancellation_reason = "Schedule conflict"
+
+        update_calls = []
+
+        async def mock_update_status(booking_id, new_status, **kwargs):
+            update_calls.append((booking_id, new_status, kwargs))
+            return cancelled_booking
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.stripe_service") as mock_stripe,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.side_effect = [
+                    sample_booking,
+                    cancelled_booking,
+                ]
+                mock_booking_repo.update_status = mock_update_status
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                mock_stripe.cancel_payment_intent = AsyncMock(return_value=True)
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/cancel",
+                        json={"reason": "Schedule conflict"},
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["cancellation_reason"] == "Schedule conflict"
+
+        # Verify the reason was passed to update_status
+        assert len(update_calls) == 1
+        _, _, kwargs = update_calls[0]
+        assert kwargs["cancellation_reason"] == "Schedule conflict"
+
+    @pytest.mark.asyncio
+    async def test_cancel_booking_already_cancelled_returns_400(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+    ):
+        """Test that cancelling an already cancelled booking returns 400."""
+        sample_booking.status = BookingStatus.CANCELLED
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/cancel",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "cancelled" in response.json()["detail"].lower()
+
+    @pytest.mark.asyncio
+    async def test_cancel_booking_completed_returns_400(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+    ):
+        """Test that cancelling a completed booking returns 400."""
+        sample_booking.status = BookingStatus.COMPLETED
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/cancel",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "completed" in response.json()["detail"].lower()
+
+    @pytest.mark.asyncio
+    async def test_cancel_booking_in_progress_returns_400(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+    ):
+        """Test that cancelling an in-progress booking returns 400."""
+        sample_booking.status = BookingStatus.IN_PROGRESS
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/cancel",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "in_progress" in response.json()["detail"].lower()
+
+    @pytest.mark.asyncio
+    async def test_cancel_booking_not_found_returns_404(
+        self,
+        mock_db,
+        sample_user,
+    ):
+        """Test that cancelling a non-existent booking returns 404."""
+        non_existent_id = uuid4()
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = None
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{non_existent_id}/cancel",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.asyncio
+    async def test_cancel_booking_requires_authentication(self):
+        """Test that cancelling a booking requires authentication."""
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.post(
+                f"/api/v1/bookings/{uuid4()}/cancel",
+                # No auth header
+            )
+
+        assert response.status_code in [
+            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_403_FORBIDDEN,
+        ]
+
+    @pytest.mark.asyncio
+    async def test_cancel_booking_confirmed_status_can_cancel(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+        cancelled_booking,
+    ):
+        """Test that a confirmed booking can be cancelled."""
+        sample_booking.status = BookingStatus.CONFIRMED
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.stripe_service") as mock_stripe,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.side_effect = [
+                    sample_booking,
+                    cancelled_booking,
+                ]
+                mock_booking_repo.update_status.return_value = cancelled_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                mock_stripe.cancel_payment_intent = AsyncMock(return_value=True)
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/cancel",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["status"] == BookingStatus.CANCELLED.value

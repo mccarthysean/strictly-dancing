@@ -1232,3 +1232,30 @@ strictly-dancing/
 
 **Next**: T042 - Implement Booking Cancellation
 
+---
+
+### Entry [E-043] 2026-01-29T07:50:00Z
+
+**Task**: T042 - Implement Booking Cancellation
+**Status**: DONE
+**Progress**: 42/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Implemented POST /api/v1/bookings/{id}/cancel endpoint in app/routers/bookings.py
+- Both client and host can cancel their bookings (403 for unrelated users)
+- Supports pending and confirmed bookings (400 for cancelled/completed/in_progress)
+- Releases Stripe PaymentIntent authorization via stripe_service.cancel_payment_intent()
+- Uses contextlib.suppress() to gracefully handle Stripe errors (authorization will expire anyway)
+- Records cancellation details: cancelled_by_id, cancellation_reason, cancelled_at
+- Accepts optional CancelBookingRequest body with reason field
+- Returns BookingWithDetailsResponse with cancelled booking details
+- Added 13 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (724/724 total - 13 new tests added)
+- Files: app/routers/bookings.py, tests/unit/test_bookings_router.py
+- Linting: All checks passed
+- Key tests: test_cancel_booking_client_can_cancel, test_cancel_booking_host_can_cancel, test_cancel_booking_releases_stripe_authorization, test_cancel_booking_updates_status_to_cancelled
+
+**Next**: T043 - Implement Session Completion with Capture
+
