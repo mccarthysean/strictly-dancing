@@ -862,14 +862,14 @@
       "id": "T054",
       "title": "Frontend Conversations List Page",
       "description": "Create inbox showing all conversations.",
-      "passes": false,
+      "passes": true,
       "phase": "phase4-realtime",
       "dependencies": ["T051", "T018"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "frontend/src/routes/messages/index.tsx exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Conversations sorted by last message time", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Unread badge on conversations", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Preview of last message", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "frontend/src/routes/messages/index.tsx exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Conversations sorted by last message time", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Unread badge on conversations", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Preview of last message", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },

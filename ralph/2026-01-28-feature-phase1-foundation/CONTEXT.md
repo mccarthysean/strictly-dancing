@@ -1609,3 +1609,38 @@ strictly-dancing/
 
 **Next**: T054 - Frontend Conversations List Page
 
+---
+
+### Entry [E-055] 2026-01-29T08:50:00Z
+
+**Task**: T054 - Frontend Conversations List Page
+**Status**: DONE
+**Progress**: 54/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created full implementation of frontend/src/routes/messages/index.tsx
+- Conversations displayed and sorted by last message time (API returns DESC order)
+- Unread badge shown on conversations with unread messages (blue pill with count)
+- Preview of last message shown below participant name (truncated with ellipsis)
+- Total unread count badge shown in page header
+- Implemented conversation cards with:
+  - Avatar with participant initials
+  - Participant name (bold when unread)
+  - Timestamp with smart formatting (time today, "Yesterday", day name, date)
+  - Last message preview
+  - Unread count badge (blue pill, shows 99+ if over 99)
+- Yellow background highlight for unread conversations
+- Empty state with icon, messaging, and "Find a Host" CTA
+- Loading and error states with retry functionality
+- Auto-refresh every 30 seconds for real-time feel
+- TypeScript check passes with no errors
+- Build completes successfully (349.81 KB bundle)
+
+**Evidence**:
+- Files: frontend/src/routes/messages/index.tsx
+- TypeScript: tsc --noEmit passes with no errors
+- Build: vite build completes successfully
+- Key features: sorted by last message, unread badges, message preview
+
+**Next**: T055 - Create Review Model
+
