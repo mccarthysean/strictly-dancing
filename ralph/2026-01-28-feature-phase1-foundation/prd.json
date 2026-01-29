@@ -532,14 +532,14 @@
       "id": "T032",
       "title": "Frontend Host Discovery Page",
       "description": "Create host discovery page with search and filters.",
-      "passes": false,
+      "passes": true,
       "phase": "phase2-host-profiles",
       "dependencies": ["T030", "T018"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "frontend/src/routes/hosts/index.tsx exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Search input and filter panel", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Host cards with photo, name, rating, price", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Pagination or infinite scroll", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "frontend/src/routes/hosts/index.tsx exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Search input and filter panel", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Host cards with photo, name, rating, price", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Pagination or infinite scroll", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },

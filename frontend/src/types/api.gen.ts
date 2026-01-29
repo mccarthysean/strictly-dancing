@@ -104,6 +104,130 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/hosts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search for hosts
+         * @description Search for dance hosts with location-based filtering and sorting.
+         */
+        get: operations["search_hosts_api_v1_hosts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hosts/{host_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get host profile by ID
+         * @description Get a public host profile by its unique identifier.
+         */
+        get: operations["get_host_profile_api_v1_hosts__host_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/me/become-host": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Become a host
+         * @description Convert the current user to a host by creating a host profile.
+         */
+        post: operations["become_host_api_v1_users_me_become_host_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/me/host-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current user's host profile
+         * @description Get the host profile for the authenticated user.
+         */
+        get: operations["get_my_host_profile_api_v1_users_me_host_profile_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update current user's host profile
+         * @description Update the host profile for the authenticated user.
+         */
+        patch: operations["update_my_host_profile_api_v1_users_me_host_profile_patch"];
+        trace?: never;
+    };
+    "/api/v1/users/me/host-profile/dance-styles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add dance style to host profile
+         * @description Add a dance style to the current user's host profile.
+         */
+        post: operations["add_dance_style_to_profile_api_v1_users_me_host_profile_dance_styles_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/me/host-profile/dance-styles/{dance_style_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove dance style from host profile
+         * @description Remove a dance style from the current user's host profile.
+         */
+        delete: operations["remove_dance_style_from_profile_api_v1_users_me_host_profile_dance_styles__dance_style_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -128,10 +252,377 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * CreateHostProfileRequest
+         * @description Schema for creating a new host profile.
+         *
+         *     Used when a user becomes a host. All fields are optional at creation,
+         *     with sensible defaults applied.
+         */
+        CreateHostProfileRequest: {
+            /**
+             * Bio
+             * @description Host's biography/description
+             */
+            bio?: string | null;
+            /**
+             * Headline
+             * @description Short tagline for profile display
+             */
+            headline?: string | null;
+            /**
+             * Hourly Rate Cents
+             * @description Hourly rate in cents ($1-$1000)
+             * @default 5000
+             */
+            hourly_rate_cents: number;
+            /** @description Host's location (latitude/longitude) */
+            location?: components["schemas"]["LocationRequest"] | null;
+        };
+        /**
+         * DanceStyleCategory
+         * @description Dance style category enumeration.
+         * @enum {string}
+         */
+        DanceStyleCategory: "latin" | "ballroom" | "swing" | "social" | "other";
+        /**
+         * DanceStyleRequest
+         * @description Schema for adding a dance style to a host profile.
+         */
+        DanceStyleRequest: {
+            /**
+             * Dance Style Id
+             * @description UUID of the dance style
+             */
+            dance_style_id: string;
+            /**
+             * Skill Level
+             * @description Skill level (1=beginner, 5=expert)
+             */
+            skill_level: number;
+        };
+        /**
+         * DanceStyleResponse
+         * @description Schema for dance style in responses.
+         */
+        DanceStyleResponse: {
+            /**
+             * Id
+             * @description Dance style UUID
+             */
+            id: string;
+            /**
+             * Name
+             * @description Dance style name
+             */
+            name: string;
+            /**
+             * Slug
+             * @description URL-friendly slug
+             */
+            slug: string;
+            /** @description Dance style category */
+            category: components["schemas"]["DanceStyleCategory"];
+            /**
+             * Description
+             * @description Dance style description
+             */
+            description?: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * HostDanceStyleResponse
+         * @description Schema for host's dance style with skill level.
+         */
+        HostDanceStyleResponse: {
+            /**
+             * Dance Style Id
+             * @description Dance style UUID
+             */
+            dance_style_id: string;
+            /**
+             * Skill Level
+             * @description Skill level (1-5)
+             */
+            skill_level: number;
+            /** @description Dance style details */
+            dance_style: components["schemas"]["DanceStyleResponse"];
+        };
+        /**
+         * HostProfileResponse
+         * @description Schema for host profile in API responses.
+         *
+         *     Includes all public host profile information.
+         */
+        HostProfileResponse: {
+            /**
+             * Id
+             * @description Host profile UUID
+             */
+            id: string;
+            /**
+             * User Id
+             * @description Associated user UUID
+             */
+            user_id: string;
+            /**
+             * Bio
+             * @description Host's biography/description
+             */
+            bio?: string | null;
+            /**
+             * Headline
+             * @description Short tagline
+             */
+            headline?: string | null;
+            /**
+             * Hourly Rate Cents
+             * @description Hourly rate in cents
+             */
+            hourly_rate_cents: number;
+            /**
+             * Rating Average
+             * @description Average rating (1.00-5.00)
+             */
+            rating_average?: number | null;
+            /**
+             * Total Reviews
+             * @description Number of reviews
+             */
+            total_reviews: number;
+            /**
+             * Total Sessions
+             * @description Number of completed sessions
+             */
+            total_sessions: number;
+            /** @description Verification status */
+            verification_status: components["schemas"]["VerificationStatus"];
+            /**
+             * Latitude
+             * @description Latitude (if location set)
+             */
+            latitude?: number | null;
+            /**
+             * Longitude
+             * @description Longitude (if location set)
+             */
+            longitude?: number | null;
+            /**
+             * Stripe Onboarding Complete
+             * @description Whether Stripe onboarding is finished
+             */
+            stripe_onboarding_complete: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             * @description Profile creation timestamp
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description Last update timestamp
+             */
+            updated_at: string;
+            /**
+             * Dance Styles
+             * @description Host's dance styles with skill levels
+             */
+            dance_styles?: components["schemas"]["HostDanceStyleResponse"][];
+        };
+        /**
+         * HostProfileSummaryResponse
+         * @description Condensed host profile for list views.
+         */
+        HostProfileSummaryResponse: {
+            /**
+             * Id
+             * @description Host profile UUID
+             */
+            id: string;
+            /**
+             * User Id
+             * @description Associated user UUID
+             */
+            user_id: string;
+            /**
+             * First Name
+             * @description Host's first name
+             */
+            first_name: string;
+            /**
+             * Last Name
+             * @description Host's last name
+             */
+            last_name: string;
+            /**
+             * Headline
+             * @description Short tagline
+             */
+            headline?: string | null;
+            /**
+             * Hourly Rate Cents
+             * @description Hourly rate in cents
+             */
+            hourly_rate_cents: number;
+            /**
+             * Rating Average
+             * @description Average rating (1.00-5.00)
+             */
+            rating_average?: number | null;
+            /**
+             * Total Reviews
+             * @description Number of reviews
+             */
+            total_reviews: number;
+            /** @description Verification status */
+            verification_status: components["schemas"]["VerificationStatus"];
+            /**
+             * Distance Km
+             * @description Distance from search location (km)
+             */
+            distance_km?: number | null;
+        };
+        /**
+         * HostProfileWithUserResponse
+         * @description Host profile response with user details.
+         */
+        HostProfileWithUserResponse: {
+            /**
+             * Id
+             * @description Host profile UUID
+             */
+            id: string;
+            /**
+             * User Id
+             * @description Associated user UUID
+             */
+            user_id: string;
+            /**
+             * Bio
+             * @description Host's biography/description
+             */
+            bio?: string | null;
+            /**
+             * Headline
+             * @description Short tagline
+             */
+            headline?: string | null;
+            /**
+             * Hourly Rate Cents
+             * @description Hourly rate in cents
+             */
+            hourly_rate_cents: number;
+            /**
+             * Rating Average
+             * @description Average rating (1.00-5.00)
+             */
+            rating_average?: number | null;
+            /**
+             * Total Reviews
+             * @description Number of reviews
+             */
+            total_reviews: number;
+            /**
+             * Total Sessions
+             * @description Number of completed sessions
+             */
+            total_sessions: number;
+            /** @description Verification status */
+            verification_status: components["schemas"]["VerificationStatus"];
+            /**
+             * Latitude
+             * @description Latitude (if location set)
+             */
+            latitude?: number | null;
+            /**
+             * Longitude
+             * @description Longitude (if location set)
+             */
+            longitude?: number | null;
+            /**
+             * Stripe Onboarding Complete
+             * @description Whether Stripe onboarding is finished
+             */
+            stripe_onboarding_complete: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             * @description Profile creation timestamp
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description Last update timestamp
+             */
+            updated_at: string;
+            /**
+             * Dance Styles
+             * @description Host's dance styles with skill levels
+             */
+            dance_styles?: components["schemas"]["HostDanceStyleResponse"][];
+            /**
+             * First Name
+             * @description Host's first name
+             */
+            first_name: string;
+            /**
+             * Last Name
+             * @description Host's last name
+             */
+            last_name: string;
+        };
+        /**
+         * HostSearchResponse
+         * @description Paginated response for host search results.
+         */
+        HostSearchResponse: {
+            /**
+             * Items
+             * @description List of host profiles
+             */
+            items: components["schemas"]["HostProfileSummaryResponse"][];
+            /**
+             * Total
+             * @description Total number of matching hosts
+             */
+            total: number;
+            /**
+             * Page
+             * @description Current page number
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Results per page
+             */
+            page_size: number;
+            /**
+             * Total Pages
+             * @description Total number of pages
+             */
+            total_pages: number;
+        };
+        /**
+         * LocationRequest
+         * @description Schema for location in requests.
+         */
+        LocationRequest: {
+            /**
+             * Latitude
+             * @description Latitude (-90 to 90)
+             */
+            latitude: number;
+            /**
+             * Longitude
+             * @description Longitude (-180 to 180)
+             */
+            longitude: number;
         };
         /**
          * LoginRequest
@@ -249,6 +740,31 @@ export interface components {
             expires_in: number;
         };
         /**
+         * UpdateHostProfileRequest
+         * @description Schema for updating a host profile.
+         *
+         *     All fields are optional - only provided fields will be updated.
+         */
+        UpdateHostProfileRequest: {
+            /**
+             * Bio
+             * @description Host's biography/description
+             */
+            bio?: string | null;
+            /**
+             * Headline
+             * @description Short tagline for profile display
+             */
+            headline?: string | null;
+            /**
+             * Hourly Rate Cents
+             * @description Hourly rate in cents ($1-$1000)
+             */
+            hourly_rate_cents?: number | null;
+            /** @description Host's location (latitude/longitude) */
+            location?: components["schemas"]["LocationRequest"] | null;
+        };
+        /**
          * UserResponse
          * @description Schema for user data in API responses.
          *
@@ -317,6 +833,12 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /**
+         * VerificationStatus
+         * @description Host verification status enumeration.
+         * @enum {string}
+         */
+        VerificationStatus: "unverified" | "pending" | "verified" | "rejected";
     };
     responses: never;
     parameters: never;
@@ -459,6 +981,237 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    search_hosts_api_v1_hosts_get: {
+        parameters: {
+            query?: {
+                /** @description Search center latitude */
+                lat?: number | null;
+                /** @description Search center longitude */
+                lng?: number | null;
+                /** @description Search radius in kilometers */
+                radius_km?: number;
+                /** @description Filter by dance style UUIDs */
+                styles?: string[] | null;
+                /** @description Minimum rating filter */
+                min_rating?: number | null;
+                /** @description Maximum hourly rate in cents */
+                max_price?: number | null;
+                /** @description Only show verified hosts */
+                verified_only?: boolean;
+                /** @description Sort field: 'distance', 'rating', 'price', 'reviews' */
+                sort_by?: string;
+                /** @description Sort order: 'asc' or 'desc' */
+                sort_order?: string;
+                /** @description Page number (1-indexed) */
+                page?: number;
+                /** @description Results per page (1-100) */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostSearchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_host_profile_api_v1_hosts__host_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                host_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostProfileWithUserResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    become_host_api_v1_users_me_become_host_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateHostProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_my_host_profile_api_v1_users_me_host_profile_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostProfileResponse"];
+                };
+            };
+        };
+    };
+    update_my_host_profile_api_v1_users_me_host_profile_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateHostProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_dance_style_to_profile_api_v1_users_me_host_profile_dance_styles_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DanceStyleRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostDanceStyleResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_dance_style_from_profile_api_v1_users_me_host_profile_dance_styles__dance_style_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dance_style_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

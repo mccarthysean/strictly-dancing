@@ -918,3 +918,30 @@ strictly-dancing/
 
 **Next**: T032 - Frontend Host Discovery Page
 
+---
+
+### Entry [E-033] 2026-01-29T07:10:00Z
+
+**Task**: T032 - Frontend Host Discovery Page
+**Status**: DONE
+**Progress**: 32/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created frontend/src/routes/hosts/index.tsx with full host discovery functionality
+- Implemented search controls with "Use my location" button (geolocation API)
+- Created collapsible filter panel with: search radius, minimum rating, max hourly rate, sort by, verified only
+- Implemented responsive host cards with photo placeholder, name, headline, rating, price, and distance
+- Added verified badge display for verified hosts
+- Implemented pagination with page numbers and Previous/Next buttons
+- Created placeholder hosts/$hostId.tsx for host profile page (T033)
+- Regenerated TypeScript types from updated OpenAPI schema
+- TypeScript check passes with no errors
+
+**Evidence**:
+- Tests: All passing (410/410 total)
+- Files: frontend/src/routes/hosts/index.tsx, frontend/src/routes/hosts/$hostId.tsx, frontend/src/types/api.gen.ts
+- TypeScript: tsc --noEmit passes with no errors
+- Key features: location-based search, filter panel, host cards, pagination
+
+**Next**: T033 - Frontend Host Profile Page
+
