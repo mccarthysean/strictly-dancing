@@ -1034,3 +1034,42 @@ strictly-dancing/
 
 **Next**: T036 - Implement Availability Repository
 
+---
+
+### Entry [E-037] 2026-01-29T07:30:00Z
+
+**Task**: T036 - Implement Availability Repository
+**Status**: DONE
+**Progress**: 36/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/repositories/availability.py with AvailabilityRepository class
+- Implemented set_recurring_availability() method for weekly schedules with upsert behavior
+- Implemented get_recurring_availability() with active_only filter
+- Implemented delete_recurring_availability() for removing day schedules
+- Implemented add_one_time() for adding one-time availability slots
+- Implemented block_time_slot() for blocking time periods (e.g., vacation, appointments)
+- Implemented get_overrides_for_date_range() to query overrides with optional type filter
+- Implemented delete_override() for removing specific overrides
+- Implemented get_availability_for_date() that combines:
+  - Recurring availability for the day of week
+  - One-time availability additions
+  - Blocked time periods (subtracts from available slots)
+- Implemented is_available_for_slot() that:
+  - Checks if slot is within available time ranges
+  - Checks for conflicting bookings (pending, confirmed, in_progress)
+  - Returns False for slots spanning midnight
+- Implemented get_bookings_for_date_range() for calendar views
+- Implemented clear_recurring_availability() and set_weekly_schedule() helper methods
+- Added _subtract_time_range() and _merge_time_ranges() helper methods for time calculations
+- Updated app/repositories/__init__.py with new export
+- Created 56 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (547/547 total - 56 new tests added)
+- Files: app/repositories/availability.py, app/repositories/__init__.py, tests/unit/test_availability_repository.py
+- Linting: All checks passed
+- Key tests: test_is_available_for_slot_success, test_is_available_for_slot_conflicting_booking, test_get_availability_with_partial_block
+
+**Next**: T037 - Implement Booking Repository
+
