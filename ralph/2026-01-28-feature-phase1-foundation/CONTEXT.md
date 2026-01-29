@@ -2471,3 +2471,48 @@ strictly-dancing/
 
 **Next**: T075 - Initialize React Native Expo Mobile Project
 
+---
+
+### Entry [E-076] 2026-01-29T10:40:00Z
+
+**Task**: T075 - Initialize React Native Expo Mobile Project
+**Status**: DONE
+**Progress**: 75/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created apps/mobile/package.json with Expo SDK 52, React Native 0.76.5 dependencies
+- Key dependencies: expo-router, expo-secure-store, expo-location, expo-notifications
+- State management: Zustand, @tanstack/react-query
+- Created apps/mobile/app.json with:
+  - Bundle identifier: com.strictlydancing.mobile (iOS and Android)
+  - Configured location, camera, and photo library permissions
+  - Enabled Expo Router with typed routes
+  - Configured expo-notifications plugin
+- Configured Expo Router for file-based routing:
+  - Created app/_layout.tsx with root layout (QueryClientProvider, SafeAreaProvider)
+  - Created app/index.tsx with auth-based redirect
+  - Created app/(auth)/_layout.tsx for auth guard (login/register screens)
+  - Created app/(auth)/login.tsx with full login form
+  - Created app/(auth)/register.tsx with password strength indicator
+  - Created app/(tabs)/_layout.tsx with bottom tab navigation (4 tabs)
+  - Created app/(tabs)/{discover,bookings,messages,profile}.tsx placeholder screens
+  - Created app/+not-found.tsx for 404 handling
+- Enabled TypeScript strict mode in tsconfig.json:
+  - strict: true, noImplicitAny, strictNullChecks
+  - Path alias @/* configured for root imports
+- Created stores/auth.ts with Zustand auth store:
+  - Token persistence with expo-secure-store
+  - login(), register(), logout(), refreshAccessToken() methods
+  - initialize() for hydrating auth state on app load
+- Verified bun run start launches Expo dev server successfully (Metro Bundler on port 8081)
+- TypeScript compiles with no errors
+
+**Evidence**:
+- Files: apps/mobile/package.json, app.json, tsconfig.json, babel.config.js, metro.config.js
+- Routes: app/_layout.tsx, index.tsx, +not-found.tsx, (auth)/_layout.tsx, (auth)/login.tsx, (auth)/register.tsx
+- Tabs: (tabs)/_layout.tsx, (tabs)/discover.tsx, (tabs)/bookings.tsx, (tabs)/messages.tsx, (tabs)/profile.tsx
+- Store: stores/auth.ts
+- TypeScript: tsc --noEmit passes with no errors
+- Expo: bun run start launches Metro Bundler successfully
+
+**Next**: T076 - Set Up Mobile State Management

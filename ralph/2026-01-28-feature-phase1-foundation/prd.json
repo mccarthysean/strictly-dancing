@@ -1180,15 +1180,15 @@
       "id": "T075",
       "title": "Initialize React Native Expo Mobile Project",
       "description": "Set up React Native mobile app with Expo for iOS/Android.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T001"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "apps/mobile/package.json exists with Expo, React Native dependencies", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "apps/mobile/app.json configured with bundle identifiers", "verification": "file_exists", "met": false},
-        {"id": "AC03", "criterion": "Expo Router configured for file-based routing", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "TypeScript strict mode enabled", "verification": "code_review", "met": false},
-        {"id": "AC05", "criterion": "bun run start launches Expo dev server", "verification": "test", "met": false}
+        {"id": "AC01", "criterion": "apps/mobile/package.json exists with Expo, React Native dependencies", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "apps/mobile/app.json configured with bundle identifiers", "verification": "file_exists", "met": true},
+        {"id": "AC03", "criterion": "Expo Router configured for file-based routing", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "TypeScript strict mode enabled", "verification": "code_review", "met": true},
+        {"id": "AC05", "criterion": "bun run start launches Expo dev server", "verification": "test", "met": true}
       ],
       "testing": {"unit_tests": []}
     },
