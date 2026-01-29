@@ -2290,3 +2290,53 @@ strictly-dancing/
 
 **Next**: T071 - Implement WebSocket Location Backend
 
+---
+
+### Entry [E-072] 2026-01-29T10:20:00Z
+
+**Task**: T071 - Implement WebSocket Location Backend
+**Status**: DONE
+**Progress**: 71/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/services/websocket_location.py with LocationWebSocketManager:
+  - LocationUpdate dataclass for location data with latitude, longitude, accuracy, altitude, heading, speed
+  - LocationMessage dataclass for WebSocket messages
+  - LocationMessageType enum: LOCATION_UPDATE, LOCATION_RECEIVED, CONNECTED, DISCONNECTED, ERROR, SESSION_ENDED
+  - LocationConnectionInfo dataclass for connection tracking
+  - connect() - Registers WebSocket connection for a booking
+  - disconnect() - Removes connection and notifies others
+  - handle_location_update() - Stores location history and broadcasts to other participant
+  - broadcast_to_booking() - Uses Redis Pub/Sub for cross-server communication
+  - get_location_history() - Returns location history for a booking (limited to 100 entries)
+  - notify_session_ended() - Notifies all connections that session has ended
+- Created WebSocket endpoint /ws/location/{booking_id} in app/routers/websocket.py:
+  - Authenticates via JWT token passed as query parameter
+  - Validates user is participant (client or host) of the booking
+  - Validates booking status is IN_PROGRESS
+  - Validates location coordinates (-90 to 90 latitude, -180 to 180 longitude)
+  - Handles location_update messages from clients
+  - Broadcasts location updates to other participant via Redis Pub/Sub
+- Updated app/services/__init__.py with new exports
+- Created 28 comprehensive unit tests in tests/unit/test_websocket_location.py:
+  - TestLocationUpdate: 5 tests for location data handling
+  - TestLocationMessage: 2 tests for message structure
+  - TestLocationMessageType: 1 test for enum values
+  - TestLocationConnectionInfo: 1 test for connection info
+  - TestLocationWebSocketManager: 11 tests for manager functionality
+  - TestVerifyLocationWebsocketToken: 3 tests for token verification
+  - TestWebSocketLocationEndpoint: 2 tests for endpoint logic
+  - TestLocationCoordinateValidation: 2 tests for coordinate validation
+  - TestLocationHistoryStorage: 1 test for history storage
+- All 1231 backend tests pass (28 new tests added)
+- Linting passes
+
+**Evidence**:
+- Tests: All passing (1231/1231 total - 28 new tests added)
+- Files: app/services/websocket_location.py, app/routers/websocket.py, app/services/__init__.py
+- Test files: tests/unit/test_websocket_location.py
+- Linting: All checks passed
+- Key features: /ws/location/{booking_id} endpoint, JWT authentication, IN_PROGRESS validation, Redis Pub/Sub broadcasting, location history storage
+
+**Next**: T072 - Frontend Location Tracking
+

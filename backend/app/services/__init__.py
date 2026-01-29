@@ -21,6 +21,15 @@ from app.services.websocket import (
     WebSocketMessage,
     WebSocketMessageType,
 )
+from app.services.websocket_location import (
+    LocationConnectionInfo,
+    LocationMessage,
+    LocationMessageType,
+    LocationUpdate,
+    LocationWebSocketManager,
+    location_websocket_manager,
+    verify_location_websocket_token,
+)
 
 __all__ = [
     "AccountStatus",
@@ -41,4 +50,11 @@ __all__ = [
     "WebSocketMessageType",
     "get_notification_trigger_service",
     "get_push_notification_service",
+    "LocationConnectionInfo",
+    "LocationMessage",
+    "LocationMessageType",
+    "LocationUpdate",
+    "LocationWebSocketManager",
+    "location_websocket_manager",
+    "verify_location_websocket_token",
 ]
