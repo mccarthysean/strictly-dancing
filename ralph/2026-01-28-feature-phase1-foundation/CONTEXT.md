@@ -1,13 +1,19 @@
-# CONTEXT.md - Phase 1 Foundation
+# CONTEXT.md - Strictly Dancing MVP - Complete Implementation
 
 ## Plan Overview
 - **PRD**: `prd.json`
 - **Created**: 2026-01-28
+- **Updated**: 2026-01-29 (Expanded to full 5-phase MVP)
 - **Type**: feature
-- **Story Points**: 13
+- **Story Points**: 188 (94 tasks)
 
 ## Goal
-Establish project infrastructure, FastAPI backend, database connectivity, user model, repository layer, and PWA frontend foundation.
+Complete implementation of the Strictly Dancing dance host marketplace platform:
+- **Phase 1**: Backend foundation, auth, PWA frontend
+- **Phase 2**: Host profiles, dance styles, geospatial search
+- **Phase 3**: Booking system, Stripe payments, availability
+- **Phase 4**: Real-time messaging, WebSocket chat
+- **Phase 5**: Reviews, dashboard, performance optimization
 
 ## Key Principles
 - **TDD**: Write tests alongside implementation, run tests AFTER
@@ -25,32 +31,62 @@ strictly-dancing/
 │   │   ├── models/    # SQLAlchemy ORM models
 │   │   ├── schemas/   # Pydantic schemas
 │   │   ├── repositories/  # Data access layer
+│   │   ├── services/  # Business logic
 │   │   └── routers/   # API endpoints
 │   ├── tests/         # pytest tests
 │   └── alembic/       # Database migrations
-└── frontend/          # PWA web app
+└── frontend/          # PWA web app (React + Vite + TanStack)
     ├── src/
     │   ├── routes/    # TanStack Router pages
+    │   ├── contexts/  # React contexts (Auth)
     │   ├── lib/api/   # OpenAPI client
     │   └── types/     # Generated TypeScript types
     └── vite.config.ts
 ```
 
-## Task Dependencies
-```
-T001 (FastAPI init)
-  └── T002 (Config)
-       └── T003 (Database)
-            └── T004 (Alembic)
-                 └── T005 (User model)
-                      └── T006 (Schemas)
-                           └── T007 (Repository)
+## Task Summary (94 Total)
 
-T001 (FastAPI init)
-  └── T008 (Frontend init)
-       └── T009 (API client)
-            └── T010 (Homepage)
-```
+### Phase 1: Foundation (T001-T022, T075-T080, T089-T090) - 30 tasks
+- T001-T007: Backend core (config, database, user model, repository)
+- T008-T010: Auth services (password, JWT, schemas)
+- T011-T016: Auth endpoints (register, login, refresh, logout, me)
+- T017-T022: PWA frontend (init, API client, auth context, pages)
+- T075-T080: React Native mobile app (init, state, API, login, register, navigation)
+- T089: Initialize monorepo structure
+- T090: Configure Celery background jobs
+
+### Phase 2: Host Profiles (T023-T033, T065, T081-T082) - 14 tasks
+- T023-T027: Models and schemas (dance styles, host profile, junction)
+- T028-T031: API endpoints (become host, CRUD, search, get profile)
+- T032-T033: PWA frontend pages (discovery, profile view)
+- T065: PWA host profile edit page
+- T081-T082: Mobile screens (discovery, profile view)
+
+### Phase 3: Booking System (T034-T047, T066-T068, T083-T084) - 19 tasks
+- T034-T038: Models and schemas (booking, availability)
+- T039-T045: API endpoints (Stripe, create/confirm/cancel/complete, list)
+- T046-T047: PWA frontend pages (booking flow, list)
+- T066: Session start endpoint
+- T067-T068: PWA pages (booking detail, availability management)
+- T083-T084: Mobile screens (booking flow, bookings list)
+
+### Phase 4: Real-time (T048-T054, T069-T073, T085-T086) - 14 tasks
+- T048-T052: Backend (messaging models, repository, endpoints, WebSocket)
+- T053-T054: PWA frontend pages (chat, conversations list)
+- T069-T070: Push notifications (backend, triggers)
+- T071-T073: Location tracking (WebSocket, frontend, active session)
+- T085-T086: Mobile screens (chat, messages list)
+
+### Phase 5: Reviews & Polish (T055-T064, T074, T087-T088, T091-T094) - 17 tasks
+- T055-T057: Reviews backend (model, repository, endpoints)
+- T058-T062: PWA frontend pages (review form, display, dashboard, settings, error handling)
+- T063-T064: Backend E2E testing and optimization
+- T074: Host verification backend
+- T087-T088: Unit test infrastructure and local dev testing
+- T091: CI/CD pipeline
+- T092: Analytics and logging (Sentry)
+- T093: App store preparation
+- T094: Frontend E2E testing with Playwright
 
 ---
 
@@ -62,7 +98,7 @@ T001 (FastAPI init)
 
 **Task**: T001 - Initialize Backend FastAPI Project
 **Status**: DONE
-**Progress**: 1/10 tasks | Blockers: 0
+**Progress**: 1/94 tasks | Blockers: 0
 
 **Accomplished**:
 - Created pyproject.toml with FastAPI, SQLAlchemy, Pydantic, pytest dependencies
@@ -75,3 +111,43 @@ T001 (FastAPI init)
 - Files: pyproject.toml, app/main.py, tests/unit/test_health.py
 
 **Next**: T002 - Configure Backend Core Settings
+
+---
+
+### Entry [E-002] 2026-01-29T05:10:00Z
+
+**Task**: Plan Expansion
+**Status**: DONE
+**Progress**: 1/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Expanded prd.json from 10 tasks to 94 tasks
+- Added all 5 phases from PRD.md
+- Added React Native Mobile app tasks (T075-T086)
+- Added testing infrastructure (T087-T088, T091, T094)
+- Added CI/CD, analytics, app store prep (T089-T093)
+- Updated story points from 13 to 188
+
+**Next**: T002 - Configure Backend Core Settings
+
+---
+
+### Entry [E-003] 2026-01-29T05:25:00Z
+
+**Task**: T002 - Configure Backend Core Settings
+**Status**: DONE
+**Progress**: 2/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/core/config.py with Settings class using pydantic-settings
+- Created backend/app/core/logging.py with structlog JSON configuration
+- Updated main.py to use config for CORS and app settings
+- Added lifespan context manager for startup/shutdown logging
+- Created 5 unit tests for config module (all passing)
+
+**Evidence**:
+- Tests: All passing (7/7 total)
+- Files: app/core/config.py, app/core/logging.py, app/main.py, tests/unit/test_config.py
+- Linting: All checks passed
+
+**Next**: T003 - Configure Database Connection

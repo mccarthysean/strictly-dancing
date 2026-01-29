@@ -1,4 +1,5 @@
 """Pytest fixtures for Strictly Dancing backend tests."""
+
 import pytest
 from fastapi.testclient import TestClient
 

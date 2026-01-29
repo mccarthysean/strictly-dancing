@@ -1,12 +1,12 @@
 {
-  "id": "2026-01-28-feature-phase1-foundation",
-  "version": "1.0.0",
+  "id": "2026-01-28-feature-full-mvp",
+  "version": "2.0.0",
   "metadata": {
-    "title": "Phase 1: Foundation - Project Infrastructure Setup",
-    "description": "Establish project infrastructure, FastAPI backend, database connectivity, user model, repository layer, and PWA frontend foundation following TDD methodology.",
+    "title": "Strictly Dancing MVP - Complete 5-Phase Implementation",
+    "description": "Full implementation of the Dance Partner marketplace platform including backend foundation, host profiles, booking system, real-time features, and reviews following TDD methodology.",
     "type": "feature",
     "priority": "very-high",
-    "story_points": 13,
+    "story_points": 188,
     "created_at": "2026-01-28T00:00:00Z",
     "github_issue": null,
     "github_issue_number": null,
@@ -42,6 +42,20 @@
         "verification": "lint",
         "verification_command": "cd /workspaces/strictly-dancing/backend && ruff check .",
         "passes": false
+      },
+      {
+        "id": "CC05",
+        "description": "All Phase 1 auth endpoints functional",
+        "verification": "api",
+        "verification_command": "curl -s http://localhost:8001/api/v1/auth/me -H 'Authorization: Bearer test' | jq",
+        "passes": false
+      },
+      {
+        "id": "CC06",
+        "description": "Host search endpoint returns results",
+        "verification": "api",
+        "verification_command": "curl -s 'http://localhost:8001/api/v1/hosts?lat=40.7&lng=-74.0' | jq",
+        "passes": false
       }
     ]
   },
@@ -51,395 +65,1422 @@
       "title": "Initialize Backend FastAPI Project",
       "description": "Set up Python backend with FastAPI, UV for dependencies, pyproject.toml, and basic application structure.",
       "passes": true,
-      "phase": "implementation",
+      "phase": "phase1-foundation",
       "dependencies": [],
       "acceptance_criteria": [
-        {
-          "id": "AC01",
-          "criterion": "pyproject.toml exists with FastAPI, SQLAlchemy, Pydantic dependencies",
-          "verification": "file_exists",
-          "met": true
-        },
-        {
-          "id": "AC02",
-          "criterion": "backend/app/main.py exists with FastAPI app factory",
-          "verification": "file_exists",
-          "met": true
-        },
-        {
-          "id": "AC03",
-          "criterion": "Health endpoint GET /health returns 200 with JSON response",
-          "verification": "test",
-          "met": true
-        },
-        {
-          "id": "AC04",
-          "criterion": "Unit test for health endpoint exists and passes",
-          "verification": "test",
-          "met": true
-        }
+        {"id": "AC01", "criterion": "pyproject.toml exists with FastAPI, SQLAlchemy, Pydantic dependencies", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "backend/app/main.py exists with FastAPI app factory", "verification": "file_exists", "met": true},
+        {"id": "AC03", "criterion": "Health endpoint GET /health returns 200 with JSON response", "verification": "test", "met": true},
+        {"id": "AC04", "criterion": "Unit test for health endpoint exists and passes", "verification": "test", "met": true}
       ],
-      "testing": {
-        "unit_tests": [
-          "test_health_endpoint_returns_200",
-          "test_health_endpoint_returns_json"
-        ]
-      }
+      "testing": {"unit_tests": ["test_health_endpoint_returns_200", "test_health_endpoint_returns_json"]}
     },
     {
       "id": "T002",
       "title": "Configure Backend Core Settings",
       "description": "Create core configuration module with environment variable loading, CORS middleware, and logging setup.",
-      "passes": false,
-      "phase": "implementation",
+      "passes": true,
+      "phase": "phase1-foundation",
       "dependencies": ["T001"],
       "acceptance_criteria": [
-        {
-          "id": "AC01",
-          "criterion": "backend/app/core/config.py exists with Settings class using pydantic-settings",
-          "verification": "file_exists",
-          "met": false
-        },
-        {
-          "id": "AC02",
-          "criterion": "CORS middleware configured for development (localhost origins)",
-          "verification": "code_review",
-          "met": false
-        },
-        {
-          "id": "AC03",
-          "criterion": "Logging configured with structlog JSON output",
-          "verification": "code_review",
-          "met": false
-        },
-        {
-          "id": "AC04",
-          "criterion": "Unit test for config loading from environment",
-          "verification": "test",
-          "met": false
-        }
+        {"id": "AC01", "criterion": "backend/app/core/config.py exists with Settings class using pydantic-settings", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "CORS middleware configured for development (localhost origins)", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Logging configured with structlog JSON output", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Unit test for config loading from environment", "verification": "test", "met": true}
       ],
-      "testing": {
-        "unit_tests": [
-          "test_config_loads_from_environment",
-          "test_config_has_required_fields"
-        ]
-      }
+      "testing": {"unit_tests": ["test_config_loads_from_environment", "test_config_has_required_fields"]}
     },
     {
       "id": "T003",
       "title": "Configure Database Connection",
       "description": "Set up SQLAlchemy 2.0 async connection with asyncpg to AWS RDS PostgreSQL.",
       "passes": false,
-      "phase": "implementation",
+      "phase": "phase1-foundation",
       "dependencies": ["T002"],
       "acceptance_criteria": [
-        {
-          "id": "AC01",
-          "criterion": "backend/app/core/database.py exists with async engine and session factory",
-          "verification": "file_exists",
-          "met": false
-        },
-        {
-          "id": "AC02",
-          "criterion": "Connection pooling configured (min=2, max=10)",
-          "verification": "code_review",
-          "met": false
-        },
-        {
-          "id": "AC03",
-          "criterion": "get_db dependency for FastAPI routes exists",
-          "verification": "file_exists",
-          "met": false
-        },
-        {
-          "id": "AC04",
-          "criterion": "DATABASE_URL environment variable used",
-          "verification": "code_review",
-          "met": false
-        }
+        {"id": "AC01", "criterion": "backend/app/core/database.py exists with async engine and session factory", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Connection pooling configured (min=2, max=10)", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "get_db dependency for FastAPI routes exists", "verification": "file_exists", "met": false},
+        {"id": "AC04", "criterion": "DATABASE_URL environment variable used", "verification": "code_review", "met": false}
       ],
-      "testing": {
-        "unit_tests": [
-          "test_database_session_creates",
-          "test_database_url_from_config"
-        ]
-      }
+      "testing": {"unit_tests": ["test_database_session_creates", "test_database_url_from_config"]}
     },
     {
       "id": "T004",
       "title": "Initialize Alembic Migrations",
       "description": "Set up Alembic with async support and create initial migration for extensions.",
       "passes": false,
-      "phase": "implementation",
+      "phase": "phase1-foundation",
       "dependencies": ["T003"],
       "acceptance_criteria": [
-        {
-          "id": "AC01",
-          "criterion": "backend/alembic/ directory exists with alembic.ini",
-          "verification": "file_exists",
-          "met": false
-        },
-        {
-          "id": "AC02",
-          "criterion": "Alembic env.py configured for async SQLAlchemy",
-          "verification": "code_review",
-          "met": false
-        },
-        {
-          "id": "AC03",
-          "criterion": "Initial migration creates uuid-ossp extension",
-          "verification": "file_exists",
-          "met": false
-        }
+        {"id": "AC01", "criterion": "backend/alembic.ini exists at backend root", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "backend/alembic/env.py configured for async SQLAlchemy", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Initial migration creates uuid-ossp and postgis extensions", "verification": "file_exists", "met": false}
       ],
-      "testing": {
-        "unit_tests": []
-      }
+      "testing": {"unit_tests": []}
     },
     {
       "id": "T005",
       "title": "Create User Database Model",
       "description": "Implement User SQLAlchemy model with all required fields and create migration.",
       "passes": false,
-      "phase": "implementation",
+      "phase": "phase1-foundation",
       "dependencies": ["T004"],
       "acceptance_criteria": [
-        {
-          "id": "AC01",
-          "criterion": "backend/app/models/user.py exists with User model",
-          "verification": "file_exists",
-          "met": false
-        },
-        {
-          "id": "AC02",
-          "criterion": "User has fields: id (UUID), email, password_hash, first_name, last_name, user_type, email_verified, is_active, created_at, updated_at",
-          "verification": "code_review",
-          "met": false
-        },
-        {
-          "id": "AC03",
-          "criterion": "Email has unique constraint",
-          "verification": "code_review",
-          "met": false
-        },
-        {
-          "id": "AC04",
-          "criterion": "user_type is ENUM (client, host, both)",
-          "verification": "code_review",
-          "met": false
-        },
-        {
-          "id": "AC05",
-          "criterion": "Alembic migration for users table exists",
-          "verification": "file_exists",
-          "met": false
-        }
+        {"id": "AC01", "criterion": "backend/app/models/user.py exists with User model", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "User has fields: id (UUID), email, password_hash, first_name, last_name, user_type, email_verified, is_active, created_at, updated_at", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Email has unique constraint", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "user_type is ENUM (client, host, both)", "verification": "code_review", "met": false},
+        {"id": "AC05", "criterion": "Alembic migration for users table exists", "verification": "file_exists", "met": false}
       ],
-      "testing": {
-        "unit_tests": [
-          "test_user_model_instantiation",
-          "test_user_model_has_required_fields"
-        ]
-      }
+      "testing": {"unit_tests": ["test_user_model_instantiation", "test_user_model_has_required_fields"]}
     },
     {
       "id": "T006",
       "title": "Create User Pydantic Schemas",
       "description": "Define Pydantic schemas for user request/response validation.",
       "passes": false,
-      "phase": "implementation",
+      "phase": "phase1-foundation",
       "dependencies": ["T005"],
       "acceptance_criteria": [
-        {
-          "id": "AC01",
-          "criterion": "backend/app/schemas/user.py exists",
-          "verification": "file_exists",
-          "met": false
-        },
-        {
-          "id": "AC02",
-          "criterion": "UserCreate, UserUpdate, UserResponse schemas defined",
-          "verification": "code_review",
-          "met": false
-        },
-        {
-          "id": "AC03",
-          "criterion": "Email validation implemented",
-          "verification": "test",
-          "met": false
-        },
-        {
-          "id": "AC04",
-          "criterion": "password_hash never exposed in UserResponse",
-          "verification": "test",
-          "met": false
-        }
+        {"id": "AC01", "criterion": "backend/app/schemas/user.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "UserCreate, UserUpdate, UserResponse schemas defined", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Email validation implemented", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "password_hash never exposed in UserResponse", "verification": "test", "met": false}
       ],
-      "testing": {
-        "unit_tests": [
-          "test_user_create_schema_validates_email",
-          "test_user_response_excludes_password_hash"
-        ]
-      }
+      "testing": {"unit_tests": ["test_user_create_schema_validates_email", "test_user_response_excludes_password_hash"]}
     },
     {
       "id": "T007",
       "title": "Implement User Repository Layer",
       "description": "Create UserRepository with async CRUD operations following repository pattern.",
       "passes": false,
-      "phase": "implementation",
+      "phase": "phase1-foundation",
       "dependencies": ["T006"],
       "acceptance_criteria": [
-        {
-          "id": "AC01",
-          "criterion": "backend/app/repositories/user.py exists",
-          "verification": "file_exists",
-          "met": false
-        },
-        {
-          "id": "AC02",
-          "criterion": "UserRepository has create(), get_by_id(), get_by_email(), update(), soft_delete() methods",
-          "verification": "code_review",
-          "met": false
-        },
-        {
-          "id": "AC03",
-          "criterion": "exists_by_email() method for registration checks",
-          "verification": "code_review",
-          "met": false
-        },
-        {
-          "id": "AC04",
-          "criterion": "All queries use async patterns",
-          "verification": "code_review",
-          "met": false
-        }
+        {"id": "AC01", "criterion": "backend/app/repositories/user.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "UserRepository has create(), get_by_id(), get_by_email(), update(), soft_delete() methods", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "exists_by_email() method for registration checks", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "All queries use async patterns", "verification": "code_review", "met": false}
       ],
-      "testing": {
-        "unit_tests": [
-          "test_user_repository_create",
-          "test_user_repository_get_by_email",
-          "test_user_repository_exists_by_email"
-        ]
-      }
+      "testing": {"unit_tests": ["test_user_repository_create", "test_user_repository_get_by_email", "test_user_repository_exists_by_email"]}
     },
     {
       "id": "T008",
-      "title": "Initialize PWA Frontend Project",
-      "description": "Set up React + Vite + TypeScript frontend with TanStack Router.",
+      "title": "Implement Password Hashing Service",
+      "description": "Create secure Argon2id password hashing service.",
       "passes": false,
-      "phase": "implementation",
-      "dependencies": ["T001"],
+      "phase": "phase1-foundation",
+      "dependencies": ["T002"],
       "acceptance_criteria": [
-        {
-          "id": "AC01",
-          "criterion": "frontend/package.json exists with React, Vite, TanStack Router dependencies",
-          "verification": "file_exists",
-          "met": false
-        },
-        {
-          "id": "AC02",
-          "criterion": "frontend/vite.config.ts configured with PWA plugin",
-          "verification": "file_exists",
-          "met": false
-        },
-        {
-          "id": "AC03",
-          "criterion": "frontend/src/routes/__root.tsx exists with basic layout",
-          "verification": "file_exists",
-          "met": false
-        },
-        {
-          "id": "AC04",
-          "criterion": "TypeScript strict mode enabled in tsconfig.json",
-          "verification": "code_review",
-          "met": false
-        },
-        {
-          "id": "AC05",
-          "criterion": "bun run dev starts development server on port 5175",
-          "verification": "test",
-          "met": false
-        }
+        {"id": "AC01", "criterion": "backend/app/services/password.py exists with PasswordService", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "hash_password() uses argon2-cffi with secure parameters", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "verify_password() uses time-constant comparison", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Minimum 8 character enforcement", "verification": "test", "met": false}
       ],
-      "testing": {
-        "unit_tests": []
-      }
+      "testing": {"unit_tests": ["test_password_hashing_produces_valid_format", "test_password_verification_succeeds_fails_correctly", "test_different_hashes_for_same_password"]}
     },
     {
       "id": "T009",
-      "title": "Configure Frontend API Client",
-      "description": "Set up OpenAPI client with TanStack Query for type-safe API calls.",
+      "title": "Implement JWT Token Service",
+      "description": "Create JWT service for access/refresh tokens using RS256.",
       "passes": false,
-      "phase": "implementation",
-      "dependencies": ["T008"],
+      "phase": "phase1-foundation",
+      "dependencies": ["T002"],
       "acceptance_criteria": [
-        {
-          "id": "AC01",
-          "criterion": "frontend/src/lib/api/client.ts exists with openapi-fetch setup",
-          "verification": "file_exists",
-          "met": false
-        },
-        {
-          "id": "AC02",
-          "criterion": "frontend/src/lib/api/$api.ts exists with TanStack Query hooks",
-          "verification": "file_exists",
-          "met": false
-        },
-        {
-          "id": "AC03",
-          "criterion": "generate-types script in package.json",
-          "verification": "code_review",
-          "met": false
-        },
-        {
-          "id": "AC04",
-          "criterion": "API base URL configurable via environment variable",
-          "verification": "code_review",
-          "met": false
-        }
+        {"id": "AC01", "criterion": "backend/app/services/token.py exists with TokenService", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Access tokens have 15-minute expiration", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Refresh tokens have 7-day expiration", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Token payload includes sub (user_id), exp, iat, jti", "verification": "test", "met": false},
+        {"id": "AC05", "criterion": "verify_token() validates signature and expiration", "verification": "test", "met": false}
       ],
-      "testing": {
-        "unit_tests": []
-      }
+      "testing": {"unit_tests": ["test_token_creation_and_verification", "test_expired_token_raises_error", "test_token_payload_structure"]}
     },
     {
       "id": "T010",
+      "title": "Create Authentication Pydantic Schemas",
+      "description": "Define all request/response models for auth endpoints.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T006"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/schemas/auth.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "RegisterRequest, LoginRequest, TokenResponse, RefreshRequest schemas defined", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Email validation on RegisterRequest", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Password strength requirements enforced", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_auth_schema_email_validation", "test_auth_schema_password_strength"]}
+    },
+    {
+      "id": "T011",
+      "title": "Implement User Registration Endpoint",
+      "description": "Create POST /api/v1/auth/register with validation.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T007", "T008", "T010"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "POST /api/v1/auth/register endpoint exists", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Validates email not already registered (case-insensitive)", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Hashes password and creates user", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Returns 201 with UserResponse", "verification": "test", "met": false},
+        {"id": "AC05", "criterion": "Returns 409 if email exists", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_registration_returns_201", "test_registration_duplicate_email_returns_409", "test_registration_creates_user_in_database"]}
+    },
+    {
+      "id": "T012",
+      "title": "Implement Login Endpoint",
+      "description": "Create POST /api/v1/auth/login returning JWT tokens.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T007", "T008", "T009", "T010"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "POST /api/v1/auth/login endpoint exists", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Verifies credentials with same error for email/password mismatch", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Returns 401 for invalid credentials", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Returns TokenResponse with access_token and refresh_token", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_login_valid_credentials_returns_tokens", "test_login_invalid_credentials_returns_401"]}
+    },
+    {
+      "id": "T013",
+      "title": "Implement Token Refresh Endpoint",
+      "description": "Create POST /api/v1/auth/refresh for obtaining new access tokens.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T009", "T010"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "POST /api/v1/auth/refresh endpoint exists", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Validates refresh token signature and expiration", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Issues new access token", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Returns 401 for invalid/expired token", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_refresh_valid_token_returns_new_access", "test_refresh_invalid_token_returns_401"]}
+    },
+    {
+      "id": "T014",
+      "title": "Implement Authentication Middleware",
+      "description": "Create FastAPI dependency for JWT auth extracting current user.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T007", "T009"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/core/deps.py exists with get_current_user dependency", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Extracts Bearer token from Authorization header", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Validates token and loads user from database", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Returns 401 for missing/invalid token", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_auth_middleware_valid_token_returns_user", "test_auth_middleware_missing_token_returns_401"]}
+    },
+    {
+      "id": "T015",
+      "title": "Implement Logout Endpoint",
+      "description": "Create POST /api/v1/auth/logout.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T014"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "POST /api/v1/auth/logout endpoint exists", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Returns 204 No Content on success", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Idempotent operation", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_logout_returns_204", "test_logout_idempotent"]}
+    },
+    {
+      "id": "T016",
+      "title": "Implement Get Current User Endpoint",
+      "description": "Create GET /api/v1/auth/me returning authenticated user profile.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T014"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "GET /api/v1/auth/me endpoint exists", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Returns UserResponse with full profile", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Requires authentication", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_get_me_returns_user_data", "test_get_me_requires_auth"]}
+    },
+    {
+      "id": "T017",
+      "title": "Initialize PWA Frontend Project",
+      "description": "Set up React + Vite + TypeScript frontend with TanStack Router.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T001"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/package.json exists with React, Vite, TanStack Router dependencies", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "frontend/vite.config.ts configured with PWA plugin", "verification": "file_exists", "met": false},
+        {"id": "AC03", "criterion": "frontend/src/routes/__root.tsx exists with basic layout", "verification": "file_exists", "met": false},
+        {"id": "AC04", "criterion": "TypeScript strict mode enabled in tsconfig.json", "verification": "code_review", "met": false},
+        {"id": "AC05", "criterion": "bun run dev starts development server on port 5175", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T018",
+      "title": "Configure Frontend API Client",
+      "description": "Set up OpenAPI client with TanStack Query for type-safe API calls.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T017"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/lib/api/client.ts exists with openapi-fetch setup", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "frontend/src/lib/api/$api.ts exists with TanStack Query hooks", "verification": "file_exists", "met": false},
+        {"id": "AC03", "criterion": "generate-types script in package.json", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "API base URL configurable via environment variable", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T019",
+      "title": "Create Frontend Auth Context",
+      "description": "Implement authentication context with login/logout/register functions.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T018"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/contexts/AuthContext.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "AuthContext provides user, isAuthenticated, login, logout, register", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Token storage in localStorage with refresh logic", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Auto-refresh on page load if token exists", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T020",
+      "title": "Implement Frontend Login Page",
+      "description": "Create login page with form validation and API integration.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T019"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/routes/login.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Email/password inputs with validation", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Loading state and error messages displayed", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Successful login redirects to home", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T021",
+      "title": "Implement Frontend Register Page",
+      "description": "Create registration page with form validation.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T019"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/routes/register.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Fields: email, password, confirm password, first name, last name", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Password strength indicator", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Successful registration redirects to login", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T022",
       "title": "Create Homepage Route",
       "description": "Implement basic homepage with navigation structure.",
       "passes": false,
-      "phase": "implementation",
-      "dependencies": ["T009"],
+      "phase": "phase1-foundation",
+      "dependencies": ["T018"],
       "acceptance_criteria": [
-        {
-          "id": "AC01",
-          "criterion": "frontend/src/routes/index.tsx exists with homepage component",
-          "verification": "file_exists",
-          "met": false
-        },
-        {
-          "id": "AC02",
-          "criterion": "Homepage displays 'Strictly Dancing' title",
-          "verification": "visual",
-          "met": false
-        },
-        {
-          "id": "AC03",
-          "criterion": "Navigation includes links to Login, Register (future)",
-          "verification": "code_review",
-          "met": false
-        },
-        {
-          "id": "AC04",
-          "criterion": "Responsive layout works on mobile",
-          "verification": "visual",
-          "met": false
-        }
+        {"id": "AC01", "criterion": "frontend/src/routes/index.tsx exists with homepage component", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Homepage displays 'Strictly Dancing' title", "verification": "visual", "met": false},
+        {"id": "AC03", "criterion": "Navigation includes links to Login, Register", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Responsive layout works on mobile", "verification": "visual", "met": false}
       ],
-      "testing": {
-        "unit_tests": []
-      }
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T023",
+      "title": "Create Dance Styles Model and Seed Data",
+      "description": "Implement DanceStyle model and seed initial styles.",
+      "passes": false,
+      "phase": "phase2-host-profiles",
+      "dependencies": ["T004"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/models/dance_style.py exists with DanceStyle model", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "DanceStyle has: id, name, slug, category, description", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Categories: Latin, Ballroom, Swing, Social, Other", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Seed migration with 20+ dance styles", "verification": "file_exists", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_dance_style_model", "test_dance_style_categories"]}
+    },
+    {
+      "id": "T024",
+      "title": "Create Host Profile Model",
+      "description": "Implement HostProfile with PostGIS location.",
+      "passes": false,
+      "phase": "phase2-host-profiles",
+      "dependencies": ["T005", "T023"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/models/host_profile.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "One-to-one relationship with User", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "PostGIS GEOGRAPHY(POINT) for location", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Fields: hourly_rate_cents, rating_average, verification_status, bio", "verification": "code_review", "met": false},
+        {"id": "AC05", "criterion": "Geospatial index on location", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_host_profile_model", "test_host_profile_location"]}
+    },
+    {
+      "id": "T025",
+      "title": "Create Host Dance Styles Junction",
+      "description": "Implement many-to-many with skill levels.",
+      "passes": false,
+      "phase": "phase2-host-profiles",
+      "dependencies": ["T024"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/models/host_dance_style.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Fields: host_profile_id, dance_style_id, skill_level (1-5)", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Unique constraint on (host_profile_id, dance_style_id)", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Cascade delete configured", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_host_dance_style_unique_constraint"]}
+    },
+    {
+      "id": "T026",
+      "title": "Implement Host Profile Repository",
+      "description": "Create repository with CRUD and geospatial queries.",
+      "passes": false,
+      "phase": "phase2-host-profiles",
+      "dependencies": ["T025"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/repositories/host_profile.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "create(), get_by_user_id(), update() methods", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "add_dance_style(), remove_dance_style() methods", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "get_nearby() using PostGIS ST_DWithin", "verification": "code_review", "met": false},
+        {"id": "AC05", "criterion": "search() with filters: styles, rating, price", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_host_profile_repository_create", "test_host_profile_repository_nearby"]}
+    },
+    {
+      "id": "T027",
+      "title": "Create Host Profile Schemas",
+      "description": "Define Pydantic schemas for host operations.",
+      "passes": false,
+      "phase": "phase2-host-profiles",
+      "dependencies": ["T024"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/schemas/host_profile.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "CreateHostProfileRequest, UpdateHostProfileRequest, HostProfileResponse defined", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "HostSearchRequest with location, filters, pagination", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Coordinate validation (lat/lng ranges)", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_host_profile_schema_validation"]}
+    },
+    {
+      "id": "T028",
+      "title": "Implement Become Host Endpoint",
+      "description": "Create POST /api/v1/users/me/become-host.",
+      "passes": false,
+      "phase": "phase2-host-profiles",
+      "dependencies": ["T026", "T027", "T014"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "POST /api/v1/users/me/become-host endpoint exists", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Creates HostProfile linked to current user", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Updates user.user_type to include host", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Returns 409 if already a host", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_become_host_creates_profile", "test_become_host_already_host_409"]}
+    },
+    {
+      "id": "T029",
+      "title": "Implement Host Profile CRUD Endpoints",
+      "description": "Create endpoints for host profile management.",
+      "passes": false,
+      "phase": "phase2-host-profiles",
+      "dependencies": ["T028"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "GET /api/v1/users/me/host-profile returns profile", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "PATCH /api/v1/users/me/host-profile updates profile", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "POST/DELETE /api/v1/users/me/host-profile/dance-styles manages styles", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "All endpoints require host authentication", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_host_profile_crud_endpoints"]}
+    },
+    {
+      "id": "T030",
+      "title": "Implement Host Search Endpoint",
+      "description": "Create GET /api/v1/hosts with filtering and geospatial search.",
+      "passes": false,
+      "phase": "phase2-host-profiles",
+      "dependencies": ["T026", "T027"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "GET /api/v1/hosts endpoint exists", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Query params: lat, lng, radius_km, styles[], min_rating, max_price", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Paginated response with total count", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Orders by distance or rating", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_host_search_geospatial", "test_host_search_filters"]}
+    },
+    {
+      "id": "T031",
+      "title": "Implement Get Host Profile Endpoint",
+      "description": "Create GET /api/v1/hosts/{id} for public profile view.",
+      "passes": false,
+      "phase": "phase2-host-profiles",
+      "dependencies": ["T026", "T027"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "GET /api/v1/hosts/{id} endpoint exists", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Returns full profile with dance styles, rating", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Excludes sensitive data (password_hash, etc.)", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Returns 404 for non-existent host", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_get_host_profile", "test_get_host_profile_404"]}
+    },
+    {
+      "id": "T032",
+      "title": "Frontend Host Discovery Page",
+      "description": "Create host discovery page with search and filters.",
+      "passes": false,
+      "phase": "phase2-host-profiles",
+      "dependencies": ["T030", "T018"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/routes/hosts/index.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Search input and filter panel", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Host cards with photo, name, rating, price", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Pagination or infinite scroll", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T033",
+      "title": "Frontend Host Profile Page",
+      "description": "Create individual host profile view page.",
+      "passes": false,
+      "phase": "phase2-host-profiles",
+      "dependencies": ["T031", "T018"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/routes/hosts/$hostId.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Displays host photo, bio, rating, dance styles", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Book Now button (links to booking flow)", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Message button (links to chat)", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T034",
+      "title": "Create Booking Model",
+      "description": "Implement Booking with all fields and relationships.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T024"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/models/booking.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "FKs to User (client, host), HostProfile, DanceStyle", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Status enum: pending, confirmed, in_progress, completed, cancelled, disputed", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Amount fields in cents, PostGIS location", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_booking_model", "test_booking_status_enum"]}
+    },
+    {
+      "id": "T035",
+      "title": "Create Host Availability Model",
+      "description": "Implement availability schedule storage.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T024"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/models/availability.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Recurring weekly schedules (day_of_week, start_time, end_time)", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "One-time overrides table", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Blocked time periods", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_availability_model"]}
+    },
+    {
+      "id": "T036",
+      "title": "Implement Availability Repository",
+      "description": "Create schedule management methods.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T035"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/repositories/availability.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "set_recurring_availability(), add_one_time() methods", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "block_time_slot(), get_availability_for_date() methods", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "is_available_for_slot() accounts for existing bookings", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_availability_repository_methods"]}
+    },
+    {
+      "id": "T037",
+      "title": "Implement Booking Repository",
+      "description": "Create booking CRUD and query methods.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T034"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/repositories/booking.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "create(), get_by_id(), get_for_client(), get_for_host() methods", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "update_status(), get_overlapping() methods", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "get_upcoming() method", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_booking_repository_methods"]}
+    },
+    {
+      "id": "T038",
+      "title": "Create Booking Schemas",
+      "description": "Define request/response schemas for bookings.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T034"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/schemas/booking.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "CreateBookingRequest, BookingResponse, BookingListResponse defined", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "AvailabilitySlot, HostAvailabilityResponse defined", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Duration validation (30-240 minutes)", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_booking_schema_validation"]}
+    },
+    {
+      "id": "T039",
+      "title": "Integrate Stripe Connect",
+      "description": "Implement Stripe Connect Express for host onboarding.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T026"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/services/stripe.py exists with StripeService", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "create_connect_account(), create_account_link() methods", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "get_account_status() method", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "POST /api/v1/hosts/stripe/onboard endpoint", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_stripe_service_methods"]}
+    },
+    {
+      "id": "T040",
+      "title": "Implement Booking Creation with Payment Hold",
+      "description": "Create POST /api/v1/bookings with Stripe authorization.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T036", "T037", "T038", "T039"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "POST /api/v1/bookings endpoint exists", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Validates host availability and time slot free", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Calculates total and platform fee", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Creates PaymentIntent with manual capture", "verification": "test", "met": false},
+        {"id": "AC05", "criterion": "Creates pending booking record", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_create_booking_success", "test_create_booking_unavailable_slot"]}
+    },
+    {
+      "id": "T041",
+      "title": "Implement Booking Confirmation",
+      "description": "Create POST /api/v1/bookings/{id}/confirm for host acceptance.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T040"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "POST /api/v1/bookings/{id}/confirm endpoint exists", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Only host can confirm their bookings", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Updates status to confirmed", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Returns 400 if not pending status", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_confirm_booking"]}
+    },
+    {
+      "id": "T042",
+      "title": "Implement Booking Cancellation",
+      "description": "Create POST /api/v1/bookings/{id}/cancel with refund.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T040"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "POST /api/v1/bookings/{id}/cancel endpoint exists", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Client or host can cancel", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Releases Stripe authorization", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Updates status to cancelled", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_cancel_booking"]}
+    },
+    {
+      "id": "T043",
+      "title": "Implement Session Completion with Capture",
+      "description": "Create POST /api/v1/bookings/{id}/complete with payment.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T040"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "POST /api/v1/bookings/{id}/complete endpoint exists", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Validates booking is in_progress status", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Captures PaymentIntent", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Creates Transfer to host's connected account", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_complete_booking_capture"]}
+    },
+    {
+      "id": "T044",
+      "title": "Implement Booking List Endpoint",
+      "description": "Create GET /api/v1/bookings with filters.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T037", "T038"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "GET /api/v1/bookings endpoint exists", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Returns user's bookings (as client or host)", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Filter by status, date range", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Cursor-based pagination", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_list_bookings"]}
+    },
+    {
+      "id": "T045",
+      "title": "Implement Availability Endpoints",
+      "description": "Create host availability management endpoints.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T036"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "GET/PUT /api/v1/users/me/host-profile/availability endpoints", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "GET /api/v1/hosts/{id}/availability public endpoint", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Returns available slots for date range", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Excludes already-booked slots", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_availability_endpoints"]}
+    },
+    {
+      "id": "T046",
+      "title": "Frontend Booking Flow Page",
+      "description": "Create booking flow with date/time selection.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T040", "T045", "T018"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/routes/hosts/$hostId/book.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Calendar with available dates", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Time slot selection and duration picker", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Price breakdown display", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T047",
+      "title": "Frontend Bookings List Page",
+      "description": "Create bookings management page.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T044", "T018"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/routes/bookings/index.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Tabs: Upcoming, Past, Cancelled", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Booking cards with status badges", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Click to view booking details", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T048",
+      "title": "Create Message and Conversation Models",
+      "description": "Implement messaging database models.",
+      "passes": false,
+      "phase": "phase4-realtime",
+      "dependencies": ["T005"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/models/conversation.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Conversation: participant_1_id, participant_2_id, last_message_at", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Message: conversation_id, sender_id, content, type, read_at", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Unique constraint on participant pair", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_conversation_model", "test_message_model"]}
+    },
+    {
+      "id": "T049",
+      "title": "Implement Messaging Repository",
+      "description": "Create conversation and message operations.",
+      "passes": false,
+      "phase": "phase4-realtime",
+      "dependencies": ["T048"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/repositories/messaging.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "get_or_create_conversation() method", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "get_conversations_for_user(), get_messages() with cursor", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "create_message(), mark_as_read(), get_unread_count()", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_messaging_repository"]}
+    },
+    {
+      "id": "T050",
+      "title": "Create Messaging Schemas",
+      "description": "Define schemas for messaging endpoints.",
+      "passes": false,
+      "phase": "phase4-realtime",
+      "dependencies": ["T048"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/schemas/messaging.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "ConversationResponse, MessageResponse defined", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "CreateMessageRequest, StartConversationRequest defined", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_messaging_schemas"]}
+    },
+    {
+      "id": "T051",
+      "title": "Implement Messaging Endpoints",
+      "description": "Create HTTP endpoints for messaging.",
+      "passes": false,
+      "phase": "phase4-realtime",
+      "dependencies": ["T049", "T050"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "GET/POST /api/v1/conversations endpoints", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "GET /api/v1/conversations/{id} with messages", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "POST /api/v1/conversations/{id}/messages", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "POST /api/v1/conversations/{id}/read marks as read", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_messaging_endpoints"]}
+    },
+    {
+      "id": "T052",
+      "title": "Implement WebSocket Chat Backend",
+      "description": "Create FastAPI WebSocket for real-time chat.",
+      "passes": false,
+      "phase": "phase4-realtime",
+      "dependencies": ["T051"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "WebSocket endpoint /ws/chat/{conversation_id}", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Authenticates WebSocket connection", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Broadcasts messages via Redis Pub/Sub", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Handles typing indicators", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_websocket_chat"]}
+    },
+    {
+      "id": "T053",
+      "title": "Frontend Chat Page",
+      "description": "Create real-time chat interface.",
+      "passes": false,
+      "phase": "phase4-realtime",
+      "dependencies": ["T052", "T018"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/routes/messages/$conversationId.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Message list with infinite scroll", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "WebSocket connection for real-time updates", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Text input with send button", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T054",
+      "title": "Frontend Conversations List Page",
+      "description": "Create inbox showing all conversations.",
+      "passes": false,
+      "phase": "phase4-realtime",
+      "dependencies": ["T051", "T018"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/routes/messages/index.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Conversations sorted by last message time", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Unread badge on conversations", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Preview of last message", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T055",
+      "title": "Create Review Model",
+      "description": "Implement Review for post-session ratings.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T034"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/models/review.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Fields: booking_id (unique), reviewer_id, reviewee_id, rating (1-5), comment", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "host_response field for replies", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Trigger updates host rating_average on insert", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_review_model"]}
+    },
+    {
+      "id": "T056",
+      "title": "Implement Review Repository",
+      "description": "Create review operations.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T055"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/repositories/review.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "create(), get_for_booking(), get_for_user() methods", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "add_response() method for host replies", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "calculate_rating_average() method", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_review_repository"]}
+    },
+    {
+      "id": "T057",
+      "title": "Implement Review Endpoints",
+      "description": "Create HTTP endpoints for reviews.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T056"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "POST /api/v1/bookings/{id}/review endpoint", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "GET /api/v1/hosts/{id}/reviews endpoint", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "POST /api/v1/reviews/{id}/response for host replies", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Only completed bookings can be reviewed", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_review_endpoints"]}
+    },
+    {
+      "id": "T058",
+      "title": "Frontend Review Form",
+      "description": "Create post-session review interface.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T057", "T018"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "Review form component exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Star rating selector (1-5)", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Written review textarea", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Submit with confirmation", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T059",
+      "title": "Frontend Reviews Display",
+      "description": "Create reusable review list component.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T057", "T033"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "ReviewsList component exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Displays reviewer name, stars, text", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Host response section", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Pagination", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T060",
+      "title": "Implement Host Dashboard",
+      "description": "Create host dashboard with earnings and stats.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T029", "T044", "T057"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/routes/host/dashboard.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Displays upcoming bookings", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Displays recent reviews", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Displays earnings summary", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T061",
+      "title": "Implement Settings Page",
+      "description": "Create user settings and preferences page.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T019"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/routes/settings.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Account section with profile editing", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Notifications preferences", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Logout button", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T062",
+      "title": "Implement Error Handling",
+      "description": "Add comprehensive error handling throughout app.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T018"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "Global error boundary component", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "API error toast notifications", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Network error retry logic", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "404 and error pages", "verification": "file_exists", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T063",
+      "title": "Backend E2E Test Suite",
+      "description": "Create comprehensive API integration tests.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T057"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/tests/integration/ directory with test files", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Auth flow tests (register, login, refresh)", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Booking flow tests (create, confirm, complete)", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "All integration tests pass", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T064",
+      "title": "Performance Optimization",
+      "description": "Optimize database queries and API responses.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T063"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "Database indexes on frequently queried columns", "verification": "code_review", "met": false},
+        {"id": "AC02", "criterion": "API p95 response time under 200ms", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Redis caching for hot data", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Frontend bundle size under 500KB gzipped", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T065",
+      "title": "Frontend Host Profile Edit Page",
+      "description": "Create profile management for hosts to edit their information.",
+      "passes": false,
+      "phase": "phase2-host-profiles",
+      "dependencies": ["T029", "T018"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/routes/host/profile/edit.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Edit bio, headline, hourly rate", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Manage dance styles with skill levels", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Update location with map picker", "verification": "code_review", "met": false},
+        {"id": "AC05", "criterion": "Photo upload with crop", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T066",
+      "title": "Implement Session Start Endpoint",
+      "description": "Create POST /api/v1/bookings/{id}/start to begin a session.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T041"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "POST /api/v1/bookings/{id}/start endpoint exists", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Validates confirmed status and within 30min of start time", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Records actual_start timestamp", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Updates status to in_progress", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_session_start_endpoint"]}
+    },
+    {
+      "id": "T067",
+      "title": "Frontend Booking Detail Page",
+      "description": "Create detailed booking view with actions.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T047"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/routes/bookings/$bookingId.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Full booking details with map showing location", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Role-based actions (Confirm/Decline/Cancel/Start/Complete)", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Message button and Add to Calendar", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T068",
+      "title": "Frontend Availability Management Page",
+      "description": "Create host availability editor.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T045", "T018"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/routes/host/availability.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Weekly schedule with time pickers", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "One-time overrides section", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Blocked dates calendar", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T069",
+      "title": "Configure Push Notifications Backend",
+      "description": "Set up push notification infrastructure with Expo.",
+      "passes": false,
+      "phase": "phase4-realtime",
+      "dependencies": ["T002"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/services/push_notifications.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Store Expo push tokens per device", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "POST /api/v1/push/register endpoint", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "send_notification() method using Expo API", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_push_notification_service"]}
+    },
+    {
+      "id": "T070",
+      "title": "Implement Push Notification Triggers",
+      "description": "Add push notifications to key events.",
+      "passes": false,
+      "phase": "phase4-realtime",
+      "dependencies": ["T069", "T041", "T051"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "New booking notification to host", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Booking confirmed notification to client", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "New message notification", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Session starting soon reminder (30min)", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_push_triggers"]}
+    },
+    {
+      "id": "T071",
+      "title": "Implement WebSocket Location Backend",
+      "description": "Create real-time location tracking during sessions.",
+      "passes": false,
+      "phase": "phase4-realtime",
+      "dependencies": ["T066"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "WebSocket endpoint /ws/location/{booking_id}", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "Authenticates connection and validates session in_progress", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Broadcasts location updates via Redis Pub/Sub", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Stores location history in booking record", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_websocket_location"]}
+    },
+    {
+      "id": "T072",
+      "title": "Frontend Location Tracking",
+      "description": "Implement location sharing during active sessions.",
+      "passes": false,
+      "phase": "phase4-realtime",
+      "dependencies": ["T071", "T018"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "Geolocation API permission handling", "verification": "code_review", "met": false},
+        {"id": "AC02", "criterion": "WebSocket connection for location updates", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Send location every 30 seconds during session", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Display partner location on map", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T073",
+      "title": "Frontend Active Session Screen",
+      "description": "Create active session view with location and controls.",
+      "passes": false,
+      "phase": "phase4-realtime",
+      "dependencies": ["T072", "T067"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "frontend/src/routes/bookings/$bookingId/active.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Map showing both users' locations", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Session timer showing elapsed time", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Complete Session button", "verification": "code_review", "met": false},
+        {"id": "AC05", "criterion": "Emergency contact button", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T074",
+      "title": "Implement Host Verification Backend",
+      "description": "Create host identity and background verification system.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T026"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/services/verification.py exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Submit ID document for verification", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "POST /api/v1/hosts/verification/submit endpoint", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Verification status: pending, verified, rejected", "verification": "code_review", "met": false},
+        {"id": "AC05", "criterion": "Verified badge on host profile", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_host_verification"]}
+    },
+    {
+      "id": "T075",
+      "title": "Initialize React Native Expo Mobile Project",
+      "description": "Set up React Native mobile app with Expo for iOS/Android.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T001"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "apps/mobile/package.json exists with Expo, React Native dependencies", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "apps/mobile/app.json configured with bundle identifiers", "verification": "file_exists", "met": false},
+        {"id": "AC03", "criterion": "Expo Router configured for file-based routing", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "TypeScript strict mode enabled", "verification": "code_review", "met": false},
+        {"id": "AC05", "criterion": "bun run start launches Expo dev server", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T076",
+      "title": "Set Up Mobile State Management",
+      "description": "Configure Zustand for global state and React Query for server state.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T075"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "apps/mobile/stores/auth.ts exists with Zustand auth store", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Token persistence with expo-secure-store", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "React Query provider configured", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Hydration handles async token loading", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_auth_store"]}
+    },
+    {
+      "id": "T077",
+      "title": "Create Mobile API Client Service",
+      "description": "Set up typed API client for mobile app.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T076"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "apps/mobile/lib/api/client.ts exists with fetch wrapper", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Auto-injects auth token from secure store", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Token refresh on 401 with retry", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Type-safe with generated OpenAPI types", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_api_client"]}
+    },
+    {
+      "id": "T078",
+      "title": "Implement Mobile Login Screen",
+      "description": "Create login screen for mobile app.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T077", "T012"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "apps/mobile/app/(auth)/login.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Email/password inputs with validation", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Loading state and error display", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Successful login navigates to home", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T079",
+      "title": "Implement Mobile Registration Screen",
+      "description": "Create registration screen for mobile app.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T077", "T011"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "apps/mobile/app/(auth)/register.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Fields: email, password, confirm, names, user type", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Password strength indicator", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Terms checkbox and validation", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T080",
+      "title": "Implement Mobile Protected Navigation",
+      "description": "Set up navigation guards for authenticated screens.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T078", "T079"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "Auth layout for (auth) group", "verification": "code_review", "met": false},
+        {"id": "AC02", "criterion": "Protected layout for (tabs) group", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Splash screen during auth check", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Logout navigates to login", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T081",
+      "title": "Mobile Host Discovery Screen",
+      "description": "Create main discovery with search, filters, map.",
+      "passes": false,
+      "phase": "phase2-host-profiles",
+      "dependencies": ["T030", "T077"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "apps/mobile/app/(tabs)/discover.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Toggle list/map view", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Search bar and filter modal", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Location-based results from GPS", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T082",
+      "title": "Mobile Host Profile Screen",
+      "description": "Create host profile view for mobile.",
+      "passes": false,
+      "phase": "phase2-host-profiles",
+      "dependencies": ["T031", "T077"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "apps/mobile/app/hosts/[id].tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Photo, name, rating, dance styles", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Book Now and Message buttons", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Reviews section", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T083",
+      "title": "Mobile Booking Flow Screen",
+      "description": "Create booking flow for mobile app.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T040", "T045", "T077"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "apps/mobile/app/book/[hostId].tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Calendar date picker", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Time slot selection", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Stripe payment sheet integration", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T084",
+      "title": "Mobile Bookings List Screen",
+      "description": "Create bookings management for mobile.",
+      "passes": false,
+      "phase": "phase3-booking-system",
+      "dependencies": ["T044", "T077"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "apps/mobile/app/(tabs)/bookings.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Tabs: Upcoming, Past, Cancelled", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Booking cards with status badges", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Pull-to-refresh", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T085",
+      "title": "Mobile Chat Screen",
+      "description": "Create real-time chat for mobile.",
+      "passes": false,
+      "phase": "phase4-realtime",
+      "dependencies": ["T052", "T077"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "apps/mobile/app/messages/[id].tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Message list with keyboard avoiding view", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "WebSocket connection for real-time", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Text input with send button", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T086",
+      "title": "Mobile Messages List Screen",
+      "description": "Create inbox for mobile app.",
+      "passes": false,
+      "phase": "phase4-realtime",
+      "dependencies": ["T051", "T077"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "apps/mobile/app/(tabs)/messages.tsx exists", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Conversations sorted by last message", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Unread badge on conversations", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Preview of last message", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T087",
+      "title": "Configure Unit Test Infrastructure",
+      "description": "Set up comprehensive unit testing with coverage requirements.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T001", "T017", "T075"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "Backend pytest coverage configured with 80% minimum", "verification": "code_review", "met": false},
+        {"id": "AC02", "criterion": "Frontend vitest configured with 70% minimum", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Mobile jest configured with coverage", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "CI pipeline fails if coverage below threshold", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T088",
+      "title": "Configure Local Development Testing",
+      "description": "Set up local testing for PWA, iOS Simulator, and Android Emulator.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T017", "T075"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "PWA dev server with hot reload on localhost:5175", "verification": "test", "met": false},
+        {"id": "AC02", "criterion": "iOS Simulator testing documented and working", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Android Emulator testing documented and working", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Expo Go testing on physical devices", "verification": "test", "met": false},
+        {"id": "AC05", "criterion": "README with local dev setup instructions", "verification": "file_exists", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T089",
+      "title": "Initialize Monorepo Structure",
+      "description": "Create complete project directory structure with proper workspace configuration.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": [],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "Root package.json with workspaces configuration", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Bun workspace links frontend and apps/mobile", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Shared TypeScript config extends from root", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "ESLint and Prettier configurations consistent across packages", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T090",
+      "title": "Configure Background Job Processing",
+      "description": "Set up Celery with Redis for background tasks like emails and notifications.",
+      "passes": false,
+      "phase": "phase1-foundation",
+      "dependencies": ["T002"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "backend/app/workers/celery.py exists with Celery app configuration", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Redis connection configured for Celery broker", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Example email task implemented", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Worker starts with: celery -A app.workers.celery worker", "verification": "test", "met": false}
+      ],
+      "testing": {"unit_tests": ["test_celery_task_executes"]}
+    },
+    {
+      "id": "T091",
+      "title": "Configure CI/CD Pipeline",
+      "description": "Set up GitHub Actions for automated testing and deployment.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T087"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": ".github/workflows/ci.yml exists with test jobs", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Backend tests run on push to main/PR", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Frontend TypeScript check runs on push", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Linting runs on all PRs", "verification": "code_review", "met": false},
+        {"id": "AC05", "criterion": "EAS Build trigger for mobile on tagged releases", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T092",
+      "title": "Configure Analytics and Logging",
+      "description": "Set up Sentry for error tracking and structured logging.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T002", "T017", "T075"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "Sentry SDK integrated in backend", "verification": "code_review", "met": false},
+        {"id": "AC02", "criterion": "Sentry SDK integrated in PWA frontend", "verification": "code_review", "met": false},
+        {"id": "AC03", "criterion": "Sentry SDK integrated in mobile app", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "Structured logging with request IDs for tracing", "verification": "code_review", "met": false},
+        {"id": "AC05", "criterion": "Performance monitoring enabled", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T093",
+      "title": "Prepare App Store Submission",
+      "description": "Complete all requirements for iOS App Store and Google Play submission.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T080", "T091"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "App icons in all required sizes", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Splash screens for iOS and Android", "verification": "file_exists", "met": false},
+        {"id": "AC03", "criterion": "Privacy policy URL configured", "verification": "code_review", "met": false},
+        {"id": "AC04", "criterion": "App Store screenshots prepared", "verification": "file_exists", "met": false},
+        {"id": "AC05", "criterion": "eas.json configured for production builds", "verification": "file_exists", "met": false}
+      ],
+      "testing": {"unit_tests": []}
+    },
+    {
+      "id": "T094",
+      "title": "Frontend E2E Testing with Playwright",
+      "description": "Create end-to-end browser tests for PWA frontend.",
+      "passes": false,
+      "phase": "phase5-reviews",
+      "dependencies": ["T022"],
+      "acceptance_criteria": [
+        {"id": "AC01", "criterion": "e2e/playwright.config.ts configured", "verification": "file_exists", "met": false},
+        {"id": "AC02", "criterion": "Auth flow E2E test (login, register)", "verification": "test", "met": false},
+        {"id": "AC03", "criterion": "Host discovery E2E test", "verification": "test", "met": false},
+        {"id": "AC04", "criterion": "Booking flow E2E test", "verification": "test", "met": false},
+        {"id": "AC05", "criterion": "E2E tests run in CI pipeline", "verification": "code_review", "met": false}
+      ],
+      "testing": {"unit_tests": []}
     }
   ],
   "global_context": {
