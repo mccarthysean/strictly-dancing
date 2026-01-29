@@ -973,3 +973,33 @@ strictly-dancing/
 
 **Next**: T034 - Create Booking Model
 
+---
+
+### Entry [E-035] 2026-01-29T07:20:00Z
+
+**Task**: T034 - Create Booking Model
+**Status**: DONE
+**Progress**: 34/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/models/booking.py with Booking model
+- Implemented BookingStatus enum with 6 values: pending, confirmed, in_progress, completed, cancelled, disputed
+- Created foreign keys to: User (client_id, host_id, cancelled_by_id), HostProfile, DanceStyle
+- Added all amount fields in cents: hourly_rate_cents, amount_cents, platform_fee_cents, host_payout_cents
+- Added PostGIS GEOGRAPHY(POINT) location field for session location
+- Added scheduling fields: scheduled_start, scheduled_end, actual_start, actual_end, duration_minutes
+- Added Stripe integration fields: stripe_payment_intent_id, stripe_transfer_id
+- Added cancellation tracking: cancellation_reason, cancelled_by_id, cancelled_at
+- Created Alembic migration (000000000006) with comprehensive indexes
+- Added relationships to User (client, host), HostProfile, DanceStyle with proper lazy loading
+- Updated models/__init__.py with new exports
+- Created 55 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (465/465 total - 55 new tests added)
+- Files: app/models/booking.py, app/models/__init__.py, alembic/versions/20260129_050000_create_bookings_table.py, tests/unit/test_booking_model.py
+- Linting: All checks passed
+- Alembic heads: 000000000006 recognized
+
+**Next**: T035 - Create Host Availability Model
+

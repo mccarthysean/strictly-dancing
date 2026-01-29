@@ -562,14 +562,14 @@
       "id": "T034",
       "title": "Create Booking Model",
       "description": "Implement Booking with all fields and relationships.",
-      "passes": false,
+      "passes": true,
       "phase": "phase3-booking-system",
       "dependencies": ["T024"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "backend/app/models/booking.py exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "FKs to User (client, host), HostProfile, DanceStyle", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Status enum: pending, confirmed, in_progress, completed, cancelled, disputed", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Amount fields in cents, PostGIS location", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "backend/app/models/booking.py exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "FKs to User (client, host), HostProfile, DanceStyle", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Status enum: pending, confirmed, in_progress, completed, cancelled, disputed", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Amount fields in cents, PostGIS location", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": ["test_booking_model", "test_booking_status_enum"]}
     },
