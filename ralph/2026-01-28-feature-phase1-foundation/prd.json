@@ -4474,7 +4474,7 @@
       "id": "T107",
       "title": "Update Registration for Passwordless Flow",
       "description": "Modify registration to not require password. Email is verified via magic link at first login.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": [
         "T106"
@@ -4484,31 +4484,31 @@
           "id": "AC01",
           "criterion": "POST /api/v1/auth/register only requires email, first_name, last_name",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC02",
           "criterion": "Registration creates user and sends magic link for first login",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC03",
           "criterion": "UserCreate schema updated to remove password field",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC04",
           "criterion": "First magic link login marks email_verified=true",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC05",
           "criterion": "Unit tests for passwordless registration",
           "verification": "test",
-          "met": false
+          "met": true
         }
       ],
       "testing": {

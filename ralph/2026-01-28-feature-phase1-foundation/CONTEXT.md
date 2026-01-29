@@ -3548,3 +3548,20 @@ All 94 tasks have been completed:
 **Next**: T107 - Update Registration for Passwordless Flow
 
 ---
+
+### Entry [E-015] 2026-01-29T16:50:00Z
+
+**Task**: T107 - Update Registration for Passwordless Flow
+**Status**: DONE (Completed as part of T106)
+**Progress**: 100/121 tasks | Blockers: 0
+
+**Note**: All acceptance criteria for T107 were already implemented as part of T106:
+- AC01: POST /api/v1/auth/register only requires email, first_name, last_name ✓
+- AC02: Registration sends welcome email (user can request magic link for first login) ✓
+- AC03: UserCreate schema updated to remove password field ✓
+- AC04: First magic link login marks email_verified=true ✓
+- AC05: Unit tests for passwordless registration exist in test_auth_router.py ✓
+
+**Next**: T108 - Implement Profile Image Upload
+
+---
