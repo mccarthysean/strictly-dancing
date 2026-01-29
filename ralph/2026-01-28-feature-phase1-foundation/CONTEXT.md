@@ -582,3 +582,29 @@ strictly-dancing/
 - Features: login/logout/register functions, token refresh, auto-load user on mount
 
 **Next**: T020 - Implement Frontend Login Page
+
+---
+
+### Entry [E-021] 2026-01-29T07:30:00Z
+
+**Task**: T020 - Implement Frontend Login Page
+**Status**: DONE
+**Progress**: 20/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Implemented frontend/src/routes/login.tsx with full login functionality
+- Email/password inputs with HTML5 validation (required, type="email", minLength=8)
+- Form validation disables submit button until valid
+- Loading state shows "Signing in..." during API call
+- Error messages displayed in styled error box
+- Successful login redirects to home page using navigate()
+- Redirects to home if already authenticated
+- Link to register page for new users
+- TypeScript check passes with no errors
+
+**Evidence**:
+- Files: src/routes/login.tsx (updated)
+- TypeScript: tsc --noEmit passes with no errors
+- Features: form validation, loading state, error display, redirect on success
+
+**Next**: T021 - Implement Frontend Register Page
