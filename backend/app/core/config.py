@@ -64,6 +64,11 @@ class Settings(BaseSettings):
     sentry_traces_sample_rate: float = 0.1  # 10% of transactions for performance
     sentry_profiles_sample_rate: float = 0.1  # 10% for profiling
 
+    # Email settings (SendGrid)
+    sendgrid_api_key: str = ""  # Leave empty to use console logging
+    email_from_address: str = "noreply@strictlydancing.com"
+    email_from_name: str = "Strictly Dancing"
+
 
 @lru_cache
 def get_settings() -> Settings:

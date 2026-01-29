@@ -3385,3 +3385,51 @@ All 94 tasks have been completed:
 **Next**: T104 - Implement Email Sending Service
 
 ---
+
+### Entry [E-012] 2026-01-29T16:20:00Z
+
+**Task**: T104 - Implement Email Sending Service
+**Status**: DONE
+**Progress**: 97/121 tasks | Blockers: 0
+
+**Accomplished**:
+- Created `app/services/email.py` with full EmailService implementation:
+  - `EmailMessage` dataclass for email data
+  - `EmailTemplate` enum with 9 templates (magic_link, booking_created, booking_confirmed, booking_cancelled, booking_completed, session_reminder, review_request, new_message, welcome)
+  - `EmailProvider` protocol for dependency injection
+  - `SendGridProvider` for production email sending via SendGrid API
+  - `ConsoleEmailProvider` for development/testing (logs emails instead of sending)
+  - Full HTML and plain text templates with responsive design and Strictly Dancing branding
+- Added email settings to `app/core/config.py`:
+  - `sendgrid_api_key`: SendGrid API key (empty = console mode)
+  - `email_from_address`: Default sender email
+  - `email_from_name`: Default sender name
+- Updated `app/workers/tasks.py` to use EmailService:
+  - `send_email_task`: Sends raw emails via EmailService.send()
+  - `send_templated_email_task`: NEW - Sends templated emails via EmailService.send_template()
+  - `send_magic_link_email`: NEW - Sends magic link login codes
+  - `send_welcome_email`: NEW - Sends welcome emails to new users
+  - `send_review_request_email`: NEW - Sends review request after completed sessions
+  - Updated `send_booking_notification_email` to use templated email task
+  - Updated `send_message_notification_email` to use templated email task
+- Created comprehensive unit tests:
+  - `tests/unit/test_email_service.py` with 31 tests
+  - Updated `tests/unit/test_celery_tasks.py` with 37 tests (added tests for new tasks)
+- All 1395 backend tests pass with 83.93% coverage
+- Linting passes
+
+**Evidence**:
+- Files: app/services/email.py, app/core/config.py, app/workers/tasks.py, app/workers/__init__.py
+- Tests: 31 tests in test_email_service.py, 37 tests in test_celery_tasks.py
+- Total backend tests: 1395 passing
+- Coverage: 83.93% (above 80% threshold)
+- Linting: All checks passed
+- AC01: app/services/email.py exists with EmailService ✓
+- AC02: SendGrid integration configured with fallback to console ✓
+- AC03: Email templates for verification (magic_link), booking confirmation, review request ✓
+- AC04: Celery tasks call EmailService.send() and send_template() ✓
+- AC05: Unit tests with mocked email service (68 tests total) ✓
+
+**Next**: T105 - Implement Rate Limiting Middleware
+
+---

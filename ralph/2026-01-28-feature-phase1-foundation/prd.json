@@ -4321,7 +4321,7 @@
       "id": "T104",
       "title": "Implement Email Sending Service",
       "description": "Replace TODO placeholder with actual email sending via SMTP or SendGrid.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": [
         "T090"
@@ -4331,31 +4331,31 @@
           "id": "AC01",
           "criterion": "app/services/email.py exists with EmailService",
           "verification": "file_exists",
-          "met": false
+          "met": true
         },
         {
           "id": "AC02",
           "criterion": "SendGrid or SMTP integration configured",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC03",
           "criterion": "Email templates for verification, booking confirmation, review request",
           "verification": "file_exists",
-          "met": false
+          "met": true
         },
         {
           "id": "AC04",
           "criterion": "Celery task calls EmailService.send()",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC05",
           "criterion": "Unit tests with mocked email service",
           "verification": "test",
-          "met": false
+          "met": true
         }
       ],
       "testing": {
