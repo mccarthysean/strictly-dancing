@@ -5018,7 +5018,7 @@
       "id": "T118",
       "title": "Implement Cursor-Based Pagination",
       "description": "Replace offset pagination with cursor-based pagination for infinite scroll as per PRD.",
-      "passes": false,
+      "passes": true,
       "phase": "phase2-host-profiles",
       "dependencies": [
         "T030"
@@ -5028,25 +5028,25 @@
           "id": "AC01",
           "criterion": "GET /api/v1/hosts returns cursor-based pagination",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC02",
           "criterion": "GET /api/v1/bookings uses cursor pagination",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC03",
           "criterion": "Response includes next_cursor, has_more fields",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC04",
           "criterion": "Frontend infinite scroll uses cursor",
           "verification": "code_review",
-          "met": false
+          "met": true
         }
       ],
       "testing": {

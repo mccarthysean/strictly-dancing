@@ -233,7 +233,7 @@ class HostSearchRequest(BaseModel):
 
 
 class HostSearchResponse(BaseModel):
-    """Paginated response for host search results."""
+    """Paginated response for host search results (offset-based)."""
 
     items: list[HostProfileSummaryResponse] = Field(
         ..., description="List of host profiles"
@@ -242,3 +242,22 @@ class HostSearchResponse(BaseModel):
     page: int = Field(..., description="Current page number")
     page_size: int = Field(..., description="Results per page")
     total_pages: int = Field(..., description="Total number of pages")
+
+
+class HostSearchCursorResponse(BaseModel):
+    """Cursor-based paginated response for host search results.
+
+    Supports infinite scroll with cursor-based pagination for better
+    performance with large datasets and real-time updates.
+    """
+
+    items: list[HostProfileSummaryResponse] = Field(
+        ..., description="List of host profiles"
+    )
+    next_cursor: str | None = Field(
+        None, description="Cursor for next page (host profile ID), null if no more"
+    )
+    has_more: bool = Field(
+        ..., description="Whether there are more results after this page"
+    )
+    total: int = Field(..., description="Total number of matching hosts")

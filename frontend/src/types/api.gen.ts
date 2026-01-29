@@ -14,8 +14,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Register a new user
-         * @description Create a new user account with email, password, and profile information.
+         * Register a new user (passwordless)
+         * @description Create a new user account with email and profile information. A magic link code will be sent to complete registration.
          */
         post: operations["register_api_v1_auth_register_post"];
         delete?: never;
@@ -24,7 +24,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/login": {
+    "/api/v1/auth/request-magic-link": {
         parameters: {
             query?: never;
             header?: never;
@@ -34,10 +34,30 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Authenticate user
-         * @description Authenticate with email and password to receive access and refresh tokens.
+         * Request a magic link login code
+         * @description Request a 6-digit login code to be sent to the provided email. The code expires after 15 minutes.
          */
-        post: operations["login_api_v1_auth_login_post"];
+        post: operations["request_magic_link_api_v1_auth_request_magic_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/verify-magic-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify magic link code and get tokens
+         * @description Verify the 6-digit code sent to email and receive JWT tokens.
+         */
+        post: operations["verify_magic_link_api_v1_auth_verify_magic_link_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -272,6 +292,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/hosts/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search for hosts with cursor pagination
+         * @description Search for dance hosts with cursor-based pagination for infinite scroll.
+         */
+        get: operations["search_hosts_cursor_api_v1_hosts_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/hosts/{host_id}/availability": {
         parameters: {
             query?: never;
@@ -364,6 +404,46 @@ export interface paths {
          * @description Get reviews for a host profile with cursor-based pagination.
          */
         get: operations["get_host_reviews_api_v1_hosts__host_id__reviews_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hosts/verification/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit verification documents
+         * @description Submit ID documents for host identity verification.
+         */
+        post: operations["submit_verification_api_v1_hosts_verification_submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hosts/verification/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get verification status
+         * @description Get the current verification status for the authenticated host.
+         */
+        get: operations["get_verification_status_api_v1_hosts_verification_status_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -480,6 +560,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/push/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register push token
+         * @description Register an Expo push token for the current user's device.
+         */
+        post: operations["register_push_token_api_v1_push_register_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/push/unregister": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Unregister push token
+         * @description Unregister an Expo push token to stop receiving notifications on a device.
+         */
+        post: operations["unregister_push_token_api_v1_push_unregister_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/push/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get my push tokens
+         * @description Get all push tokens registered for the current user.
+         */
+        get: operations["get_my_push_tokens_api_v1_push_tokens_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/push/tokens/{token_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete push token
+         * @description Delete a specific push token by ID.
+         */
+        delete: operations["delete_push_token_api_v1_push_tokens__token_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reviews/{review_id}/response": {
         parameters: {
             query?: never;
@@ -518,6 +678,26 @@ export interface paths {
         get: operations["get_review_api_v1_reviews__review_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/send-session-reminders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send session starting soon reminders
+         * @description Send push notifications for sessions starting within 30 minutes. Should be called every 5 minutes by a cron job.
+         */
+        post: operations["send_session_reminders_api_v1_tasks_send_session_reminders_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -667,6 +847,30 @@ export interface paths {
          * @description Delete an availability override.
          */
         delete: operations["delete_availability_override_api_v1_users_me_host_profile_availability_overrides__override_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload avatar image
+         * @description Upload and process a profile image. Resizes and creates thumbnail.
+         */
+        post: operations["upload_avatar_api_v1_users_me_avatar_post"];
+        /**
+         * Delete avatar image
+         * @description Remove the current user's avatar image.
+         */
+        delete: operations["delete_avatar_api_v1_users_me_avatar_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -849,6 +1053,31 @@ export interface components {
              * @description End time of the slot
              */
             end_time: string;
+        };
+        /**
+         * AvatarUploadResponse
+         * @description Response schema for avatar upload.
+         */
+        AvatarUploadResponse: {
+            /**
+             * Avatar Url
+             * @description URL to the uploaded profile image
+             */
+            avatar_url: string;
+            /**
+             * Avatar Thumbnail Url
+             * @description URL to the thumbnail image
+             */
+            avatar_thumbnail_url: string;
+        };
+        /** Body_upload_avatar_api_v1_users_me_avatar_post */
+        Body_upload_avatar_api_v1_users_me_avatar_post: {
+            /**
+             * File
+             * Format: binary
+             * @description Image file (JPEG, PNG, or WebP)
+             */
+            file: string;
         };
         /**
          * BookingListCursorResponse
@@ -1413,6 +1642,18 @@ export interface components {
          * @enum {integer}
          */
         DayOfWeek: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+        /**
+         * DevicePlatform
+         * @description Device platform enumeration.
+         * @enum {string}
+         */
+        DevicePlatform: "ios" | "android" | "web";
+        /**
+         * DocumentType
+         * @description Types of verification documents.
+         * @enum {string}
+         */
+        DocumentType: "government_id" | "passport" | "drivers_license" | "other";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -1683,8 +1924,37 @@ export interface components {
             last_name: string;
         };
         /**
+         * HostSearchCursorResponse
+         * @description Cursor-based paginated response for host search results.
+         *
+         *     Supports infinite scroll with cursor-based pagination for better
+         *     performance with large datasets and real-time updates.
+         */
+        HostSearchCursorResponse: {
+            /**
+             * Items
+             * @description List of host profiles
+             */
+            items: components["schemas"]["HostProfileSummaryResponse"][];
+            /**
+             * Next Cursor
+             * @description Cursor for next page (host profile ID), null if no more
+             */
+            next_cursor?: string | null;
+            /**
+             * Has More
+             * @description Whether there are more results after this page
+             */
+            has_more: boolean;
+            /**
+             * Total
+             * @description Total number of matching hosts
+             */
+            total: number;
+        };
+        /**
          * HostSearchResponse
-         * @description Paginated response for host search results.
+         * @description Paginated response for host search results (offset-based).
          */
         HostSearchResponse: {
             /**
@@ -1730,21 +2000,34 @@ export interface components {
             longitude: number;
         };
         /**
-         * LoginRequest
-         * @description Schema for user login request.
+         * MagicLinkRequest
+         * @description Schema for requesting a magic link login code.
          */
-        LoginRequest: {
+        MagicLinkRequest: {
             /**
              * Email
              * Format: email
              * @description User's email address
              */
             email: string;
+        };
+        /**
+         * MagicLinkResponse
+         * @description Schema for magic link request response.
+         */
+        MagicLinkResponse: {
             /**
-             * Password
-             * @description User's password
+             * Message
+             * @description Status message (intentionally vague for security)
+             * @default If this email is registered, a login code has been sent.
              */
-            password: string;
+            message: string;
+            /**
+             * Expires In Minutes
+             * @description Code expiry time in minutes
+             * @default 15
+             */
+            expires_in_minutes: number;
         };
         /**
          * MessageListResponse
@@ -1847,6 +2130,55 @@ export interface components {
             sender?: components["schemas"]["MessageUserSummary"] | null;
         };
         /**
+         * PushTokenListResponse
+         * @description Response containing list of push tokens.
+         */
+        PushTokenListResponse: {
+            /**
+             * Items
+             * @description List of registered push tokens
+             */
+            items: components["schemas"]["PushTokenResponse"][];
+            /**
+             * Count
+             * @description Total number of tokens
+             */
+            count: number;
+        };
+        /**
+         * PushTokenResponse
+         * @description Schema for push token in API responses.
+         */
+        PushTokenResponse: {
+            /**
+             * Id
+             * @description Push token UUID
+             */
+            id: string;
+            /**
+             * Token
+             * @description The Expo push token
+             */
+            token: string;
+            /** @description Device platform */
+            platform: components["schemas"]["DevicePlatform"];
+            /**
+             * Device Id
+             * @description Device identifier
+             */
+            device_id?: string | null;
+            /**
+             * Device Name
+             * @description Device name
+             */
+            device_name?: string | null;
+            /**
+             * Is Active
+             * @description Whether the token is active
+             */
+            is_active: boolean;
+        };
+        /**
          * RecurringAvailabilityRequest
          * @description Schema for setting recurring availability.
          */
@@ -1932,10 +2264,33 @@ export interface components {
             expires_in: number;
         };
         /**
+         * RegisterPushTokenRequest
+         * @description Schema for registering a push token.
+         */
+        RegisterPushTokenRequest: {
+            /**
+             * Token
+             * @description The Expo push token (ExponentPushToken[...])
+             */
+            token: string;
+            /** @description Device platform (ios, android, web) */
+            platform: components["schemas"]["DevicePlatform"];
+            /**
+             * Device Id
+             * @description Optional unique device identifier
+             */
+            device_id?: string | null;
+            /**
+             * Device Name
+             * @description Optional human-readable device name
+             */
+            device_name?: string | null;
+        };
+        /**
          * RegisterRequest
-         * @description Schema for user registration request.
+         * @description Schema for user registration request (passwordless).
          *
-         *     Validates email format and enforces password strength requirements.
+         *     Only requires email and name. Authentication is via magic link.
          */
         RegisterRequest: {
             /**
@@ -1944,11 +2299,6 @@ export interface components {
              * @description User's email address
              */
             email: string;
-            /**
-             * Password
-             * @description User password (8-128 characters, requires uppercase, lowercase, and number)
-             */
-            password: string;
             /**
              * First Name
              * @description User's first name
@@ -2075,6 +2425,18 @@ export interface components {
             reviewee?: components["schemas"]["ReviewUserSummary"] | null;
         };
         /**
+         * SessionRemindersResponse
+         * @description Response model for session reminders task.
+         */
+        SessionRemindersResponse: {
+            /** Bookings Checked */
+            bookings_checked: number;
+            /** Notifications Sent */
+            notifications_sent: number;
+            /** Message */
+            message: string;
+        };
+        /**
          * SetAvailabilityRequest
          * @description Schema for setting host's complete weekly availability.
          *
@@ -2176,6 +2538,61 @@ export interface components {
             onboarding_url: string;
         };
         /**
+         * SubmitVerificationRequest
+         * @description Request schema for submitting verification documents.
+         * @example {
+         *       "document_number": "***1234",
+         *       "document_type": "government_id",
+         *       "document_url": "https://storage.example.com/docs/id-123.jpg",
+         *       "notes": "Front side of my driver's license"
+         *     }
+         */
+        SubmitVerificationRequest: {
+            /** @description Type of document being submitted */
+            document_type: components["schemas"]["DocumentType"];
+            /**
+             * Document Url
+             * @description URL/path to the uploaded document file
+             */
+            document_url?: string | null;
+            /**
+             * Document Number
+             * @description Masked document number (e.g., last 4 digits)
+             */
+            document_number?: string | null;
+            /**
+             * Notes
+             * @description Optional notes from the host
+             */
+            notes?: string | null;
+        };
+        /**
+         * SubmitVerificationResponse
+         * @description Response schema for successful verification submission.
+         * @example {
+         *       "document_id": "550e8400-e29b-41d4-a716-446655440000",
+         *       "message": "Verification documents submitted successfully. Please allow 1-3 business days for review.",
+         *       "success": true
+         *     }
+         */
+        SubmitVerificationResponse: {
+            /**
+             * Success
+             * @description Whether the submission was successful
+             */
+            success: boolean;
+            /**
+             * Document Id
+             * @description ID of the created document
+             */
+            document_id?: string | null;
+            /**
+             * Message
+             * @description Status message
+             */
+            message: string;
+        };
+        /**
          * TokenResponse
          * @description Schema for authentication token response.
          *
@@ -2214,6 +2631,17 @@ export interface components {
              * @description Total unread messages across all conversations
              */
             total_unread: number;
+        };
+        /**
+         * UnregisterPushTokenRequest
+         * @description Schema for unregistering a push token.
+         */
+        UnregisterPushTokenRequest: {
+            /**
+             * Token
+             * @description The Expo push token to unregister
+             */
+            token: string;
         };
         /**
          * UpdateHostProfileRequest
@@ -2282,6 +2710,16 @@ export interface components {
              */
             is_active: boolean;
             /**
+             * Avatar Url
+             * @description URL to user's profile image
+             */
+            avatar_url?: string | null;
+            /**
+             * Avatar Thumbnail Url
+             * @description URL to user's thumbnail image
+             */
+            avatar_thumbnail_url?: string | null;
+            /**
              * Created At
              * Format: date-time
              * @description Account creation timestamp
@@ -2331,11 +2769,109 @@ export interface components {
             type: string;
         };
         /**
+         * VerificationDocumentResponse
+         * @description Response schema for a verification document.
+         */
+        VerificationDocumentResponse: {
+            /**
+             * Id
+             * @description Document UUID
+             */
+            id: string;
+            /** @description Type of document */
+            document_type: components["schemas"]["DocumentType"];
+            /**
+             * Document Url
+             * @description URL to the document
+             */
+            document_url?: string | null;
+            /**
+             * Document Number
+             * @description Masked document number
+             */
+            document_number?: string | null;
+            /**
+             * Notes
+             * @description Notes from the host
+             */
+            notes?: string | null;
+            /**
+             * Reviewer Notes
+             * @description Notes from the reviewer
+             */
+            reviewer_notes?: string | null;
+            /**
+             * Reviewed At
+             * @description When the document was reviewed
+             */
+            reviewed_at?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             * @description When the document was submitted
+             */
+            created_at: string;
+        };
+        /**
          * VerificationStatus
          * @description Host verification status enumeration.
          * @enum {string}
          */
         VerificationStatus: "unverified" | "pending" | "verified" | "rejected";
+        /**
+         * VerificationStatusResponse
+         * @description Response schema for verification status.
+         * @example {
+         *       "can_submit": false,
+         *       "documents": [
+         *         {
+         *           "created_at": "2026-01-29T10:00:00Z",
+         *           "document_number": "***1234",
+         *           "document_type": "government_id",
+         *           "document_url": "https://storage.example.com/docs/id-123.jpg",
+         *           "id": "550e8400-e29b-41d4-a716-446655440000",
+         *           "notes": "Front side of my driver's license"
+         *         }
+         *       ],
+         *       "status": "pending"
+         *     }
+         */
+        VerificationStatusResponse: {
+            /** @description Current verification status */
+            status: components["schemas"]["VerificationStatus"];
+            /**
+             * Can Submit
+             * @description Whether the host can submit new verification documents
+             */
+            can_submit: boolean;
+            /**
+             * Rejection Reason
+             * @description Reason for rejection if status is rejected
+             */
+            rejection_reason?: string | null;
+            /**
+             * Documents
+             * @description List of submitted verification documents
+             */
+            documents?: components["schemas"]["VerificationDocumentResponse"][];
+        };
+        /**
+         * VerifyMagicLinkRequest
+         * @description Schema for verifying a magic link code.
+         */
+        VerifyMagicLinkRequest: {
+            /**
+             * Email
+             * Format: email
+             * @description User's email address
+             */
+            email: string;
+            /**
+             * Code
+             * @description 6-digit verification code
+             */
+            code: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -2378,7 +2914,7 @@ export interface operations {
             };
         };
     };
-    login_api_v1_auth_login_post: {
+    request_magic_link_api_v1_auth_request_magic_link_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2387,7 +2923,40 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["LoginRequest"];
+                "application/json": components["schemas"]["MagicLinkRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MagicLinkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_magic_link_api_v1_auth_verify_magic_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyMagicLinkRequest"];
             };
         };
         responses: {
@@ -2797,7 +3366,7 @@ export interface operations {
                 max_price?: number | null;
                 /** @description Only show verified hosts */
                 verified_only?: boolean;
-                /** @description Sort field: 'distance', 'rating', 'price', 'reviews' */
+                /** @description Sort field: 'distance', 'rating', 'price', 'reviews', 'relevance' */
                 sort_by?: string;
                 /** @description Sort order: 'asc' or 'desc' */
                 sort_order?: string;
@@ -2805,6 +3374,8 @@ export interface operations {
                 page?: number;
                 /** @description Results per page (1-100) */
                 page_size?: number;
+                /** @description Search query for fuzzy matching on host names and bio */
+                q?: string | null;
             };
             header?: never;
             path?: never;
@@ -2819,6 +3390,58 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HostSearchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_hosts_cursor_api_v1_hosts_search_get: {
+        parameters: {
+            query?: {
+                /** @description Cursor for pagination (host profile ID from previous page) */
+                cursor?: string | null;
+                /** @description Search center latitude */
+                lat?: number | null;
+                /** @description Search center longitude */
+                lng?: number | null;
+                /** @description Search radius in kilometers */
+                radius_km?: number;
+                /** @description Filter by dance style UUIDs */
+                styles?: string[] | null;
+                /** @description Minimum rating filter */
+                min_rating?: number | null;
+                /** @description Maximum hourly rate in cents */
+                max_price?: number | null;
+                /** @description Only show verified hosts */
+                verified_only?: boolean;
+                /** @description Sort field: 'distance', 'rating', 'price', 'relevance' */
+                sort_by?: string;
+                /** @description Results per page (1-100) */
+                limit?: number;
+                /** @description Search query for fuzzy matching on host names and bio */
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostSearchCursorResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2984,6 +3607,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_verification_api_v1_hosts_verification_submit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitVerificationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubmitVerificationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_verification_status_api_v1_hosts_verification_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationStatusResponse"];
                 };
             };
         };
@@ -3209,6 +3885,119 @@ export interface operations {
             };
         };
     };
+    register_push_token_api_v1_push_register_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterPushTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushTokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unregister_push_token_api_v1_push_unregister_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnregisterPushTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_my_push_tokens_api_v1_push_tokens_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushTokenListResponse"];
+                };
+            };
+        };
+    };
+    delete_push_token_api_v1_push_tokens__token_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     add_review_response_api_v1_reviews__review_id__response_post: {
         parameters: {
             query?: never;
@@ -3293,6 +4082,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReviewWithUserResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_session_reminders_api_v1_tasks_send_session_reminders_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-task-secret"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionRemindersResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3580,6 +4400,57 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    upload_avatar_api_v1_users_me_avatar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_avatar_api_v1_users_me_avatar_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvatarUploadResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_avatar_api_v1_users_me_avatar_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

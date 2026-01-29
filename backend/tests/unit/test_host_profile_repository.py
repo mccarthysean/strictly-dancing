@@ -872,3 +872,151 @@ class TestSearchWithFuzzyQuery:
         sig = inspect.signature(host_profile_repository.search)
         query_param = sig.parameters["query"]
         assert query_param.default is None
+
+
+class TestSearchWithCursor:
+    """Tests for search_with_cursor method using cursor-based pagination."""
+
+    @pytest.fixture
+    def host_profile_repository(self, mock_session):
+        """Create repository with mock session."""
+        from app.repositories.host_profile import HostProfileRepository
+
+        return HostProfileRepository(mock_session)
+
+    @pytest.fixture
+    def mock_session(self):
+        """Create mock async session."""
+        session = MagicMock()
+        session.execute = AsyncMock()
+        session.flush = AsyncMock()
+        session.add = MagicMock()
+        return session
+
+    async def test_search_with_cursor_method_exists(self, host_profile_repository):
+        """Test that search_with_cursor method exists."""
+        assert hasattr(host_profile_repository, "search_with_cursor")
+
+    async def test_search_with_cursor_is_async(self, host_profile_repository):
+        """Verify search_with_cursor method is async."""
+        import inspect
+
+        assert inspect.iscoroutinefunction(host_profile_repository.search_with_cursor)
+
+    async def test_search_with_cursor_returns_four_values(
+        self, host_profile_repository, mock_session
+    ):
+        """Test that search_with_cursor returns tuple of 4 values."""
+        mock_count_result = MagicMock()
+        mock_count_result.scalar.return_value = 0
+        mock_query_result = MagicMock()
+        mock_query_result.unique.return_value.scalars.return_value.all.return_value = []
+
+        mock_session.execute = AsyncMock(
+            side_effect=[mock_count_result, mock_query_result]
+        )
+
+        result = await host_profile_repository.search_with_cursor()
+        assert len(result) == 4
+        profiles, total, next_cursor, has_more = result
+        assert isinstance(profiles, list)
+        assert isinstance(total, int)
+        assert next_cursor is None or isinstance(next_cursor, str)
+        assert isinstance(has_more, bool)
+
+    async def test_search_with_cursor_accepts_cursor_param(
+        self, host_profile_repository, mock_session
+    ):
+        """Test that search_with_cursor accepts cursor parameter."""
+        from uuid import UUID
+
+        mock_count_result = MagicMock()
+        mock_count_result.scalar.return_value = 0
+        mock_query_result = MagicMock()
+        mock_query_result.unique.return_value.scalars.return_value.all.return_value = []
+
+        # Mock get_by_id to return None for cursor profile
+        mock_profile_result = MagicMock()
+        mock_profile_result.unique.return_value.scalar_one_or_none.return_value = None
+
+        mock_session.execute = AsyncMock(
+            side_effect=[mock_profile_result, mock_count_result, mock_query_result]
+        )
+
+        cursor = UUID("660e8400-e29b-41d4-a716-446655440001")
+        # Should not raise an error
+        (
+            profiles,
+            total,
+            next_cursor,
+            has_more,
+        ) = await host_profile_repository.search_with_cursor(cursor=cursor)
+        assert total == 0
+
+    async def test_search_with_cursor_accepts_limit_param(
+        self, host_profile_repository, mock_session
+    ):
+        """Test that search_with_cursor accepts limit parameter."""
+        mock_count_result = MagicMock()
+        mock_count_result.scalar.return_value = 0
+        mock_query_result = MagicMock()
+        mock_query_result.unique.return_value.scalars.return_value.all.return_value = []
+
+        mock_session.execute = AsyncMock(
+            side_effect=[mock_count_result, mock_query_result]
+        )
+
+        # Should not raise an error
+        await host_profile_repository.search_with_cursor(limit=50)
+
+    async def test_search_with_cursor_accepts_query_param(
+        self, host_profile_repository, mock_session
+    ):
+        """Test that search_with_cursor accepts query parameter."""
+        mock_count_result = MagicMock()
+        mock_count_result.scalar.return_value = 0
+        mock_query_result = MagicMock()
+        mock_query_result.unique.return_value.scalars.return_value.all.return_value = []
+
+        mock_session.execute = AsyncMock(
+            side_effect=[mock_count_result, mock_query_result]
+        )
+
+        # Should not raise an error
+        await host_profile_repository.search_with_cursor(query="salsa")
+
+    async def test_search_with_cursor_accepts_order_by_relevance(
+        self, host_profile_repository, mock_session
+    ):
+        """Test that search_with_cursor accepts order_by=relevance."""
+        mock_count_result = MagicMock()
+        mock_count_result.scalar.return_value = 0
+        mock_query_result = MagicMock()
+        mock_query_result.unique.return_value.scalars.return_value.all.return_value = []
+
+        mock_session.execute = AsyncMock(
+            side_effect=[mock_count_result, mock_query_result]
+        )
+
+        # Should not raise an error
+        await host_profile_repository.search_with_cursor(
+            query="salsa", order_by="relevance"
+        )
+
+    async def test_search_with_cursor_signature(self, host_profile_repository):
+        """Verify search_with_cursor method signature."""
+        import inspect
+
+        sig = inspect.signature(host_profile_repository.search_with_cursor)
+        params = list(sig.parameters.keys())
+
+        assert "cursor" in params
+        assert "latitude" in params
+        assert "longitude" in params
+        assert "radius_km" in params
+        assert "style_ids" in params
+        assert "min_rating" in params
+        assert "max_price_cents" in params
+        assert "order_by" in params
+        assert "limit" in params
+        assert "query" in params

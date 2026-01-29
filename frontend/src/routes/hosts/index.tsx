@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { $api } from '@/lib/api/$api'
 import type { components } from '@/types/api.gen'
@@ -19,10 +19,14 @@ function HostsPage() {
     max_price: null as number | null,
     verified_only: false,
     sort_by: 'rating' as string,
-    sort_order: 'desc' as string,
-    page: 1,
-    page_size: 12,
+    q: null as string | null,
+    limit: 12,
   })
+
+  // Cursor-based pagination state
+  const [cursor, setCursor] = useState<string | null>(null)
+  const [allHosts, setAllHosts] = useState<HostProfileSummaryResponse[]>([])
+  const [hasMore, setHasMore] = useState(true)
 
   // Filter panel visibility
   const [showFilters, setShowFilters] = useState(false)
@@ -31,10 +35,14 @@ function HostsPage() {
   const [locationLoading, setLocationLoading] = useState(false)
   const [locationError, setLocationError] = useState<string | null>(null)
 
-  // Fetch hosts with current search params
-  const { data, isLoading, error } = $api.useQuery('get', '/api/v1/hosts', {
+  // Infinite scroll observer ref
+  const loadMoreRef = useRef<HTMLDivElement>(null)
+
+  // Fetch hosts with cursor-based pagination
+  const { data, isLoading, error, isFetching } = $api.useQuery('get', '/api/v1/hosts/search', {
     params: {
       query: {
+        cursor: cursor,
         lat: searchParams.lat,
         lng: searchParams.lng,
         radius_km: searchParams.radius_km,
@@ -42,12 +50,62 @@ function HostsPage() {
         max_price: searchParams.max_price,
         verified_only: searchParams.verified_only,
         sort_by: searchParams.sort_by,
-        sort_order: searchParams.sort_order,
-        page: searchParams.page,
-        page_size: searchParams.page_size,
+        q: searchParams.q,
+        limit: searchParams.limit,
       },
     },
   })
+
+  // Handle data updates from API
+  useEffect(() => {
+    if (data) {
+      if (cursor === null) {
+        // First page - replace all hosts
+        setAllHosts(data.items)
+      } else {
+        // Subsequent pages - append hosts
+        setAllHosts((prev) => [...prev, ...data.items])
+      }
+      setHasMore(data.has_more)
+    }
+  }, [data, cursor])
+
+  // Load more hosts (for infinite scroll)
+  const handleLoadMore = useCallback(() => {
+    if (data?.next_cursor && hasMore && !isFetching) {
+      setCursor(data.next_cursor)
+    }
+  }, [data?.next_cursor, hasMore, isFetching])
+
+  // Infinite scroll observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          handleLoadMore()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    const currentRef = loadMoreRef.current
+    if (currentRef) {
+      observer.observe(currentRef)
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef)
+      }
+    }
+  }, [handleLoadMore])
+
+  // Reset pagination when filters change
+  const resetPagination = useCallback(() => {
+    setCursor(null)
+    setAllHosts([])
+    setHasMore(true)
+  }, [])
 
   // Get user's location
   const handleUseMyLocation = () => {
@@ -65,8 +123,8 @@ function HostsPage() {
           ...prev,
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-          page: 1,
         }))
+        resetPagination()
         setLocationLoading(false)
       },
       () => {
@@ -82,15 +140,9 @@ function HostsPage() {
       ...prev,
       lat: null,
       lng: null,
-      page: 1,
     }))
+    resetPagination()
     setLocationError(null)
-  }
-
-  // Handle page change
-  const handlePageChange = (newPage: number) => {
-    setSearchParams((prev) => ({ ...prev, page: newPage }))
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   // Handle filter changes
@@ -98,8 +150,8 @@ function HostsPage() {
     setSearchParams((prev) => ({
       ...prev,
       [key]: value,
-      page: 1, // Reset to page 1 when filters change
     }))
+    resetPagination()
   }
 
   return (
@@ -280,15 +332,13 @@ function HostsPage() {
                 Sort by
               </label>
               <select
-                value={`${searchParams.sort_by}-${searchParams.sort_order}`}
+                value={searchParams.sort_by}
                 onChange={(e) => {
-                  const [sortBy, sortOrder] = e.target.value.split('-')
                   setSearchParams((prev) => ({
                     ...prev,
-                    sort_by: sortBy ?? 'rating',
-                    sort_order: sortOrder ?? 'desc',
-                    page: 1,
+                    sort_by: e.target.value,
                   }))
+                  resetPagination()
                 }}
                 style={{
                   width: '100%',
@@ -298,13 +348,31 @@ function HostsPage() {
                   fontSize: '0.875rem',
                 }}
               >
-                <option value="rating-desc">Highest rated</option>
-                <option value="rating-asc">Lowest rated</option>
-                <option value="price-asc">Lowest price</option>
-                <option value="price-desc">Highest price</option>
-                <option value="reviews-desc">Most reviews</option>
-                {searchParams.lat && <option value="distance-asc">Closest</option>}
+                <option value="rating">Highest rated</option>
+                <option value="price">Lowest price</option>
+                {searchParams.lat && <option value="distance">Closest</option>}
+                {searchParams.q && <option value="relevance">Most relevant</option>}
               </select>
+            </div>
+
+            {/* Search Query */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.25rem' }}>
+                Search
+              </label>
+              <input
+                type="text"
+                placeholder="Search by name..."
+                value={searchParams.q ?? ''}
+                onChange={(e) => handleFilterChange('q', e.target.value || null)}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.375rem',
+                  fontSize: '0.875rem',
+                }}
+              />
             </div>
 
             {/* Verified Only */}
@@ -338,7 +406,7 @@ function HostsPage() {
             {data.total} host{data.total !== 1 ? 's' : ''} found
           </span>
           <span>
-            Page {data.page} of {data.total_pages}
+            Showing {allHosts.length} of {data.total}
           </span>
         </div>
       )}
@@ -369,20 +437,20 @@ function HostsPage() {
       )}
 
       {/* Host Cards Grid */}
-      {data && data.items.length > 0 && (
+      {allHosts.length > 0 && (
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
           gap: '1.5rem',
         }}>
-          {data.items.map((host) => (
+          {allHosts.map((host) => (
             <HostCard key={host.id} host={host} />
           ))}
         </div>
       )}
 
       {/* Empty State */}
-      {data && data.items.length === 0 && (
+      {!isLoading && allHosts.length === 0 && (
         <div style={{
           display: 'flex',
           flexDirection: 'column',
@@ -402,87 +470,40 @@ function HostsPage() {
         </div>
       )}
 
-      {/* Pagination */}
-      {data && data.total_pages > 1 && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '0.5rem',
-          marginTop: '2rem',
-          flexWrap: 'wrap',
-        }}>
-          <button
-            onClick={() => handlePageChange(data.page - 1)}
-            disabled={data.page <= 1}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: data.page <= 1 ? '#e5e7eb' : '#4f46e5',
-              color: data.page <= 1 ? '#9ca3af' : 'white',
-              border: 'none',
-              borderRadius: '0.375rem',
-              cursor: data.page <= 1 ? 'not-allowed' : 'pointer',
-              fontSize: '0.875rem',
-            }}
-          >
-            Previous
-          </button>
-
-          {/* Page numbers */}
-          {Array.from({ length: Math.min(5, data.total_pages) }, (_, i) => {
-            const pageNum = getPageNumber(data.page, data.total_pages, i)
-            return (
-              <button
-                key={pageNum}
-                onClick={() => handlePageChange(pageNum)}
-                style={{
-                  padding: '0.5rem 0.75rem',
-                  backgroundColor: pageNum === data.page ? '#4f46e5' : '#f3f4f6',
-                  color: pageNum === data.page ? 'white' : '#374151',
-                  border: 'none',
-                  borderRadius: '0.375rem',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  minWidth: '2.5rem',
-                }}
-              >
-                {pageNum}
-              </button>
-            )
-          })}
-
-          <button
-            onClick={() => handlePageChange(data.page + 1)}
-            disabled={data.page >= data.total_pages}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: data.page >= data.total_pages ? '#e5e7eb' : '#4f46e5',
-              color: data.page >= data.total_pages ? '#9ca3af' : 'white',
-              border: 'none',
-              borderRadius: '0.375rem',
-              cursor: data.page >= data.total_pages ? 'not-allowed' : 'pointer',
-              fontSize: '0.875rem',
-            }}
-          >
-            Next
-          </button>
+      {/* Infinite Scroll Trigger */}
+      {hasMore && (
+        <div
+          ref={loadMoreRef}
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '2rem',
+            marginTop: '1rem',
+          }}
+        >
+          {isFetching ? (
+            <p style={{ color: '#6b7280' }}>Loading more hosts...</p>
+          ) : (
+            <button
+              onClick={handleLoadMore}
+              style={{
+                padding: '0.5rem 1.5rem',
+                backgroundColor: '#4f46e5',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.375rem',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+              }}
+            >
+              Load more
+            </button>
+          )}
         </div>
       )}
     </div>
   )
-}
-
-// Helper function to calculate page numbers for pagination
-function getPageNumber(currentPage: number, totalPages: number, index: number): number {
-  const maxVisible = 5
-  let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2))
-  const endPage = Math.min(totalPages, startPage + maxVisible - 1)
-
-  if (endPage - startPage + 1 < maxVisible) {
-    startPage = Math.max(1, endPage - maxVisible + 1)
-  }
-
-  return startPage + index
 }
 
 // Host Card Component

@@ -447,6 +447,187 @@ class HostProfileRepository:
 
         return profiles, total_count
 
+    async def search_with_cursor(
+        self,
+        cursor: UUID | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
+        radius_km: float | None = None,
+        style_ids: list[UUID] | None = None,
+        min_rating: float | None = None,
+        max_price_cents: int | None = None,
+        order_by: str = "distance",
+        limit: int = 20,
+        query: str | None = None,
+    ) -> tuple[list[HostProfile], int, str | None, bool]:
+        """Search host profiles with cursor-based pagination.
+
+        Supports infinite scroll with cursor-based pagination for better
+        performance with large datasets and real-time updates.
+
+        Args:
+            cursor: Optional cursor (host profile ID) to start after.
+            latitude: Center point latitude for location search.
+            longitude: Center point longitude for location search.
+            radius_km: Search radius in kilometers.
+            style_ids: Filter by dance style UUIDs (hosts must have at least one).
+            min_rating: Minimum average rating.
+            max_price_cents: Maximum hourly rate in cents.
+            order_by: Sort order - "distance", "rating", "price", or "relevance".
+            limit: Maximum number of results (default 20).
+            query: Optional text search query for fuzzy matching on names and bio.
+
+        Returns:
+            Tuple of (list of HostProfile, total_count, next_cursor, has_more).
+        """
+        conditions = []
+        similarity_expr = None
+
+        # Location filter
+        point = None
+        if latitude is not None and longitude is not None:
+            point = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
+            if radius_km is not None:
+                radius_meters = radius_km * 1000
+                conditions.append(HostProfile.location.isnot(None))
+                conditions.append(
+                    ST_DWithin(HostProfile.location, point, radius_meters)
+                )
+
+        # Dance style filter
+        if style_ids:
+            style_subquery = (
+                select(HostDanceStyle.host_profile_id)
+                .where(
+                    HostDanceStyle.dance_style_id.in_([str(sid) for sid in style_ids])
+                )
+                .distinct()
+            )
+            conditions.append(HostProfile.id.in_(style_subquery))
+
+        # Rating filter
+        if min_rating is not None:
+            conditions.append(HostProfile.rating_average >= min_rating)
+
+        # Price filter
+        if max_price_cents is not None:
+            conditions.append(HostProfile.hourly_rate_cents <= max_price_cents)
+
+        # Fuzzy text search filter using pg_trgm
+        if query and query.strip():
+            search_term = query.strip()
+            similarity_expr = func.greatest(
+                func.coalesce(func.similarity(User.first_name, search_term), 0),
+                func.coalesce(func.similarity(User.last_name, search_term), 0),
+                func.coalesce(func.similarity(HostProfile.headline, search_term), 0),
+                func.coalesce(func.similarity(HostProfile.bio, search_term), 0),
+                func.coalesce(
+                    func.similarity(
+                        func.concat(User.first_name, " ", User.last_name), search_term
+                    ),
+                    0,
+                ),
+            )
+            conditions.append(similarity_expr > 0.1)
+
+        # Build base query with join to users
+        base_query = (
+            select(HostProfile)
+            .join(User, HostProfile.user_id == User.id)
+            .options(joinedload(HostProfile.user))
+        )
+
+        if conditions:
+            base_query = base_query.where(and_(*conditions))
+
+        # Apply cursor-based pagination
+        # For cursor pagination, we need to skip to items after the cursor
+        if cursor is not None:
+            # Get the cursor profile to determine position
+            cursor_profile = await self.get_by_id(cursor)
+            if cursor_profile is not None:
+                # Apply cursor condition based on ordering
+                if order_by == "rating":
+                    # Combine with ID for stable ordering
+                    base_query = base_query.where(
+                        func.concat(
+                            func.coalesce(HostProfile.rating_average, 0),
+                            "_",
+                            HostProfile.id,
+                        )
+                        < func.concat(
+                            func.coalesce(cursor_profile.rating_average, 0),
+                            "_",
+                            str(cursor),
+                        )
+                    )
+                elif order_by == "price":
+                    base_query = base_query.where(
+                        func.concat(HostProfile.hourly_rate_cents, "_", HostProfile.id)
+                        > func.concat(
+                            cursor_profile.hourly_rate_cents, "_", str(cursor)
+                        )
+                    )
+                else:
+                    # Default: order by created_at desc, then id
+                    base_query = base_query.where(
+                        func.concat(HostProfile.created_at, "_", HostProfile.id)
+                        < func.concat(cursor_profile.created_at, "_", str(cursor))
+                    )
+
+        # Determine ordering - always add ID as secondary sort for stability
+        if order_by == "relevance" and similarity_expr is not None:
+            base_query = base_query.order_by(
+                similarity_expr.desc(), HostProfile.id.desc()
+            )
+        elif order_by == "distance" and point is not None:
+            distance_expr = ST_Distance(HostProfile.location, point)
+            base_query = base_query.order_by(distance_expr, HostProfile.id)
+        elif order_by == "rating":
+            base_query = base_query.order_by(
+                HostProfile.rating_average.desc().nulls_last(), HostProfile.id.desc()
+            )
+        elif order_by == "price":
+            base_query = base_query.order_by(
+                HostProfile.hourly_rate_cents.asc(), HostProfile.id
+            )
+        elif similarity_expr is not None:
+            base_query = base_query.order_by(
+                similarity_expr.desc(), HostProfile.created_at.desc(), HostProfile.id
+            )
+        else:
+            base_query = base_query.order_by(
+                HostProfile.created_at.desc(), HostProfile.id.desc()
+            )
+
+        # Get total count (without pagination)
+        count_query = (
+            select(func.count(HostProfile.id))
+            .select_from(HostProfile)
+            .join(User, HostProfile.user_id == User.id)
+        )
+        if conditions:
+            count_query = count_query.where(and_(*conditions))
+        count_result = await self._session.execute(count_query)
+        total_count = count_result.scalar() or 0
+
+        # Fetch limit + 1 to determine if there are more results
+        base_query = base_query.limit(limit + 1)
+
+        # Execute main query
+        result = await self._session.execute(base_query)
+        profiles = list(result.unique().scalars().all())
+
+        # Determine if there are more results
+        has_more = len(profiles) > limit
+        if has_more:
+            profiles = profiles[:limit]
+
+        # Determine next cursor (last item's ID if there are more)
+        next_cursor = str(profiles[-1].id) if profiles and has_more else None
+
+        return profiles, total_count, next_cursor, has_more
+
     async def get_all_dance_styles(self) -> list[DanceStyle]:
         """Get all available dance styles.
 

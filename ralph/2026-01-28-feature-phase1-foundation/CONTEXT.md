@@ -3712,3 +3712,50 @@ All 94 tasks have been completed:
 **Next**: T114, T118, T120, T121, or T115
 
 ---
+
+### Entry [E-019] 2026-01-29T17:30:00Z
+
+**Task**: T118 - Implement Cursor-Based Pagination
+**Status**: DONE
+**Progress**: 104/121 tasks | Blockers: 0
+
+**Accomplished**:
+- Created `HostSearchCursorResponse` schema with `items`, `next_cursor`, `has_more`, `total` fields
+- Added `search_with_cursor()` method to `HostProfileRepository`:
+  - Supports cursor parameter (host profile UUID)
+  - Returns tuple of (profiles, total_count, next_cursor, has_more)
+  - Fetches limit + 1 to efficiently determine if more results exist
+  - Includes stable ordering with secondary ID sort
+- Created new endpoint `GET /api/v1/hosts/search`:
+  - Uses cursor-based pagination for infinite scroll
+  - Accepts same filters as offset-based endpoint (lat, lng, radius_km, etc.)
+  - Supports fuzzy text search with `q` parameter
+  - Returns `HostSearchCursorResponse`
+- Bookings endpoint already had cursor-based pagination (verified)
+- Updated frontend hosts page (`routes/hosts/index.tsx`):
+  - Converted from offset pagination to cursor-based infinite scroll
+  - Implemented IntersectionObserver for automatic load more
+  - Added "Load more" button as fallback
+  - Added search input for fuzzy text search
+  - Fixed pagination reset on filter changes
+- Generated TypeScript types from OpenAPI
+- All 1567 backend tests pass with 82.99% coverage
+- TypeScript compilation passes
+
+**Evidence**:
+- Schema: app/schemas/host_profile.py (HostSearchCursorResponse)
+- Repository: app/repositories/host_profile.py (search_with_cursor)
+- Router: app/routers/hosts.py (search_hosts_cursor endpoint)
+- Frontend: frontend/src/routes/hosts/index.tsx (infinite scroll)
+- Tests: 19 new cursor pagination tests (11 router + 8 repository)
+- Total backend tests: 1567 passing
+- Coverage: 82.99% (above 80% threshold)
+- TypeScript: Compiles without errors
+- AC01: GET /api/v1/hosts/search returns cursor-based pagination ✓
+- AC02: GET /api/v1/bookings uses cursor pagination ✓ (already existed)
+- AC03: Response includes next_cursor, has_more fields ✓
+- AC04: Frontend infinite scroll uses cursor ✓
+
+**Next**: T114, T120, T121, or T115
+
+---

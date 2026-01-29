@@ -26,6 +26,7 @@ from app.schemas.host_profile import (
     HostDanceStyleResponse,
     HostProfileSummaryResponse,
     HostProfileWithUserResponse,
+    HostSearchCursorResponse,
     HostSearchResponse,
 )
 from app.schemas.review import (
@@ -266,6 +267,200 @@ async def search_hosts(
         page=page,
         page_size=page_size,
         total_pages=total_pages,
+    )
+
+
+@router.get(
+    "/search",
+    response_model=HostSearchCursorResponse,
+    summary="Search for hosts with cursor pagination",
+    description="Search for dance hosts with cursor-based pagination for infinite scroll.",
+)
+async def search_hosts_cursor(
+    db: DbSession,
+    cursor: Annotated[
+        str | None,
+        Query(
+            description="Cursor for pagination (host profile ID from previous page)",
+        ),
+    ] = None,
+    lat: Annotated[
+        float | None,
+        Query(
+            ge=-90.0,
+            le=90.0,
+            description="Search center latitude",
+        ),
+    ] = None,
+    lng: Annotated[
+        float | None,
+        Query(
+            ge=-180.0,
+            le=180.0,
+            description="Search center longitude",
+        ),
+    ] = None,
+    radius_km: Annotated[
+        float,
+        Query(
+            ge=1.0,
+            le=500.0,
+            description="Search radius in kilometers",
+        ),
+    ] = 50.0,
+    styles: Annotated[
+        list[str] | None,
+        Query(
+            description="Filter by dance style UUIDs",
+        ),
+    ] = None,
+    min_rating: Annotated[
+        float | None,
+        Query(
+            ge=1.0,
+            le=5.0,
+            description="Minimum rating filter",
+        ),
+    ] = None,
+    max_price: Annotated[
+        int | None,
+        Query(
+            ge=100,
+            description="Maximum hourly rate in cents",
+        ),
+    ] = None,
+    verified_only: Annotated[
+        bool,
+        Query(
+            description="Only show verified hosts",
+        ),
+    ] = False,
+    sort_by: Annotated[
+        str,
+        Query(
+            description="Sort field: 'distance', 'rating', 'price', 'relevance'",
+        ),
+    ] = "distance",
+    limit: Annotated[
+        int,
+        Query(
+            ge=1,
+            le=100,
+            description="Results per page (1-100)",
+        ),
+    ] = 20,
+    q: Annotated[
+        str | None,
+        Query(
+            max_length=200,
+            description="Search query for fuzzy matching on host names and bio",
+        ),
+    ] = None,
+) -> HostSearchCursorResponse:
+    """Search for dance hosts with cursor-based pagination.
+
+    This endpoint provides location-based host discovery with cursor-based
+    pagination optimized for infinite scroll. Use next_cursor from the
+    response to fetch the next page of results.
+
+    Args:
+        db: The database session (injected).
+        cursor: Cursor from previous page (host profile ID).
+        lat: Search center latitude (required for distance sorting).
+        lng: Search center longitude (required for distance sorting).
+        radius_km: Search radius in kilometers (default 50km).
+        styles: List of dance style UUIDs to filter by.
+        min_rating: Minimum average rating filter.
+        max_price: Maximum hourly rate in cents.
+        verified_only: Only return verified hosts.
+        sort_by: Sort field - 'distance', 'rating', 'price', or 'relevance'.
+        limit: Number of results per page.
+        q: Optional search query for fuzzy text matching.
+
+    Returns:
+        HostSearchCursorResponse with items, next_cursor, has_more, and total.
+    """
+    # Validate sort_by
+    allowed_sort_fields = {"distance", "rating", "price", "relevance"}
+    if sort_by not in allowed_sort_fields:
+        sort_by = "relevance" if q else "distance"
+
+    host_repo = HostProfileRepository(db)
+
+    # Convert style strings to UUIDs if provided
+    style_uuids = None
+    if styles:
+        style_uuids = [UUID(s) for s in styles]
+
+    # Parse cursor if provided
+    cursor_uuid = None
+    if cursor:
+        try:
+            cursor_uuid = UUID(cursor)
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid cursor format",
+            ) from e
+
+    # Map sort_by to repository order_by
+    order_by_map = {
+        "distance": "distance",
+        "rating": "rating",
+        "price": "price",
+        "relevance": "relevance",
+    }
+    order_by = order_by_map.get(sort_by, "distance")
+
+    # Execute cursor-based search
+    profiles, total_count, next_cursor, has_more = await host_repo.search_with_cursor(
+        cursor=cursor_uuid,
+        latitude=lat,
+        longitude=lng,
+        radius_km=radius_km if lat is not None and lng is not None else None,
+        style_ids=style_uuids,
+        min_rating=min_rating,
+        max_price_cents=max_price,
+        order_by=order_by,
+        limit=limit,
+        query=q,
+    )
+
+    # Filter by verification status if requested
+    if verified_only:
+        profiles = [
+            p for p in profiles if p.verification_status == VerificationStatus.VERIFIED
+        ]
+        # Note: Post-filtering means total and has_more may be slightly inaccurate
+
+    # Build response items
+    items = []
+    for profile in profiles:
+        # Calculate distance if location provided
+        distance_km = None
+        if lat is not None and lng is not None and profile.location is not None:
+            distance_km = _calculate_distance_km(lat, lng, profile)
+
+        items.append(
+            HostProfileSummaryResponse(
+                id=str(profile.id),
+                user_id=str(profile.user_id),
+                first_name=profile.user.first_name,
+                last_name=profile.user.last_name,
+                headline=profile.headline,
+                hourly_rate_cents=profile.hourly_rate_cents,
+                rating_average=profile.rating_average,
+                total_reviews=profile.total_reviews,
+                verification_status=profile.verification_status,
+                distance_km=distance_km,
+            )
+        )
+
+    return HostSearchCursorResponse(
+        items=items,
+        next_cursor=next_cursor,
+        has_more=has_more,
+        total=total_count,
     )
 
 

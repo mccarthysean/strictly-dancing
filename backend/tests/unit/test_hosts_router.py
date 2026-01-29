@@ -1913,6 +1913,197 @@ class TestCalculateDistanceKm:
         assert result is None
 
 
+class TestSearchHostsCursor:
+    """Tests for cursor-based pagination on GET /api/v1/hosts/search endpoint."""
+
+    def test_search_cursor_endpoint_exists(self, client: TestClient) -> None:
+        """Test that the cursor-based search endpoint exists."""
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search_with_cursor.return_value = ([], 0, None, False)
+
+            response = client.get("/api/v1/hosts/search")
+            assert response.status_code != status.HTTP_404_NOT_FOUND
+
+    def test_search_cursor_returns_200(self, client: TestClient) -> None:
+        """Test that cursor search returns 200 OK."""
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search_with_cursor.return_value = ([], 0, None, False)
+
+            response = client.get("/api/v1/hosts/search")
+            assert response.status_code == status.HTTP_200_OK
+
+    def test_search_cursor_response_structure(self, client: TestClient) -> None:
+        """Test that cursor response has correct fields."""
+        mock_profile = create_mock_host_profile()
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search_with_cursor.return_value = (
+                [mock_profile],
+                1,
+                "next-cursor-id",
+                True,
+            )
+
+            response = client.get("/api/v1/hosts/search")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert "items" in data
+            assert "next_cursor" in data
+            assert "has_more" in data
+            assert "total" in data
+            # Should NOT have offset-based pagination fields
+            assert "page" not in data
+            assert "page_size" not in data
+            assert "total_pages" not in data
+
+    def test_search_cursor_accepts_cursor_parameter(self, client: TestClient) -> None:
+        """Test that cursor parameter is accepted."""
+        cursor_id = "660e8400-e29b-41d4-a716-446655440001"
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search_with_cursor.return_value = ([], 0, None, False)
+
+            response = client.get(f"/api/v1/hosts/search?cursor={cursor_id}")
+            assert response.status_code == status.HTTP_200_OK
+
+            # Verify cursor was passed to repository
+            call_kwargs = mock_host_repo.search_with_cursor.call_args.kwargs
+            assert str(call_kwargs["cursor"]) == cursor_id
+
+    def test_search_cursor_invalid_cursor_returns_400(self, client: TestClient) -> None:
+        """Test that invalid cursor format returns 400."""
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+
+            response = client.get("/api/v1/hosts/search?cursor=not-a-uuid")
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_search_cursor_returns_next_cursor(self, client: TestClient) -> None:
+        """Test that next_cursor is returned when there are more results."""
+        mock_profile = create_mock_host_profile()
+        next_cursor_id = "660e8400-e29b-41d4-a716-446655440002"
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search_with_cursor.return_value = (
+                [mock_profile],
+                10,
+                next_cursor_id,
+                True,
+            )
+
+            response = client.get("/api/v1/hosts/search?limit=1")
+            data = response.json()
+
+            assert data["next_cursor"] == next_cursor_id
+            assert data["has_more"] is True
+
+    def test_search_cursor_null_when_no_more(self, client: TestClient) -> None:
+        """Test that next_cursor is null when no more results."""
+        mock_profile = create_mock_host_profile()
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search_with_cursor.return_value = (
+                [mock_profile],
+                1,
+                None,
+                False,
+            )
+
+            response = client.get("/api/v1/hosts/search")
+            data = response.json()
+
+            assert data["next_cursor"] is None
+            assert data["has_more"] is False
+
+    def test_search_cursor_accepts_limit_parameter(self, client: TestClient) -> None:
+        """Test that limit parameter is accepted."""
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search_with_cursor.return_value = ([], 0, None, False)
+
+            response = client.get("/api/v1/hosts/search?limit=50")
+            assert response.status_code == status.HTTP_200_OK
+
+            call_kwargs = mock_host_repo.search_with_cursor.call_args.kwargs
+            assert call_kwargs["limit"] == 50
+
+    def test_search_cursor_with_all_filters(self, client: TestClient) -> None:
+        """Test cursor search with all filter parameters."""
+        mock_profile = create_mock_host_profile()
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search_with_cursor.return_value = (
+                [mock_profile],
+                1,
+                None,
+                False,
+            )
+
+            response = client.get(
+                "/api/v1/hosts/search?lat=40.7&lng=-74.0&radius_km=25"
+                "&min_rating=4.0&max_price=10000&q=salsa&limit=10"
+            )
+            assert response.status_code == status.HTTP_200_OK
+
+            call_kwargs = mock_host_repo.search_with_cursor.call_args.kwargs
+            assert call_kwargs["latitude"] == 40.7
+            assert call_kwargs["longitude"] == -74.0
+            assert call_kwargs["radius_km"] == 25.0
+            assert call_kwargs["min_rating"] == 4.0
+            assert call_kwargs["max_price_cents"] == 10000
+            assert call_kwargs["query"] == "salsa"
+            assert call_kwargs["limit"] == 10
+
+    def test_search_cursor_sort_by_relevance(self, client: TestClient) -> None:
+        """Test that sort_by=relevance is supported."""
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search_with_cursor.return_value = ([], 0, None, False)
+
+            response = client.get("/api/v1/hosts/search?q=salsa&sort_by=relevance")
+            assert response.status_code == status.HTTP_200_OK
+
+            call_kwargs = mock_host_repo.search_with_cursor.call_args.kwargs
+            assert call_kwargs["order_by"] == "relevance"
+
+    def test_search_cursor_returns_total_count(self, client: TestClient) -> None:
+        """Test that total count is returned."""
+        mock_profile = create_mock_host_profile()
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search_with_cursor.return_value = (
+                [mock_profile],
+                42,
+                None,
+                False,
+            )
+
+            response = client.get("/api/v1/hosts/search")
+            data = response.json()
+
+            assert data["total"] == 42
+
+
 class TestFuzzySearchHosts:
     """Tests for fuzzy text search on hosts endpoint using pg_trgm."""
 
