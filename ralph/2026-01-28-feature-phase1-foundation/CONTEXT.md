@@ -276,3 +276,31 @@ strictly-dancing/
 - Key tests: test_user_repository_create, test_user_repository_get_by_email, test_user_repository_exists_by_email
 
 **Next**: T008 - Implement Password Hashing Service
+
+---
+
+### Entry [E-009] 2026-01-29T06:00:00Z
+
+**Task**: T008 - Implement Password Hashing Service
+**Status**: DONE
+**Progress**: 8/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created app/services/__init__.py with service exports
+- Created app/services/password.py with PasswordService class
+- Uses argon2-cffi with secure Argon2id parameters (time_cost=3, memory_cost=65536, parallelism=4)
+- hash_password() hashes passwords using Argon2id algorithm
+- verify_password() uses time-constant comparison (built into argon2-cffi)
+- validate_password_strength() enforces minimum 8 character requirement
+- needs_rehash() method for detecting when rehashing is needed
+- Singleton password_service instance for convenience
+- Updated pyproject.toml to use argon2-cffi instead of passlib[bcrypt]
+- Created 19 unit tests for PasswordService (all passing)
+
+**Evidence**:
+- Tests: All passing (86/86 total)
+- Files: app/services/__init__.py, app/services/password.py, tests/unit/test_password_service.py
+- Linting: All checks passed
+- Key tests: test_password_hashing_produces_valid_format, test_password_verification_succeeds_fails_correctly, test_different_hashes_for_same_password
+
+**Next**: T009 - Implement JWT Token Service

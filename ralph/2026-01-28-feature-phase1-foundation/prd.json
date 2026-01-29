@@ -169,14 +169,14 @@
       "id": "T008",
       "title": "Implement Password Hashing Service",
       "description": "Create secure Argon2id password hashing service.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T002"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "backend/app/services/password.py exists with PasswordService", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "hash_password() uses argon2-cffi with secure parameters", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "verify_password() uses time-constant comparison", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Minimum 8 character enforcement", "verification": "test", "met": false}
+        {"id": "AC01", "criterion": "backend/app/services/password.py exists with PasswordService", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "hash_password() uses argon2-cffi with secure parameters", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "verify_password() uses time-constant comparison", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Minimum 8 character enforcement", "verification": "test", "met": true}
       ],
       "testing": {"unit_tests": ["test_password_hashing_produces_valid_format", "test_password_verification_succeeds_fails_correctly", "test_different_hashes_for_same_password"]}
     },
