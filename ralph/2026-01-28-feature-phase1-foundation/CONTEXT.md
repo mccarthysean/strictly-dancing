@@ -2156,3 +2156,44 @@ strictly-dancing/
 
 **Next**: T068 - Frontend Availability Management Page
 
+
+### Entry [E-069] 2026-01-29T09:55:00Z
+
+**Task**: T068 - Frontend Availability Management Page
+**Status**: DONE
+**Progress**: 68/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created frontend/src/routes/host/availability.tsx with complete availability management page
+- Implemented weekly schedule editor with:
+  - Time pickers using 30-minute intervals
+  - Add/remove time slots for each day of the week
+  - Quick templates (Weekdays 9-5, Every day 10-8, Weekends only, Clear all)
+  - Save/Cancel actions with unsaved changes tracking
+- Added one-time overrides section with:
+  - Add available slot functionality
+  - Date picker, time pickers, all-day option
+  - Optional reason field
+  - List view with delete functionality
+- Created blocked dates section with:
+  - Add blocked time/date functionality
+  - Visual blocked date calendar showing upcoming blocked dates
+  - List view with delete functionality
+- Added tabbed navigation between Weekly Schedule, One-Time Slots, and Blocked Dates
+- Implemented API integration:
+  - GET /api/v1/users/me/host-profile/availability for fetching current schedule
+  - PUT /api/v1/users/me/host-profile/availability for saving weekly schedule
+  - POST /api/v1/users/me/host-profile/availability/overrides for adding overrides
+  - DELETE /api/v1/users/me/host-profile/availability/overrides/{id} for removing overrides
+- Success/error banners for user feedback
+- Auth guards (requires login and host profile)
+- TypeScript compiles with no errors
+- Frontend builds successfully (122.93 KB gzipped bundle)
+
+**Evidence**:
+- Files: frontend/src/routes/host/availability.tsx
+- TypeScript: tsc --noEmit passes with no errors
+- Build: vite build completes successfully (122.93 KB gzipped)
+- Key features: weekly schedule editor, one-time overrides, blocked dates calendar
+
+**Next**: T069 - Configure Push Notifications Backend

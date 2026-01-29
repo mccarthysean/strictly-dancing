@@ -19,6 +19,7 @@ import { Route as BookingsIndexRouteImport } from './routes/bookings/index'
 import { Route as MessagesConversationIdRouteImport } from './routes/messages/$conversationId'
 import { Route as HostsHostIdRouteImport } from './routes/hosts/$hostId'
 import { Route as HostDashboardRouteImport } from './routes/host/dashboard'
+import { Route as HostAvailabilityRouteImport } from './routes/host/availability'
 import { Route as BookingsBookingIdRouteImport } from './routes/bookings/$bookingId'
 import { Route as HostsHostIdBookRouteImport } from './routes/hosts/$hostId/book'
 import { Route as HostProfileEditRouteImport } from './routes/host/profile/edit'
@@ -73,6 +74,11 @@ const HostDashboardRoute = HostDashboardRouteImport.update({
   path: '/host/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HostAvailabilityRoute = HostAvailabilityRouteImport.update({
+  id: '/host/availability',
+  path: '/host/availability',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BookingsBookingIdRoute = BookingsBookingIdRouteImport.update({
   id: '/bookings/$bookingId',
   path: '/bookings/$bookingId',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
+  '/host/availability': typeof HostAvailabilityRoute
   '/host/dashboard': typeof HostDashboardRoute
   '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
   '/messages/$conversationId': typeof MessagesConversationIdRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
+  '/host/availability': typeof HostAvailabilityRoute
   '/host/dashboard': typeof HostDashboardRoute
   '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
   '/messages/$conversationId': typeof MessagesConversationIdRoute
@@ -126,6 +134,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
+  '/host/availability': typeof HostAvailabilityRoute
   '/host/dashboard': typeof HostDashboardRoute
   '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
   '/messages/$conversationId': typeof MessagesConversationIdRoute
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/settings'
     | '/bookings/$bookingId'
+    | '/host/availability'
     | '/host/dashboard'
     | '/hosts/$hostId'
     | '/messages/$conversationId'
@@ -158,6 +168,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/settings'
     | '/bookings/$bookingId'
+    | '/host/availability'
     | '/host/dashboard'
     | '/hosts/$hostId'
     | '/messages/$conversationId'
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/settings'
     | '/bookings/$bookingId'
+    | '/host/availability'
     | '/host/dashboard'
     | '/hosts/$hostId'
     | '/messages/$conversationId'
@@ -189,6 +201,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
   BookingsBookingIdRoute: typeof BookingsBookingIdRoute
+  HostAvailabilityRoute: typeof HostAvailabilityRoute
   HostDashboardRoute: typeof HostDashboardRoute
   HostsHostIdRoute: typeof HostsHostIdRouteWithChildren
   MessagesConversationIdRoute: typeof MessagesConversationIdRoute
@@ -270,6 +283,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HostDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/host/availability': {
+      id: '/host/availability'
+      path: '/host/availability'
+      fullPath: '/host/availability'
+      preLoaderRoute: typeof HostAvailabilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bookings/$bookingId': {
       id: '/bookings/$bookingId'
       path: '/bookings/$bookingId'
@@ -312,6 +332,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
   BookingsBookingIdRoute: BookingsBookingIdRoute,
+  HostAvailabilityRoute: HostAvailabilityRoute,
   HostDashboardRoute: HostDashboardRoute,
   HostsHostIdRoute: HostsHostIdRouteWithChildren,
   MessagesConversationIdRoute: MessagesConversationIdRoute,
