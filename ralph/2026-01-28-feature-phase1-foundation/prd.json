@@ -1058,14 +1058,14 @@
       "id": "T067",
       "title": "Frontend Booking Detail Page",
       "description": "Create detailed booking view with actions.",
-      "passes": false,
+      "passes": true,
       "phase": "phase3-booking-system",
       "dependencies": ["T047"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "frontend/src/routes/bookings/$bookingId.tsx exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Full booking details with map showing location", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Role-based actions (Confirm/Decline/Cancel/Start/Complete)", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Message button and Add to Calendar", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "frontend/src/routes/bookings/$bookingId.tsx exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Full booking details with map showing location", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Role-based actions (Confirm/Decline/Cancel/Start/Complete)", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Message button and Add to Calendar", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },

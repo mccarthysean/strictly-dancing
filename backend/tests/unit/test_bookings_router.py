@@ -3256,6 +3256,234 @@ class TestCompleteBookingEndpoint:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
+class TestGetBookingEndpoint:
+    """Tests for GET /api/v1/bookings/{booking_id} endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_get_booking_endpoint_exists(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+    ):
+        """Test that the get booking endpoint exists and returns 200."""
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app),
+                    base_url="http://test",
+                ) as client:
+                    response = await client.get(
+                        f"/api/v1/bookings/{sample_booking.id}",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.asyncio
+    async def test_get_booking_returns_booking_details(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+    ):
+        """Test that the get booking endpoint returns booking details."""
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app),
+                    base_url="http://test",
+                ) as client:
+                    response = await client.get(
+                        f"/api/v1/bookings/{sample_booking.id}",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["id"] == str(sample_booking.id)
+        assert data["client_id"] == sample_booking.client_id
+        assert data["host_id"] == sample_booking.host_id
+        assert data["status"] == sample_booking.status.value
+        assert data["duration_minutes"] == sample_booking.duration_minutes
+        assert data["amount_cents"] == sample_booking.amount_cents
+
+    @pytest.mark.asyncio
+    async def test_get_booking_as_host(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that host can access their booking."""
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app),
+                    base_url="http://test",
+                ) as client:
+                    response = await client.get(
+                        f"/api/v1/bookings/{sample_booking.id}",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.asyncio
+    async def test_get_booking_not_found_returns_404(
+        self,
+        mock_db,
+        sample_user,
+    ):
+        """Test that non-existent booking returns 404."""
+        non_existent_id = uuid4()
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = None
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app),
+                    base_url="http://test",
+                ) as client:
+                    response = await client.get(
+                        f"/api/v1/bookings/{non_existent_id}",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.asyncio
+    async def test_get_booking_unrelated_user_returns_403(
+        self,
+        mock_db,
+        sample_booking,
+    ):
+        """Test that unrelated user cannot access booking."""
+        # Create an unrelated user
+        unrelated_user = MagicMock(spec=User)
+        unrelated_user.id = uuid4()
+        unrelated_user.email = "unrelated@test.com"
+        unrelated_user.first_name = "Unrelated"
+        unrelated_user.last_name = "User"
+        unrelated_user.user_type = UserType.CLIENT
+        unrelated_user.is_active = True
+        unrelated_user.email_verified = True
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(unrelated_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = unrelated_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app),
+                    base_url="http://test",
+                ) as client:
+                    response = await client.get(
+                        f"/api/v1/bookings/{sample_booking.id}",
+                        headers=get_auth_header(unrelated_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @pytest.mark.asyncio
+    async def test_get_booking_requires_authentication(
+        self,
+        mock_db,
+        sample_booking,
+    ):
+        """Test that get booking endpoint requires authentication."""
+        async with AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://test",
+        ) as client:
+            response = await client.get(
+                f"/api/v1/bookings/{sample_booking.id}",
+            )
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
 class TestListBookingsEndpoint:
     """Tests for GET /api/v1/bookings endpoint."""
 

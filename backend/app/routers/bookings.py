@@ -649,6 +649,55 @@ async def complete_booking(
     return _build_booking_response(booking, include_details=True)
 
 
+@router.get(
+    "/{booking_id}",
+    response_model=BookingWithDetailsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get a booking by ID",
+    description="Get detailed information about a specific booking.",
+)
+async def get_booking(
+    booking_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> BookingWithDetailsResponse:
+    """Get a specific booking by its ID.
+
+    Only participants of the booking (client or host) can view it.
+
+    Args:
+        booking_id: The booking's unique identifier.
+        db: The database session (injected).
+        current_user: The authenticated user (injected).
+
+    Returns:
+        BookingWithDetailsResponse with the booking details.
+
+    Raises:
+        HTTPException: 403 if user is not a participant in the booking.
+        HTTPException: 404 if booking not found.
+    """
+    booking_repo = BookingRepository(db)
+
+    # Get the booking with relationships
+    booking = await booking_repo.get_by_id(booking_id, load_relationships=True)
+    if booking is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Booking not found",
+        )
+
+    # Verify that the current user is either the client or the host
+    user_id_str = str(current_user.id)
+    if booking.client_id != user_id_str and booking.host_id != user_id_str:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not a participant in this booking",
+        )
+
+    return _build_booking_response(booking, include_details=True)
+
+
 # Type aliases for query parameters with validation
 StatusFilterQuery = Annotated[
     list[BookingStatus] | None,

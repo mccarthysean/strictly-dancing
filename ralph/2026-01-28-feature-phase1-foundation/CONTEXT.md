@@ -2107,3 +2107,52 @@ strictly-dancing/
 
 **Next**: T067 - Frontend Booking Detail Page
 
+---
+
+### Entry [E-068] 2026-01-29T09:45:00Z
+
+**Task**: T067 - Frontend Booking Detail Page
+**Status**: DONE
+**Progress**: 67/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created frontend/src/routes/bookings/$bookingId.tsx with complete booking detail page
+- Added backend GET /api/v1/bookings/{booking_id} endpoint to fetch single booking
+- Full booking details display:
+  - Other party info (client/host) with avatar and name
+  - Session details: date, time, duration, dance style
+  - Location section with map placeholder (Google Maps link when coordinates available)
+  - Pricing breakdown (shows host earnings for hosts)
+  - Notes section (client and host notes)
+  - Cancellation details for cancelled bookings
+- Role-based actions implemented:
+  - Pending (host): Confirm Booking, Decline buttons
+  - Confirmed: Start Session (when within 30 min), Cancel Booking
+  - In Progress (host): Complete Session button
+  - Completed (client): Leave a Review button (placeholder)
+- Quick actions for all statuses:
+  - Message button (starts/opens conversation with other party)
+  - Add to Calendar (Google Calendar integration)
+- Cancel booking modal with optional reason
+- Success/error banners for action feedback
+- Fixed bottom action bar for mobile-friendly UX
+- Added 6 unit tests for GET booking endpoint:
+  - test_get_booking_endpoint_exists
+  - test_get_booking_returns_booking_details
+  - test_get_booking_as_host
+  - test_get_booking_not_found_returns_404
+  - test_get_booking_unrelated_user_returns_403
+  - test_get_booking_requires_authentication
+- All 73 booking router tests pass (6 new tests added)
+- TypeScript compiles with no errors
+- Frontend builds successfully (118.83 KB gzipped bundle)
+
+**Evidence**:
+- Files: frontend/src/routes/bookings/$bookingId.tsx, backend/app/routers/bookings.py, backend/tests/unit/test_bookings_router.py
+- TypeScript: tsc --noEmit passes with no errors
+- Build: vite build completes successfully (118.83 KB gzipped)
+- Tests: 73 booking router tests passing
+- Key features: booking details, role-based actions, message button, calendar integration
+
+**Next**: T068 - Frontend Availability Management Page
+
