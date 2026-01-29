@@ -1106,3 +1106,37 @@ strictly-dancing/
 
 **Next**: T038 - Create Booking Schemas
 
+---
+
+### Entry [E-039] 2026-01-29T07:50:00Z
+
+**Task**: T038 - Create Booking Schemas
+**Status**: DONE
+**Progress**: 38/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/schemas/booking.py with comprehensive Pydantic schemas
+- Implemented BookingLocationRequest for session location with coordinate validation
+- Implemented CreateBookingRequest with duration validation (30-240 minutes)
+- Implemented CancelBookingRequest for cancellation operations
+- Implemented UserSummaryResponse and DanceStyleSummaryResponse for related data
+- Implemented BookingResponse with all booking fields
+- Implemented BookingWithDetailsResponse extending BookingResponse with relations
+- Implemented BookingListResponse for paginated booking lists
+- Implemented AvailabilitySlot and AvailabilitySlotWithDate for time slots
+- Implemented RecurringAvailabilityRequest/Response for weekly schedules
+- Implemented AvailabilityOverrideRequest/Response for one-time overrides
+- Implemented HostAvailabilityResponse combining recurring and overrides
+- Implemented AvailabilityForDateResponse and AvailabilityForDateRangeResponse
+- All validators working: duration range, coordinate bounds, time order, all_day logic
+- Updated app/schemas/__init__.py with 17 new schema exports
+- Created 52 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (656/656 total - 52 new tests added)
+- Files: app/schemas/booking.py, app/schemas/__init__.py, tests/unit/test_booking_schemas.py
+- Linting: All checks passed
+- Key tests: TestCreateBookingRequest (duration validation), TestAvailabilityOverrideRequest (time validation), TestBookingSchemaValidation (comprehensive duration tests)
+
+**Next**: T039 - Integrate Stripe Connect
+
