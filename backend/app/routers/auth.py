@@ -238,3 +238,26 @@ async def logout(
     # This endpoint exists for consistency and could be extended in the future
     # to support token blacklisting if needed.
     return None
+
+
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    summary="Get current user",
+    description="Retrieve the authenticated user's profile information.",
+)
+async def get_current_user_profile(
+    current_user: CurrentUser,
+) -> UserResponse:
+    """Get the current authenticated user's profile.
+
+    Returns the full user profile information for the authenticated user.
+    This endpoint requires a valid access token.
+
+    Args:
+        current_user: The authenticated user (injected via auth middleware).
+
+    Returns:
+        UserResponse with the user's profile data.
+    """
+    return UserResponse.model_validate(current_user)

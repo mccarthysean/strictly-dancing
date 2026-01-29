@@ -484,3 +484,27 @@ strictly-dancing/
 - Key tests: test_logout_endpoint_exists, test_logout_returns_204_on_success, test_logout_requires_authentication, test_logout_idempotent, test_logout_with_invalid_token_returns_401
 
 **Next**: T016 - Implement Get Current User Endpoint
+
+---
+
+### Entry [E-017] 2026-01-29T06:30:00Z
+
+**Task**: T016 - Implement Get Current User Endpoint
+**Status**: DONE
+**Progress**: 16/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created GET /api/v1/auth/me endpoint in app/routers/auth.py
+- Endpoint returns UserResponse with full user profile
+- Requires authentication via CurrentUser dependency (401 for unauthorized)
+- Uses UserResponse.model_validate() to convert User model to response
+- Password hash is never exposed in the response
+- Created 7 unit tests for /me endpoint (all passing)
+
+**Evidence**:
+- Tests: All passing (188/188 total)
+- Files: app/routers/auth.py, tests/unit/test_auth_router.py
+- Linting: All checks passed
+- Key tests: test_get_me_returns_200_on_success, test_get_me_returns_user_data, test_get_me_excludes_password_hash, test_get_me_requires_auth, test_get_me_returns_full_profile
+
+**Next**: T017 - Initialize PWA Frontend Project

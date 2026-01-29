@@ -782,3 +782,157 @@ class TestLogoutEndpoint:
             headers={"Authorization": "Bearer invalid_token"},
         )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+class TestGetCurrentUserEndpoint:
+    """Tests for GET /api/v1/auth/me endpoint."""
+
+    def test_get_me_endpoint_exists(self, client: TestClient) -> None:
+        """Test that the /me endpoint exists and accepts GET."""
+        # Without auth, should return 401/403, not 404
+        response = client.get("/api/v1/auth/me")
+        assert response.status_code != status.HTTP_404_NOT_FOUND
+
+    def test_get_me_returns_200_on_success(self, client: TestClient) -> None:
+        """Test that authenticated request returns 200 OK."""
+        from app.core.deps import get_current_user
+        from app.main import create_app
+
+        mock_user = MagicMock()
+        mock_user.id = "550e8400-e29b-41d4-a716-446655440000"
+        mock_user.email = "test@example.com"
+        mock_user.first_name = "Test"
+        mock_user.last_name = "User"
+        mock_user.user_type = UserType.CLIENT
+        mock_user.email_verified = False
+        mock_user.is_active = True
+        mock_user.created_at = "2026-01-29T00:00:00Z"
+        mock_user.updated_at = "2026-01-29T00:00:00Z"
+
+        app = create_app()
+        app.dependency_overrides[get_current_user] = lambda: mock_user
+
+        with TestClient(app) as test_client:
+            response = test_client.get(
+                "/api/v1/auth/me",
+                headers={"Authorization": "Bearer valid_token"},
+            )
+            assert response.status_code == status.HTTP_200_OK
+
+    def test_get_me_returns_user_data(self, client: TestClient) -> None:
+        """Test that /me returns the user's profile data."""
+        from app.core.deps import get_current_user
+        from app.main import create_app
+
+        mock_user = MagicMock()
+        mock_user.id = "550e8400-e29b-41d4-a716-446655440000"
+        mock_user.email = "authenticated@example.com"
+        mock_user.first_name = "Auth"
+        mock_user.last_name = "User"
+        mock_user.user_type = UserType.HOST
+        mock_user.email_verified = True
+        mock_user.is_active = True
+        mock_user.created_at = "2026-01-29T00:00:00Z"
+        mock_user.updated_at = "2026-01-29T00:00:00Z"
+
+        app = create_app()
+        app.dependency_overrides[get_current_user] = lambda: mock_user
+
+        with TestClient(app) as test_client:
+            response = test_client.get(
+                "/api/v1/auth/me",
+                headers={"Authorization": "Bearer valid_token"},
+            )
+
+            data = response.json()
+            assert data["id"] == "550e8400-e29b-41d4-a716-446655440000"
+            assert data["email"] == "authenticated@example.com"
+            assert data["first_name"] == "Auth"
+            assert data["last_name"] == "User"
+            assert data["user_type"] == "host"
+            assert data["email_verified"] is True
+            assert data["is_active"] is True
+
+    def test_get_me_excludes_password_hash(self, client: TestClient) -> None:
+        """Test that /me response does not include password_hash."""
+        from app.core.deps import get_current_user
+        from app.main import create_app
+
+        mock_user = MagicMock()
+        mock_user.id = "550e8400-e29b-41d4-a716-446655440000"
+        mock_user.email = "test@example.com"
+        mock_user.first_name = "Test"
+        mock_user.last_name = "User"
+        mock_user.user_type = UserType.CLIENT
+        mock_user.email_verified = False
+        mock_user.is_active = True
+        mock_user.password_hash = "argon2$secret_hash"
+        mock_user.created_at = "2026-01-29T00:00:00Z"
+        mock_user.updated_at = "2026-01-29T00:00:00Z"
+
+        app = create_app()
+        app.dependency_overrides[get_current_user] = lambda: mock_user
+
+        with TestClient(app) as test_client:
+            response = test_client.get(
+                "/api/v1/auth/me",
+                headers={"Authorization": "Bearer valid_token"},
+            )
+
+            data = response.json()
+            assert "password_hash" not in data
+            assert "password" not in data
+
+    def test_get_me_requires_auth(self, client: TestClient) -> None:
+        """Test that /me requires authentication."""
+        response = client.get("/api/v1/auth/me")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_get_me_with_invalid_token_returns_401(self, client: TestClient) -> None:
+        """Test that /me with invalid token returns 401."""
+        response = client.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": "Bearer invalid_token"},
+        )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_get_me_returns_full_profile(self, client: TestClient) -> None:
+        """Test that /me returns all expected profile fields."""
+        from app.core.deps import get_current_user
+        from app.main import create_app
+
+        mock_user = MagicMock()
+        mock_user.id = "550e8400-e29b-41d4-a716-446655440000"
+        mock_user.email = "complete@example.com"
+        mock_user.first_name = "Complete"
+        mock_user.last_name = "Profile"
+        mock_user.user_type = UserType.BOTH
+        mock_user.email_verified = True
+        mock_user.is_active = True
+        mock_user.created_at = "2026-01-29T00:00:00Z"
+        mock_user.updated_at = "2026-01-29T12:00:00Z"
+
+        app = create_app()
+        app.dependency_overrides[get_current_user] = lambda: mock_user
+
+        with TestClient(app) as test_client:
+            response = test_client.get(
+                "/api/v1/auth/me",
+                headers={"Authorization": "Bearer valid_token"},
+            )
+
+            data = response.json()
+            # Verify all expected fields are present
+            expected_fields = [
+                "id",
+                "email",
+                "first_name",
+                "last_name",
+                "user_type",
+                "email_verified",
+                "is_active",
+                "created_at",
+                "updated_at",
+            ]
+            for field in expected_fields:
+                assert field in data, f"Missing expected field: {field}"
