@@ -213,6 +213,8 @@ class TestUserResponseSchema:
             "user_type",
             "email_verified",
             "is_active",
+            "avatar_url",
+            "avatar_thumbnail_url",
             "created_at",
             "updated_at",
         }

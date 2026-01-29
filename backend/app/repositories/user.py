@@ -214,3 +214,46 @@ class UserRepository:
         user.email_verified = True
         await self._session.flush()
         return user
+
+    async def update_avatar(
+        self,
+        user_id: UUID,
+        avatar_url: str,
+        avatar_thumbnail_url: str,
+    ) -> User | None:
+        """Update a user's avatar URLs.
+
+        Args:
+            user_id: The user's unique identifier.
+            avatar_url: URL to the main avatar image.
+            avatar_thumbnail_url: URL to the thumbnail avatar image.
+
+        Returns:
+            The updated User if found, None if user doesn't exist.
+        """
+        user = await self.get_by_id(user_id)
+        if user is None:
+            return None
+
+        user.avatar_url = avatar_url
+        user.avatar_thumbnail_url = avatar_thumbnail_url
+        await self._session.flush()
+        return user
+
+    async def delete_avatar(self, user_id: UUID) -> User | None:
+        """Remove a user's avatar URLs.
+
+        Args:
+            user_id: The user's unique identifier.
+
+        Returns:
+            The updated User if found, None if user doesn't exist.
+        """
+        user = await self.get_by_id(user_id)
+        if user is None:
+            return None
+
+        user.avatar_url = None
+        user.avatar_thumbnail_url = None
+        await self._session.flush()
+        return user

@@ -4522,7 +4522,7 @@
       "id": "T108",
       "title": "Implement Profile Image Upload",
       "description": "Add S3-compatible storage for profile images as per PRD (Supabase Storage).",
-      "passes": false,
+      "passes": true,
       "phase": "phase2-host-profiles",
       "dependencies": [
         "T029"
@@ -4532,31 +4532,31 @@
           "id": "AC01",
           "criterion": "app/services/storage.py exists with StorageService",
           "verification": "file_exists",
-          "met": false
+          "met": true
         },
         {
           "id": "AC02",
           "criterion": "S3/Supabase Storage integration for file uploads",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC03",
           "criterion": "POST /api/v1/users/me/avatar uploads and stores image",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC04",
           "criterion": "Image resizing/cropping on upload",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC05",
           "criterion": "Unit tests with mocked storage",
           "verification": "test",
-          "met": false
+          "met": true
         }
       ],
       "testing": {

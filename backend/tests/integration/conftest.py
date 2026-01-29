@@ -54,6 +54,8 @@ def make_mock_user(
     mock_user.password_hash = password_hash
     mock_user.created_at = datetime.now(UTC)
     mock_user.updated_at = datetime.now(UTC)
+    mock_user.avatar_url = None
+    mock_user.avatar_thumbnail_url = None
     return mock_user
 
 

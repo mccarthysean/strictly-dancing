@@ -45,6 +45,8 @@ class TestRegistrationEndpoint:
             mock_user.is_active = True
             mock_user.created_at = "2026-01-29T00:00:00Z"
             mock_user.updated_at = "2026-01-29T00:00:00Z"
+            mock_user.avatar_url = None
+            mock_user.avatar_thumbnail_url = None
             mock_repo.create_passwordless.return_value = mock_user
             mock_welcome_email.delay = MagicMock()
 
@@ -79,6 +81,8 @@ class TestRegistrationEndpoint:
             mock_user.is_active = True
             mock_user.created_at = "2026-01-29T00:00:00Z"
             mock_user.updated_at = "2026-01-29T00:00:00Z"
+            mock_user.avatar_url = None
+            mock_user.avatar_thumbnail_url = None
             mock_repo.create_passwordless.return_value = mock_user
             mock_welcome_email.delay = MagicMock()
 
@@ -112,6 +116,8 @@ class TestRegistrationEndpoint:
             mock_user.is_active = True
             mock_user.created_at = "2026-01-29T00:00:00Z"
             mock_user.updated_at = "2026-01-29T00:00:00Z"
+            mock_user.avatar_url = None
+            mock_user.avatar_thumbnail_url = None
             mock_repo.create_passwordless.return_value = mock_user
             mock_welcome_email.delay = MagicMock()
 
@@ -189,6 +195,8 @@ class TestRegistrationEndpoint:
             mock_user.is_active = True
             mock_user.created_at = "2026-01-29T00:00:00Z"
             mock_user.updated_at = "2026-01-29T00:00:00Z"
+            mock_user.avatar_url = None
+            mock_user.avatar_thumbnail_url = None
             mock_repo.create_passwordless.return_value = mock_user
             mock_welcome_email.delay = MagicMock()
 
@@ -228,6 +236,8 @@ class TestRegistrationEndpoint:
             mock_user.is_active = True
             mock_user.created_at = "2026-01-29T00:00:00Z"
             mock_user.updated_at = "2026-01-29T00:00:00Z"
+            mock_user.avatar_url = None
+            mock_user.avatar_thumbnail_url = None
             mock_repo.create_passwordless.return_value = mock_user
             mock_welcome_email.delay = MagicMock()
 
@@ -854,6 +864,8 @@ class TestGetCurrentUserEndpoint:
         mock_user.is_active = True
         mock_user.created_at = "2026-01-29T00:00:00Z"
         mock_user.updated_at = "2026-01-29T00:00:00Z"
+        mock_user.avatar_url = None
+        mock_user.avatar_thumbnail_url = None
 
         app = create_app()
         app.dependency_overrides[get_current_user] = lambda: mock_user
@@ -880,6 +892,8 @@ class TestGetCurrentUserEndpoint:
         mock_user.is_active = True
         mock_user.created_at = "2026-01-29T00:00:00Z"
         mock_user.updated_at = "2026-01-29T00:00:00Z"
+        mock_user.avatar_url = None
+        mock_user.avatar_thumbnail_url = None
 
         app = create_app()
         app.dependency_overrides[get_current_user] = lambda: mock_user
@@ -915,6 +929,8 @@ class TestGetCurrentUserEndpoint:
         mock_user.password_hash = "argon2$secret_hash"
         mock_user.created_at = "2026-01-29T00:00:00Z"
         mock_user.updated_at = "2026-01-29T00:00:00Z"
+        mock_user.avatar_url = None
+        mock_user.avatar_thumbnail_url = None
 
         app = create_app()
         app.dependency_overrides[get_current_user] = lambda: mock_user
@@ -957,6 +973,8 @@ class TestGetCurrentUserEndpoint:
         mock_user.is_active = True
         mock_user.created_at = "2026-01-29T00:00:00Z"
         mock_user.updated_at = "2026-01-29T12:00:00Z"
+        mock_user.avatar_url = None
+        mock_user.avatar_thumbnail_url = None
 
         app = create_app()
         app.dependency_overrides[get_current_user] = lambda: mock_user

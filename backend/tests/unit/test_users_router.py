@@ -1,10 +1,12 @@
 """Unit tests for users router endpoints."""
 
+from io import BytesIO
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
+from PIL import Image
 
 from app.main import create_app
 from app.models.host_profile import VerificationStatus
@@ -964,3 +966,169 @@ class TestRemoveDanceStyleEndpoint:
 
             assert response.status_code == status.HTTP_404_NOT_FOUND
             assert "not found" in response.json()["detail"].lower()
+
+
+class TestUploadAvatarEndpoint:
+    """Tests for POST /api/v1/users/me/avatar endpoint."""
+
+    def test_upload_avatar_endpoint_exists(self, client: TestClient) -> None:
+        """Test that the upload-avatar endpoint exists and accepts POST."""
+        # Without auth, should get 401, not 404
+        response = client.post("/api/v1/users/me/avatar")
+        assert response.status_code != status.HTTP_404_NOT_FOUND
+
+    def test_upload_avatar_requires_authentication(self, client: TestClient) -> None:
+        """Test that upload-avatar requires authentication."""
+        response = client.post("/api/v1/users/me/avatar")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_upload_avatar_success(self, client: TestClient) -> None:
+        """Test successful avatar upload with valid image."""
+        mock_user = create_mock_user()
+        mock_user.avatar_url = None
+        mock_user.avatar_thumbnail_url = None
+
+        # Create a test image
+        img = Image.new("RGB", (100, 100), color="red")
+        buffer = BytesIO()
+        img.save(buffer, format="JPEG")
+        buffer.seek(0)
+
+        with (
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.core.deps.UserRepository") as mock_user_repo_class,
+            patch("app.routers.users.UserRepository") as mock_users_repo_class,
+        ):
+            # Set up auth mocks
+            mock_token_payload = MagicMock()
+            mock_token_payload.sub = mock_user.id
+            mock_token_payload.token_type = "access"
+            mock_token_service.verify_token.return_value = mock_token_payload
+
+            mock_user_repo = AsyncMock()
+            mock_user_repo_class.return_value = mock_user_repo
+            mock_user_repo.get_by_id.return_value = mock_user
+
+            # Set up user repo for updating avatar
+            mock_users_repo = AsyncMock()
+            mock_users_repo_class.return_value = mock_users_repo
+
+            response = client.post(
+                "/api/v1/users/me/avatar",
+                headers={"Authorization": "Bearer valid_token"},
+                files={"file": ("avatar.jpg", buffer, "image/jpeg")},
+            )
+
+            # The endpoint should succeed and return avatar URLs
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            assert "avatar_url" in data
+            assert "avatar_thumbnail_url" in data
+            # User repository should be called to update avatar
+            mock_users_repo.update_avatar.assert_called_once()
+
+    def test_upload_avatar_invalid_file(self, client: TestClient) -> None:
+        """Test upload rejects invalid file type."""
+        mock_user = create_mock_user()
+
+        with (
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.core.deps.UserRepository") as mock_user_repo_class,
+        ):
+            # Set up auth mocks
+            mock_token_payload = MagicMock()
+            mock_token_payload.sub = mock_user.id
+            mock_token_payload.token_type = "access"
+            mock_token_service.verify_token.return_value = mock_token_payload
+
+            mock_user_repo = AsyncMock()
+            mock_user_repo_class.return_value = mock_user_repo
+            mock_user_repo.get_by_id.return_value = mock_user
+
+            response = client.post(
+                "/api/v1/users/me/avatar",
+                headers={"Authorization": "Bearer valid_token"},
+                files={"file": ("test.txt", b"not an image", "text/plain")},
+            )
+
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+            assert "Invalid" in response.json()["detail"]
+
+
+class TestDeleteAvatarEndpoint:
+    """Tests for DELETE /api/v1/users/me/avatar endpoint."""
+
+    def test_delete_avatar_endpoint_exists(self, client: TestClient) -> None:
+        """Test that the delete-avatar endpoint exists and accepts DELETE."""
+        # Without auth, should get 401, not 404
+        response = client.delete("/api/v1/users/me/avatar")
+        assert response.status_code != status.HTTP_404_NOT_FOUND
+
+    def test_delete_avatar_requires_authentication(self, client: TestClient) -> None:
+        """Test that delete-avatar requires authentication."""
+        response = client.delete("/api/v1/users/me/avatar")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_delete_avatar_success(self, client: TestClient) -> None:
+        """Test successful avatar deletion."""
+        mock_user = create_mock_user()
+        mock_user.avatar_url = "https://example.com/avatars/user/abc/avatar.webp"
+        mock_user.avatar_thumbnail_url = (
+            "https://example.com/avatars/user/abc/thumb.webp"
+        )
+
+        with (
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.core.deps.UserRepository") as mock_user_repo_class,
+            patch("app.routers.users.UserRepository") as mock_users_repo_class,
+        ):
+            # Set up auth mocks
+            mock_token_payload = MagicMock()
+            mock_token_payload.sub = mock_user.id
+            mock_token_payload.token_type = "access"
+            mock_token_service.verify_token.return_value = mock_token_payload
+
+            mock_user_repo = AsyncMock()
+            mock_user_repo_class.return_value = mock_user_repo
+            mock_user_repo.get_by_id.return_value = mock_user
+
+            # Set up user repo for deleting avatar
+            mock_users_repo = AsyncMock()
+            mock_users_repo_class.return_value = mock_users_repo
+
+            response = client.delete(
+                "/api/v1/users/me/avatar",
+                headers={"Authorization": "Bearer valid_token"},
+            )
+
+            assert response.status_code == status.HTTP_204_NO_CONTENT
+            mock_users_repo.delete_avatar.assert_called_once()
+
+    def test_delete_avatar_no_avatar_returns_404(self, client: TestClient) -> None:
+        """Test that delete-avatar returns 404 if user has no avatar."""
+        mock_user = create_mock_user()
+        mock_user.avatar_url = None
+        mock_user.avatar_thumbnail_url = None
+
+        with (
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.core.deps.UserRepository") as mock_user_repo_class,
+            patch("app.routers.users.StorageService"),
+        ):
+            # Set up auth mocks
+            mock_token_payload = MagicMock()
+            mock_token_payload.sub = mock_user.id
+            mock_token_payload.token_type = "access"
+            mock_token_service.verify_token.return_value = mock_token_payload
+
+            mock_user_repo = AsyncMock()
+            mock_user_repo_class.return_value = mock_user_repo
+            mock_user_repo.get_by_id.return_value = mock_user
+
+            response = client.delete(
+                "/api/v1/users/me/avatar",
+                headers={"Authorization": "Bearer valid_token"},
+            )
+
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+            assert "no avatar" in response.json()["detail"].lower()

@@ -74,7 +74,18 @@ class UserResponse(BaseModel):
     user_type: UserType = Field(..., description="Type of user account")
     email_verified: bool = Field(..., description="Whether email is verified")
     is_active: bool = Field(..., description="Whether account is active")
+    avatar_url: str | None = Field(None, description="URL to user's profile image")
+    avatar_thumbnail_url: str | None = Field(
+        None, description="URL to user's thumbnail image"
+    )
     created_at: datetime = Field(..., description="Account creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
 
     # password_hash is intentionally NOT included - never expose in responses
+
+
+class AvatarUploadResponse(BaseModel):
+    """Response schema for avatar upload."""
+
+    avatar_url: str = Field(..., description="URL to the uploaded profile image")
+    avatar_thumbnail_url: str = Field(..., description="URL to the thumbnail image")

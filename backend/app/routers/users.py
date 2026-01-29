@@ -1,10 +1,11 @@
 """Users router for user profile management operations."""
 
+import logging
 from datetime import date, timedelta
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -28,6 +29,10 @@ from app.schemas.host_profile import (
     HostProfileResponse,
     UpdateHostProfileRequest,
 )
+from app.schemas.user import AvatarUploadResponse
+from app.services.storage import StorageService, get_storage_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
 
@@ -657,3 +662,123 @@ async def delete_availability_override(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Override not found",
         )
+
+
+# Type alias for storage service dependency
+StorageServiceDep = Annotated[StorageService, Depends(get_storage_service)]
+
+
+@router.post(
+    "/me/avatar",
+    response_model=AvatarUploadResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Upload avatar image",
+    description="Upload and process a profile image. Resizes and creates thumbnail.",
+)
+async def upload_avatar(
+    file: Annotated[UploadFile, File(description="Image file (JPEG, PNG, or WebP)")],
+    current_user: CurrentUser,
+    db: DbSession,
+    storage: StorageServiceDep,
+) -> AvatarUploadResponse:
+    """Upload a new avatar image for the current user.
+
+    The image is resized and a thumbnail is created. Supported formats
+    are JPEG, PNG, and WebP. Maximum file size is 5MB.
+
+    Args:
+        current_user: The authenticated user (injected via auth middleware).
+        db: The database session (injected).
+        storage: Storage service for file uploads (injected).
+        file: The uploaded image file.
+
+    Returns:
+        AvatarUploadResponse with avatar_url and avatar_thumbnail_url.
+
+    Raises:
+        HTTPException 400: If the file is invalid or too large.
+    """
+    # Read file contents
+    file_data = await file.read()
+
+    # Get content type from upload or infer from filename
+    content_type = file.content_type
+    if content_type is None:
+        # Try to infer from filename
+        filename = file.filename or ""
+        if filename.lower().endswith(".jpg") or filename.lower().endswith(".jpeg"):
+            content_type = "image/jpeg"
+        elif filename.lower().endswith(".png"):
+            content_type = "image/png"
+        elif filename.lower().endswith(".webp"):
+            content_type = "image/webp"
+        else:
+            content_type = "application/octet-stream"
+
+    # Upload and process the image
+    try:
+        result = await storage.upload_avatar(
+            user_id=str(current_user.id),
+            file_data=file_data,
+            content_type=content_type,
+            filename=file.filename,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        ) from e
+
+    # Update user record with new avatar URLs
+    user_repo = UserRepository(db)
+    await user_repo.update_avatar(
+        user_id=UUID(str(current_user.id)),
+        avatar_url=result["avatar_url"],
+        avatar_thumbnail_url=result["avatar_thumbnail_url"],
+    )
+
+    logger.info(f"Avatar uploaded for user {current_user.id}")
+
+    return AvatarUploadResponse(
+        avatar_url=result["avatar_url"],
+        avatar_thumbnail_url=result["avatar_thumbnail_url"],
+    )
+
+
+@router.delete(
+    "/me/avatar",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete avatar image",
+    description="Remove the current user's avatar image.",
+)
+async def delete_avatar(
+    current_user: CurrentUser,
+    db: DbSession,
+    storage: StorageServiceDep,
+) -> None:
+    """Delete the current user's avatar image.
+
+    Removes both the main avatar and thumbnail from storage.
+
+    Args:
+        current_user: The authenticated user (injected via auth middleware).
+        db: The database session (injected).
+        storage: Storage service for file operations (injected).
+
+    Raises:
+        HTTPException 404: If the user has no avatar.
+    """
+    if current_user.avatar_url is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User has no avatar",
+        )
+
+    # Delete from storage
+    await storage.delete_avatar(current_user.avatar_url)
+
+    # Update user record
+    user_repo = UserRepository(db)
+    await user_repo.delete_avatar(UUID(str(current_user.id)))
+
+    logger.info(f"Avatar deleted for user {current_user.id}")

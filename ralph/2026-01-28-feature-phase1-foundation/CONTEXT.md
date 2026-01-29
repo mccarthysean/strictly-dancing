@@ -3565,3 +3565,62 @@ All 94 tasks have been completed:
 **Next**: T108 - Implement Profile Image Upload
 
 ---
+
+### Entry [E-016] 2026-01-29T17:30:00Z
+
+**Task**: T108 - Implement Profile Image Upload
+**Status**: DONE
+**Progress**: 101/121 tasks | Blockers: 0
+
+**Accomplished**:
+- Created `app/services/storage.py` with StorageService:
+  - Abstract `StorageBackend` base class for storage backends
+  - `S3StorageBackend` for S3-compatible storage (AWS S3, Supabase, MinIO)
+  - `LocalStorageBackend` for local development file storage
+  - Image validation (file size, content type, actual image verification)
+  - Image resizing with aspect ratio preservation using Pillow
+  - Thumbnail creation with center-square cropping
+  - WebP output format for optimal file sizes
+  - Configurable settings for max size, dimensions, allowed types
+- Added S3/storage configuration to `app/core/config.py`:
+  - s3_bucket_name, s3_region, s3_access_key_id, s3_secret_access_key
+  - s3_endpoint_url for Supabase/MinIO compatibility
+  - storage_base_url for CDN support
+  - avatar_max_size_bytes (5MB), avatar_allowed_types, avatar_resize dimensions
+- Updated `app/models/user.py`:
+  - Added avatar_url column (String 500, nullable)
+  - Added avatar_thumbnail_url column (String 500, nullable)
+- Updated `app/schemas/user.py`:
+  - Added avatar_url and avatar_thumbnail_url to UserResponse
+  - Created AvatarUploadResponse schema
+- Updated `app/repositories/user.py`:
+  - Added update_avatar() method
+  - Added delete_avatar() method
+- Created migration `20260129_130000_add_avatar_columns_to_users.py`
+- Added endpoints to `app/routers/users.py`:
+  - POST /api/v1/users/me/avatar - upload and process avatar image
+  - DELETE /api/v1/users/me/avatar - delete avatar image
+- Added dependencies to pyproject.toml: pillow>=10.0.0, aioboto3>=12.0.0
+- Created comprehensive unit tests:
+  - `tests/unit/test_storage_service.py` (28 tests)
+  - Updated `tests/unit/test_users_router.py` with avatar endpoint tests
+  - Updated mock users in test files to include avatar fields
+- All 1510 backend tests pass with 83.29% coverage
+- Linting passes (ruff check + format)
+
+**Evidence**:
+- Files: app/services/storage.py, app/core/config.py, app/models/user.py, app/schemas/user.py, app/repositories/user.py, app/routers/users.py
+- Migration: alembic/versions/20260129_130000_add_avatar_columns_to_users.py
+- Tests: 28 in test_storage_service.py, avatar tests in test_users_router.py
+- Total backend tests: 1510 passing
+- Coverage: 83.29% (above 80% threshold)
+- Linting: All checks passed
+- AC01: app/services/storage.py exists with StorageService ✓
+- AC02: S3/Supabase Storage integration via S3StorageBackend ✓
+- AC03: POST /api/v1/users/me/avatar uploads and stores image ✓
+- AC04: Image resizing/cropping on upload via Pillow ✓
+- AC05: Unit tests with mocked storage (28 tests) ✓
+
+**Next**: T109 or next incomplete task
+
+---

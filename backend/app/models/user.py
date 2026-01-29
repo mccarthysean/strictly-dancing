@@ -73,6 +73,14 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         default=True,
         nullable=False,
     )
+    avatar_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+    avatar_thumbnail_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
 
     # Create a case-insensitive index on email for faster lookups
     __table_args__ = (

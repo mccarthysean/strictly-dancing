@@ -74,6 +74,21 @@ class Settings(BaseSettings):
     rate_limit_anonymous: int = 20  # requests per minute for anonymous users
     rate_limit_window_seconds: int = 60  # sliding window size
 
+    # S3 Storage settings
+    s3_bucket_name: str = ""  # Leave empty to use local file storage
+    s3_region: str = "us-west-2"
+    s3_access_key_id: str = ""
+    s3_secret_access_key: str = ""
+    s3_endpoint_url: str = ""  # For Supabase Storage or MinIO compatibility
+    storage_base_url: str = ""  # Base URL for accessing stored files (CDN or S3)
+
+    # Avatar settings
+    avatar_max_size_bytes: int = 5 * 1024 * 1024  # 5MB
+    avatar_allowed_types: list[str] = ["image/jpeg", "image/png", "image/webp"]
+    avatar_resize_width: int = 400  # Resize avatar to this width (preserving aspect)
+    avatar_resize_height: int = 400  # Max height for avatar
+    avatar_thumbnail_size: int = 100  # Thumbnail size (square)
+
 
 @lru_cache
 def get_settings() -> Settings:
