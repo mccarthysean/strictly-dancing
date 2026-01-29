@@ -3624,3 +3624,44 @@ All 94 tasks have been completed:
 **Next**: T109 or next incomplete task
 
 ---
+
+### Entry [E-017] 2026-01-29T17:52:00Z
+
+**Task**: T109 - Implement Database Trigger for Rating Average
+**Status**: DONE
+**Progress**: 102/121 tasks | Blockers: 0
+
+**Accomplished**:
+- Verified trigger already exists in migration `20260129_080000_create_reviews_table.py`:
+  - `update_host_rating_stats()` trigger function for INSERT/UPDATE
+  - `update_host_rating_stats_on_delete()` trigger function for DELETE
+  - Triggers: `trigger_update_host_rating_on_review_insert`, `trigger_update_host_rating_on_review_update`, `trigger_update_host_rating_on_review_delete`
+- Trigger implementation:
+  - Looks up host_profile via booking.host_profile_id
+  - Calculates AVG(rating) rounded to 2 decimal places
+  - Updates rating_average and total_reviews
+  - Updates updated_at timestamp
+  - Handles NULL average when no reviews remain (COALESCE)
+- Created comprehensive integration tests:
+  - `tests/integration/test_rating_trigger.py` (18 tests)
+  - TestRatingTriggerMigrationExists: Verifies trigger function, INSERT/UPDATE/DELETE triggers exist
+  - TestRatingTriggerLogic: Verifies ROUND precision, updated_at, NULL handling, downgrade
+  - TestRatingTriggerBehaviorExpectations: Verifies expected calculation behavior
+  - TestTriggerIntegrationRequirements: Verifies model columns match trigger expectations
+- All 1528 backend tests pass with 83.29% coverage
+- Linting passes (ruff check + format)
+
+**Evidence**:
+- Migration: alembic/versions/20260129_080000_create_reviews_table.py
+- Tests: 18 in test_rating_trigger.py
+- Total backend tests: 1528 passing
+- Coverage: 83.29% (above 80% threshold)
+- Linting: All checks passed
+- AC01: Alembic migration creates trigger function ✓
+- AC02: Trigger fires on INSERT/UPDATE/DELETE on reviews table ✓
+- AC03: rating_average is automatically recalculated ✓
+- AC04: Integration test verifies trigger works (18 tests) ✓
+
+**Next**: T110 or next incomplete task
+
+---

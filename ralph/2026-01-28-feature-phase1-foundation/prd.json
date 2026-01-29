@@ -4570,7 +4570,7 @@
       "id": "T109",
       "title": "Implement Database Trigger for Rating Average",
       "description": "Create PostgreSQL trigger to auto-update host rating_average when reviews are added.",
-      "passes": false,
+      "passes": true,
       "phase": "phase5-reviews",
       "dependencies": [
         "T055"
@@ -4580,25 +4580,25 @@
           "id": "AC01",
           "criterion": "Alembic migration creates trigger function",
           "verification": "file_exists",
-          "met": false
+          "met": true
         },
         {
           "id": "AC02",
           "criterion": "Trigger fires on INSERT/UPDATE/DELETE on reviews table",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC03",
           "criterion": "rating_average is automatically recalculated",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC04",
           "criterion": "Integration test verifies trigger works",
           "verification": "test",
-          "met": false
+          "met": true
         }
       ],
       "testing": {
