@@ -169,7 +169,10 @@
       "Bash(gh label list:*)",
       "Bash(jq:*)",
       "Bash(uvicorn:*)",
-      "Bash(alembic:*)"
+      "Bash(alembic:*)",
+      "Bash(nohup:*)",
+      "Bash(sleep:*)",
+      "Bash(./scripts/ralph-external-loop.sh:*)"
     ],
     "deny": [
       "Edit(/)",
