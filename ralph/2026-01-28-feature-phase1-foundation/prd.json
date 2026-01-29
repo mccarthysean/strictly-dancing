@@ -365,14 +365,14 @@
       "id": "T021",
       "title": "Implement Frontend Register Page",
       "description": "Create registration page with form validation.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T019"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "frontend/src/routes/register.tsx exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Fields: email, password, confirm password, first name, last name", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Password strength indicator", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Successful registration redirects to login", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "frontend/src/routes/register.tsx exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Fields: email, password, confirm password, first name, last name", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Password strength indicator", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Successful registration redirects to login", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },

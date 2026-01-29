@@ -608,3 +608,31 @@ strictly-dancing/
 - Features: form validation, loading state, error display, redirect on success
 
 **Next**: T021 - Implement Frontend Register Page
+
+---
+
+### Entry [E-022] 2026-01-29T07:45:00Z
+
+**Task**: T021 - Implement Frontend Register Page
+**Status**: DONE
+**Progress**: 21/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Implemented frontend/src/routes/register.tsx with full registration functionality
+- Fields: email, password, confirm password, first name, last name
+- Password strength indicator with score (Weak/Medium/Strong) and color bar
+- Password requirements checklist: 8+ chars, uppercase, lowercase, number
+- Confirm password validation with mismatch error display
+- Form validation disables submit until all requirements met
+- Loading state shows "Creating account..." during API call
+- Error messages displayed in styled error box
+- Successful registration redirects to login page
+- Link to login page for existing users
+- TypeScript check passes with no errors
+
+**Evidence**:
+- Files: src/routes/register.tsx (updated)
+- TypeScript: tsc --noEmit passes with no errors
+- Features: password strength indicator, requirements checklist, form validation
+
+**Next**: T022 - Create Homepage Route
