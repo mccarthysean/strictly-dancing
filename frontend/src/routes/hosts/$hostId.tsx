@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { $api } from '@/lib/api/$api'
 import type { components } from '@/types/api.gen'
+import { ReviewsList } from '@/components/ReviewsList'
 
 export const Route = createFileRoute('/hosts/$hostId')({
   component: HostProfilePage,
@@ -198,18 +199,10 @@ function HostProfilePage() {
         </div>
       )}
 
-      {/* Reviews Section (Placeholder) */}
+      {/* Reviews Section */}
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>Reviews</h2>
-        {host.total_reviews > 0 ? (
-          <p style={styles.reviewsPlaceholder}>
-            {host.total_reviews} review{host.total_reviews !== 1 ? 's' : ''} - Reviews display coming soon
-          </p>
-        ) : (
-          <p style={styles.noReviews}>
-            No reviews yet. Be the first to book a session!
-          </p>
-        )}
+        <ReviewsList hostId={hostId} totalReviews={host.total_reviews} />
       </div>
     </div>
   )
@@ -467,14 +460,5 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#6b7280',
     marginTop: '0.5rem',
     marginBottom: 0,
-  },
-  reviewsPlaceholder: {
-    color: '#6b7280',
-    margin: 0,
-  },
-  noReviews: {
-    color: '#9ca3af',
-    fontStyle: 'italic',
-    margin: 0,
   },
 }

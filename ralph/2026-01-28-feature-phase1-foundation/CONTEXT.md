@@ -1793,3 +1793,34 @@ strictly-dancing/
 
 **Next**: T059 - Frontend Reviews Display
 
+---
+
+### Entry [E-060] 2026-01-29T09:15:00Z
+
+**Task**: T059 - Frontend Reviews Display
+**Status**: DONE
+**Progress**: 59/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created frontend/src/components/ReviewsList.tsx as reusable component
+- Displays reviewer name with avatar (initials), star rating (1-5), and review text
+- Shows relative dates (Today, Yesterday, X days ago, X weeks ago, etc.)
+- Implemented host response section with:
+  - Distinct visual styling (left border highlight)
+  - Response icon and "Response from Host" label
+  - Response date display
+  - Pre-wrapped text for multiline responses
+- Implemented cursor-based pagination with "Load More Reviews" button
+- Integrated component into host profile page (hosts/$hostId.tsx)
+- Removed placeholder reviews section
+- TypeScript compiles with no errors
+- Frontend builds successfully (354.95 KB bundle)
+
+**Evidence**:
+- Files: frontend/src/components/ReviewsList.tsx, frontend/src/routes/hosts/$hostId.tsx
+- TypeScript: tsc --noEmit passes with no errors
+- Build: vite build completes successfully
+- Key features: reviewer info, star rating, review text, host response, pagination
+
+**Next**: T060 - Implement Host Dashboard
+
