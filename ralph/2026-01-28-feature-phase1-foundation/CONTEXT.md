@@ -331,3 +331,29 @@ strictly-dancing/
 - Key tests: test_access_token_has_15_minute_expiration, test_refresh_token_has_7_day_expiration, test_token_payload_includes_sub, test_verify_token_validates_signature, test_verify_token_validates_expiration
 
 **Next**: T010 - Create Authentication Pydantic Schemas
+
+---
+
+### Entry [E-011] 2026-01-29T06:00:00Z
+
+**Task**: T010 - Create Authentication Pydantic Schemas
+**Status**: DONE
+**Progress**: 10/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/schemas/auth.py with all required schemas
+- RegisterRequest: email (EmailStr validation), password (strength validation), first_name, last_name, user_type
+- LoginRequest: email, password (simple validation)
+- TokenResponse: access_token, refresh_token, token_type, expires_in
+- RefreshRequest: refresh_token
+- Password strength validation: min 8 chars, requires uppercase, lowercase, and digit
+- Updated app/schemas/__init__.py with new exports
+- Created 25 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (134/134 total)
+- Files: app/schemas/auth.py, tests/unit/test_auth_schemas.py
+- Linting: All checks passed
+- Key tests: test_auth_schema_email_validation, test_auth_schema_password_strength_requires_uppercase, test_auth_schema_password_strength_requires_lowercase, test_auth_schema_password_strength_requires_digit
+
+**Next**: T011 - Implement User Registration Endpoint
