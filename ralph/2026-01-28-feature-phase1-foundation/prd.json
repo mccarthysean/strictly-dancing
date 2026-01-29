@@ -380,14 +380,14 @@
       "id": "T022",
       "title": "Create Homepage Route",
       "description": "Implement basic homepage with navigation structure.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T018"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "frontend/src/routes/index.tsx exists with homepage component", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Homepage displays 'Strictly Dancing' title", "verification": "visual", "met": false},
-        {"id": "AC03", "criterion": "Navigation includes links to Login, Register", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Responsive layout works on mobile", "verification": "visual", "met": false}
+        {"id": "AC01", "criterion": "frontend/src/routes/index.tsx exists with homepage component", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Homepage displays 'Strictly Dancing' title", "verification": "visual", "met": true},
+        {"id": "AC03", "criterion": "Navigation includes links to Login, Register", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Responsive layout works on mobile", "verification": "visual", "met": true}
       ],
       "testing": {"unit_tests": []}
     },

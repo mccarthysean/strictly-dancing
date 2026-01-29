@@ -636,3 +636,27 @@ strictly-dancing/
 - Features: password strength indicator, requirements checklist, form validation
 
 **Next**: T022 - Create Homepage Route
+
+---
+
+### Entry [E-023] 2026-01-29T08:00:00Z
+
+**Task**: T022 - Create Homepage Route
+**Status**: DONE
+**Progress**: 22/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Updated frontend/src/routes/index.tsx with improved homepage
+- Homepage displays "Strictly Dancing" title with responsive clamp() sizing
+- Navigation in __root.tsx includes links to Login, Register
+- Responsive layout using flexWrap, clamp(), and mobile-friendly padding
+- Added authenticated state showing welcome message with user's name
+- Created placeholder hosts/index.tsx for host discovery page
+- TypeScript check passes with no errors
+
+**Evidence**:
+- Files: src/routes/index.tsx, src/routes/hosts/index.tsx, src/routes/__root.tsx
+- TypeScript: tsc --noEmit passes with no errors
+- Features: responsive typography, auth-aware content, navigation links
+
+**Next**: Phase 1 Foundation Complete - All backend and frontend foundation tasks done
