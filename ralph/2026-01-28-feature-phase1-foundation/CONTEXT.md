@@ -2804,3 +2804,33 @@ strictly-dancing/
 - Key features: date picker, time selection, price calculation, API integration
 
 **Next**: T084 - Mobile Bookings List Screen
+
+---
+
+### Entry [E-085] 2026-01-29T12:15:00Z
+
+**Task**: T084 - Mobile Bookings List Screen
+**Status**: DONE
+**Progress**: 84/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Implemented full bookings list screen at apps/mobile/app/(tabs)/bookings.tsx:
+  - Three tabs: Upcoming (pending/confirmed/in_progress), Past (completed), Cancelled (cancelled/disputed)
+  - Tab switching clears and refreshes list
+- Booking cards with comprehensive details:
+  - Partner avatar and name (host or client based on user role)
+  - Status badges with color coding (pending=yellow, confirmed=blue, in_progress=green, etc.)
+  - Date, time, duration, and dance style info
+  - Total amount and "View Details" link
+- Pull-to-refresh using RefreshControl
+- Cursor-based pagination with "load more" on scroll
+- Empty state for each tab with appropriate message
+- Auth check redirects to login if not authenticated
+- Integration with GET /api/v1/bookings endpoint with status filters
+
+**Evidence**:
+- File: apps/mobile/app/(tabs)/bookings.tsx
+- TypeScript: tsc --noEmit passes with no errors
+- Key features: tabs, status badges, pull-to-refresh, pagination
+
+**Next**: T085 - Mobile Chat Screen
