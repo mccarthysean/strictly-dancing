@@ -1211,14 +1211,14 @@
       "id": "T077",
       "title": "Create Mobile API Client Service",
       "description": "Set up typed API client for mobile app.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T076"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "apps/mobile/lib/api/client.ts exists with fetch wrapper", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Auto-injects auth token from secure store", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Token refresh on 401 with retry", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Type-safe with generated OpenAPI types", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "apps/mobile/lib/api/client.ts exists with fetch wrapper", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Auto-injects auth token from secure store", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Token refresh on 401 with retry", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Type-safe with generated OpenAPI types", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": ["test_api_client"]}
     },

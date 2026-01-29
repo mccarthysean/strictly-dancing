@@ -2552,3 +2552,46 @@ strictly-dancing/
 - Key features: Zustand store, SecureStore persistence, QueryClient, splash screen hydration
 
 **Next**: T077 - Create Mobile API Client Service
+
+---
+
+### Entry [E-078] 2026-01-29T11:00:00Z
+
+**Task**: T077 - Create Mobile API Client Service
+**Status**: DONE
+**Progress**: 77/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created apps/mobile/lib/api/client.ts with comprehensive fetch wrapper:
+  - fetchWithAuth() function for authenticated requests
+  - Auto-injects Bearer token from useAuthStore accessToken
+  - Handles 401 responses with automatic token refresh and retry
+  - Logs out user if refresh fails
+  - parseResponse() helper for JSON parsing and error handling
+  - ApiError class with statusCode, detail, and originalError
+- Implemented typed HTTP methods:
+  - get<T>(), post<T>(), put<T>(), patch<T>(), delete<T>()
+  - All methods support generic type parameter for return type
+  - skipAuth option for public endpoints
+- Created lib/api/types.ts with type helpers:
+  - ApiResponse<Path, Method> - extract response type from OpenAPI paths
+  - ApiRequestBody<Path, Method> - extract request body type
+  - ApiQueryParams<Path, Method> - extract query params type
+  - ApiPathParams<Path, Method> - extract path params type
+- Copied OpenAPI generated types to types/api.gen.ts
+- Added generate-types script to package.json using openapi-typescript
+- Created 12 comprehensive unit tests in __tests__/api-client.test.ts:
+  - GET/POST/PUT/PATCH/DELETE methods
+  - Auth token injection
+  - skipAuth option
+  - 401 handling with token refresh and retry
+  - Error handling (ApiError, non-JSON responses, 204 No Content)
+- All 22 tests passing (10 auth store + 12 api client)
+
+**Evidence**:
+- Files: lib/api/client.ts, lib/api/types.ts, types/api.gen.ts, __tests__/api-client.test.ts
+- Tests: 22/22 passing
+- TypeScript: tsc --noEmit passes with no errors
+- Key features: auth injection, 401 refresh/retry, type-safe methods
+
+**Next**: T078 - Implement Mobile Login Screen
