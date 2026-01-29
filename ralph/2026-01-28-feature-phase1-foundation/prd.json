@@ -4369,7 +4369,7 @@
       "id": "T105",
       "title": "Implement Rate Limiting Middleware",
       "description": "Add rate limiting: 100 req/min authenticated, 20 req/min anonymous as per PRD.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": [
         "T002"
@@ -4379,31 +4379,31 @@
           "id": "AC01",
           "criterion": "app/core/rate_limit.py exists with RateLimitMiddleware",
           "verification": "file_exists",
-          "met": false
+          "met": true
         },
         {
           "id": "AC02",
           "criterion": "Redis-backed rate limiting with sliding window",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC03",
           "criterion": "100 req/min for authenticated users",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC04",
           "criterion": "20 req/min for anonymous users",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC05",
           "criterion": "Returns 429 with Retry-After header when exceeded",
           "verification": "test",
-          "met": false
+          "met": true
         }
       ],
       "testing": {

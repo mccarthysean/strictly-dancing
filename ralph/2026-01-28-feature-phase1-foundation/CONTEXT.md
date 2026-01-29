@@ -3433,3 +3433,56 @@ All 94 tasks have been completed:
 **Next**: T105 - Implement Rate Limiting Middleware
 
 ---
+
+### Entry [E-013] 2026-01-29T16:30:00Z
+
+**Task**: T105 - Implement Rate Limiting Middleware
+**Status**: DONE
+**Progress**: 98/121 tasks | Blockers: 0
+
+**Accomplished**:
+- Created `app/core/rate_limit.py` with complete rate limiting implementation:
+  - `RateLimiter` class with Redis-backed sliding window algorithm
+  - Uses sorted sets for efficient time-based request tracking
+  - `RateLimitMiddleware` for FastAPI integration
+  - Automatic cleanup of expired entries
+- Rate limits as per PRD:
+  - 100 req/min for authenticated users (identified by JWT user ID)
+  - 20 req/min for anonymous users (identified by IP address)
+- Sliding window implementation:
+  - Uses Redis ZREMRANGEBYSCORE to remove expired entries
+  - Uses ZCARD to count current entries
+  - Uses ZADD to add new entries with timestamp score
+  - Calculates retry-after from oldest entry timestamp
+- 429 response when rate limited:
+  - Returns 429 Too Many Requests status code
+  - Includes Retry-After header with seconds until reset
+  - Response body includes detail message and retry_after value
+- Rate limit headers on all responses:
+  - X-RateLimit-Limit: The applicable limit
+  - X-RateLimit-Remaining: Remaining requests in window
+  - X-RateLimit-Reset: Unix timestamp when window resets
+- Added rate limit settings to `app/core/config.py`:
+  - `rate_limit_authenticated`: Configurable authenticated limit (default 100)
+  - `rate_limit_anonymous`: Configurable anonymous limit (default 20)
+  - `rate_limit_window_seconds`: Configurable window size (default 60)
+- Excluded paths from rate limiting: /health, /docs, /openapi.json
+- Graceful degradation: Allows requests if Redis is unavailable
+- Updated `app/main.py` to add RateLimitMiddleware
+- Created comprehensive unit tests in `tests/unit/test_rate_limit.py` (46 tests)
+
+**Evidence**:
+- Files: app/core/rate_limit.py, app/core/config.py, app/main.py, tests/unit/test_rate_limit.py
+- Tests: 46/46 tests passing in test_rate_limit.py
+- Total backend tests: 1441 passing
+- Coverage: 84.36% (above 80% threshold)
+- Linting: All checks passed
+- AC01: app/core/rate_limit.py exists with RateLimitMiddleware ✓
+- AC02: Redis-backed rate limiting with sliding window ✓
+- AC03: 100 req/min for authenticated users ✓
+- AC04: 20 req/min for anonymous users ✓
+- AC05: Returns 429 with Retry-After header when exceeded ✓
+
+**Next**: T106 - Convert Auth to Passwordless Magic Link
+
+---

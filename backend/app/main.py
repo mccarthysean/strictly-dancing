@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import RequestIdMiddleware
+from app.core.rate_limit import RateLimitMiddleware
 from app.core.sentry import init_sentry
 from app.routers import (
     auth_router,
@@ -59,6 +60,9 @@ def create_app() -> FastAPI:
 
     # Request ID middleware for tracing
     app.add_middleware(RequestIdMiddleware)
+
+    # Rate limiting middleware
+    app.add_middleware(RateLimitMiddleware)
 
     # CORS middleware configured from settings
     app.add_middleware(

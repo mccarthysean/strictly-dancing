@@ -69,6 +69,11 @@ class Settings(BaseSettings):
     email_from_address: str = "noreply@strictlydancing.com"
     email_from_name: str = "Strictly Dancing"
 
+    # Rate limiting settings
+    rate_limit_authenticated: int = 100  # requests per minute for authenticated users
+    rate_limit_anonymous: int = 20  # requests per minute for anonymous users
+    rate_limit_window_seconds: int = 60  # sliding window size
+
 
 @lru_cache
 def get_settings() -> Settings:
