@@ -11,8 +11,19 @@ module.exports = {
     'hooks/**/*.{ts,tsx}',
     'stores/**/*.{ts,tsx}',
     'services/**/*.{ts,tsx}',
+    'lib/**/*.{ts,tsx}',
     '!**/*.d.ts',
+    '!**/types/**',
   ],
+  coverageThreshold: {
+    global: {
+      branches: 60,
+      functions: 60,
+      lines: 60,
+      statements: 60,
+    },
+  },
+  coverageReporters: ['text', 'text-summary', 'json', 'html'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',

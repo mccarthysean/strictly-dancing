@@ -1361,14 +1361,14 @@
       "id": "T087",
       "title": "Configure Unit Test Infrastructure",
       "description": "Set up comprehensive unit testing with coverage requirements.",
-      "passes": false,
+      "passes": true,
       "phase": "phase5-reviews",
       "dependencies": ["T001", "T017", "T075"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "Backend pytest coverage configured with 80% minimum", "verification": "code_review", "met": false},
-        {"id": "AC02", "criterion": "Frontend vitest configured with 70% minimum", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Mobile jest configured with coverage", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "CI pipeline fails if coverage below threshold", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "Backend pytest coverage configured with 80% minimum", "verification": "code_review", "met": true},
+        {"id": "AC02", "criterion": "Frontend vitest configured with 70% minimum", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Mobile jest configured with coverage", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "CI pipeline fails if coverage below threshold", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },

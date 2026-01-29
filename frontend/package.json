@@ -11,7 +11,8 @@
     "tsc": "tsc --noEmit",
     "generate-types": "openapi-typescript http://localhost:8001/openapi.json -o src/types/api.gen.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.0",
@@ -36,6 +37,10 @@
     "typescript": "^5.7.2",
     "vite": "^6.0.3",
     "vite-plugin-pwa": "^0.21.1",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "jsdom": "^25.0.1",
     "vitest": "^2.1.8",
     "workbox-core": "^7.3.0",
     "workbox-precaching": "^7.3.0",

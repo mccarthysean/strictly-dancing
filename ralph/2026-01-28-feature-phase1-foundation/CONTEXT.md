@@ -2909,3 +2909,44 @@ strictly-dancing/
 - Key features: sorted conversations, unread badges, message preview
 
 **Next**: T087 - Configure Unit Test Infrastructure
+
+---
+
+### Entry [E-088] 2026-01-29T13:00:00Z
+
+**Task**: T087 - Configure Unit Test Infrastructure
+**Status**: DONE
+**Progress**: 87/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Backend pytest configuration (pyproject.toml):
+  - Coverage configured with pytest-cov
+  - 80% minimum coverage threshold (--cov-fail-under=80)
+  - Coverage reports with term-missing
+  - Excluded config and main from coverage
+- Frontend vitest configuration:
+  - Created vitest.config.ts with jsdom environment
+  - Coverage provider: v8
+  - 70% minimum threshold for branches/functions/lines/statements
+  - Excluded node_modules, types, generated files
+  - Added @testing-library dependencies to package.json
+  - test:coverage script added
+- Mobile jest configuration:
+  - Updated jest.config.js with coverageThreshold
+  - 60% minimum for branches/functions/lines/statements
+  - Coverage reporters: text, json, html
+  - test:coverage script added
+- GitHub Actions CI pipeline:
+  - Created .github/workflows/ci.yml
+  - Backend: lint, type check, tests with coverage
+  - Frontend: tsc, lint, tests with coverage
+  - Mobile: tsc, lint, tests with coverage
+  - Codecov integration for coverage reports
+  - Build job depends on all test jobs passing
+
+**Evidence**:
+- Files: pyproject.toml, vitest.config.ts, jest.config.js, ci.yml
+- Coverage thresholds: backend 80%, frontend 70%, mobile 60%
+- CI pipeline with coverage enforcement
+
+**Next**: T088 - Configure Local Development Testing
