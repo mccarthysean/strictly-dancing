@@ -689,4 +689,31 @@ strictly-dancing/
 - Linting: All checks passed
 - Alembic heads: 000000000003 recognized
 
-**Next**: T024 - Create Host Profile Model
+**Next**: T025 - Create Host Dance Styles Junction
+
+---
+
+### Entry [E-025] 2026-01-29T06:35:00Z
+
+**Task**: T024 - Create Host Profile Model
+**Status**: DONE
+**Progress**: 24/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/models/host_profile.py with HostProfile model
+- HostProfile has one-to-one relationship with User (user_id FK with unique constraint)
+- Added PostGIS GEOGRAPHY(POINT, 4326) location field for geospatial queries
+- Fields: id, user_id, bio, headline, hourly_rate_cents, rating_average, total_reviews, total_sessions, verification_status, location, stripe_account_id, stripe_onboarding_complete, created_at, updated_at
+- Created VerificationStatus enum (unverified, pending, verified, rejected)
+- Created Alembic migration (000000000004) with geospatial index on location
+- Added geoalchemy2 and shapely dependencies to pyproject.toml
+- Updated app/models/__init__.py with new exports
+- Created 25 unit tests for HostProfile model (all passing)
+
+**Evidence**:
+- Tests: All passing (234/234 total - 25 new tests added)
+- Files: app/models/host_profile.py, alembic/versions/20260129_030000_create_host_profiles_table.py, tests/unit/test_host_profile_model.py
+- Linting: All checks passed
+- Alembic heads: 000000000004 recognized
+
+**Next**: T025 - Create Host Dance Styles Junction
