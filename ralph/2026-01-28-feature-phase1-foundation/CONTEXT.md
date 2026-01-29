@@ -1948,3 +1948,40 @@ strictly-dancing/
 
 **Next**: T063 - Backend E2E Test Suite
 
+---
+
+### Entry [E-064] 2026-01-29T09:25:00Z
+
+**Task**: T063 - Backend E2E Test Suite
+**Status**: DONE
+**Progress**: 63/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/tests/integration/ directory with comprehensive test files:
+  - conftest.py: Integration test fixtures including mock factories for users, host profiles, bookings, and dance styles
+  - test_auth_flow.py: 24 tests covering complete authentication lifecycle
+  - test_booking_flow.py: 16 tests covering complete booking lifecycle
+- Auth flow tests cover:
+  - Complete registration -> login -> get me -> logout flow
+  - Registration validation (email format, password strength, duplicate emails)
+  - Login with valid/invalid credentials
+  - Token refresh with valid/invalid tokens
+  - Get current user endpoint
+  - Logout endpoint
+- Booking flow tests cover:
+  - Complete create -> confirm -> complete flow
+  - Booking creation success and validation
+  - Host confirming bookings
+  - Client/host cancelling bookings
+  - Host completing bookings
+  - Booking list with filters
+- All 40 integration tests pass
+- All 1094 total backend tests pass
+
+**Evidence**:
+- Files: backend/tests/integration/__init__.py, conftest.py, test_auth_flow.py, test_booking_flow.py
+- Tests: 40 integration tests passing, 1094 total tests passing
+- Command: `cd backend && uv run pytest tests/integration/ -v` passes
+
+**Next**: T064 - Performance Optimization
+

@@ -997,14 +997,14 @@
       "id": "T063",
       "title": "Backend E2E Test Suite",
       "description": "Create comprehensive API integration tests.",
-      "passes": false,
+      "passes": true,
       "phase": "phase5-reviews",
       "dependencies": ["T057"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "backend/tests/integration/ directory with test files", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Auth flow tests (register, login, refresh)", "verification": "test", "met": false},
-        {"id": "AC03", "criterion": "Booking flow tests (create, confirm, complete)", "verification": "test", "met": false},
-        {"id": "AC04", "criterion": "All integration tests pass", "verification": "test", "met": false}
+        {"id": "AC01", "criterion": "backend/tests/integration/ directory with test files", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Auth flow tests (register, login, refresh)", "verification": "test", "met": true},
+        {"id": "AC03", "criterion": "Booking flow tests (create, confirm, complete)", "verification": "test", "met": true},
+        {"id": "AC04", "criterion": "All integration tests pass", "verification": "test", "met": true}
       ],
       "testing": {"unit_tests": []}
     },
