@@ -1709,3 +1709,47 @@ strictly-dancing/
 
 **Next**: T057 - Implement Review Endpoints
 
+---
+
+### Entry [E-058] 2026-01-29T09:30:00Z
+
+**Task**: T057 - Implement Review Endpoints
+**Status**: DONE
+**Progress**: 57/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created POST /api/v1/bookings/{id}/review endpoint for creating reviews
+  - Only client of completed booking can create review
+  - Validates booking status is COMPLETED
+  - Checks no existing review for booking
+- Created GET /api/v1/hosts/{id}/reviews endpoint for host reviews
+  - Cursor-based pagination (limit, cursor params)
+  - Returns total count and has_more
+- Created POST /api/v1/reviews/{id}/response endpoint for host replies
+  - Only reviewee (host) can add response
+  - Sets host_responded_at timestamp
+- Created DELETE /api/v1/reviews/{id}/response endpoint
+- Created GET /api/v1/reviews/{id} endpoint for single review
+- Created GET /api/v1/bookings/{id}/review endpoint
+- Created app/schemas/review.py with:
+  - CreateReviewRequest (rating 1-5, optional comment)
+  - ReviewResponse, ReviewWithUserResponse
+  - ReviewListResponse with pagination
+  - AddResponseRequest
+  - ReviewUserSummary
+- Created app/routers/reviews.py with reviews router
+- Updated hosts.py router with reviews endpoint
+- Updated bookings.py router with review creation
+- Registered reviews router in main.py
+- Created 20 comprehensive endpoint tests (all passing)
+- All 1054 backend tests pass
+- Linting passes
+
+**Evidence**:
+- Tests: All passing (1054/1054 total - 20 new tests added)
+- Files: app/schemas/review.py, app/routers/reviews.py, app/routers/bookings.py, app/routers/hosts.py, tests/unit/test_review_endpoints.py
+- Linting: All checks passed
+- Endpoints: POST bookings/{id}/review, GET hosts/{id}/reviews, POST reviews/{id}/response
+
+**Next**: T058 - Frontend Review Form
+

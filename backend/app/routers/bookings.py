@@ -16,6 +16,7 @@ from app.models.booking import BookingStatus
 from app.repositories.availability import AvailabilityRepository
 from app.repositories.booking import BookingRepository
 from app.repositories.host_profile import HostProfileRepository
+from app.repositories.review import ReviewRepository
 from app.schemas.booking import (
     BookingListCursorResponse,
     BookingResponse,
@@ -24,6 +25,11 @@ from app.schemas.booking import (
     CreateBookingRequest,
     DanceStyleSummaryResponse,
     UserSummaryResponse,
+)
+from app.schemas.review import (
+    CreateReviewRequest,
+    ReviewUserSummary,
+    ReviewWithUserResponse,
 )
 from app.services.stripe import stripe_service
 
@@ -664,4 +670,194 @@ async def list_bookings(
         next_cursor=next_cursor,
         has_more=has_more,
         limit=limit,
+    )
+
+
+@router.post(
+    "/{booking_id}/review",
+    response_model=ReviewWithUserResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a review for a completed booking",
+    description="Client leaves a review for a completed booking session.",
+)
+async def create_review(
+    booking_id: UUID,
+    request: CreateReviewRequest,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> ReviewWithUserResponse:
+    """Create a review for a completed booking.
+
+    Only the client of a completed booking can leave a review.
+    Each booking can only have one review.
+
+    Args:
+        booking_id: The booking's unique identifier.
+        request: The review data (rating and optional comment).
+        db: The database session (injected).
+        current_user: The authenticated user (injected).
+
+    Returns:
+        ReviewWithUserResponse with the created review.
+
+    Raises:
+        HTTPException: 400 if booking is not completed or already reviewed.
+        HTTPException: 403 if user is not the client of the booking.
+        HTTPException: 404 if booking not found.
+    """
+    booking_repo = BookingRepository(db)
+    review_repo = ReviewRepository(db)
+
+    # Get the booking
+    booking = await booking_repo.get_by_id(booking_id, load_relationships=True)
+    if booking is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Booking not found",
+        )
+
+    # Verify that the current user is the client
+    if booking.client_id != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the client can review this booking",
+        )
+
+    # Verify the booking is completed
+    if booking.status != BookingStatus.COMPLETED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only completed bookings can be reviewed",
+        )
+
+    # Check if a review already exists
+    existing_review = await review_repo.get_for_booking(booking_id)
+    if existing_review:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This booking has already been reviewed",
+        )
+
+    # Create the review
+    review = await review_repo.create(
+        booking_id=booking_id,
+        reviewer_id=current_user.id,
+        reviewee_id=UUID(booking.host_id),
+        rating=request.rating,
+        comment=request.comment,
+    )
+
+    await db.commit()
+
+    # Reload the review with relationships
+    review = await review_repo.get_by_id(UUID(review.id), load_relationships=True)
+
+    return ReviewWithUserResponse(
+        id=review.id,
+        booking_id=review.booking_id,
+        reviewer_id=review.reviewer_id,
+        reviewee_id=review.reviewee_id,
+        rating=review.rating,
+        comment=review.comment,
+        host_response=review.host_response,
+        host_responded_at=review.host_responded_at,
+        created_at=review.created_at,
+        updated_at=review.updated_at,
+        reviewer=ReviewUserSummary(
+            id=review.reviewer.id,
+            first_name=review.reviewer.first_name,
+            last_name=review.reviewer.last_name,
+        )
+        if review.reviewer
+        else None,
+        reviewee=ReviewUserSummary(
+            id=review.reviewee.id,
+            first_name=review.reviewee.first_name,
+            last_name=review.reviewee.last_name,
+        )
+        if review.reviewee
+        else None,
+    )
+
+
+@router.get(
+    "/{booking_id}/review",
+    response_model=ReviewWithUserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get the review for a booking",
+    description="Get the review associated with a specific booking.",
+)
+async def get_booking_review(
+    booking_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> ReviewWithUserResponse:
+    """Get the review for a specific booking.
+
+    Only participants of the booking (client or host) can view the review.
+
+    Args:
+        booking_id: The booking's unique identifier.
+        db: The database session (injected).
+        current_user: The authenticated user (injected).
+
+    Returns:
+        ReviewWithUserResponse with the review.
+
+    Raises:
+        HTTPException: 403 if user is not a participant in the booking.
+        HTTPException: 404 if booking or review not found.
+    """
+    booking_repo = BookingRepository(db)
+    review_repo = ReviewRepository(db)
+
+    # Get the booking
+    booking = await booking_repo.get_by_id(booking_id, load_relationships=True)
+    if booking is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Booking not found",
+        )
+
+    # Verify that the current user is a participant
+    user_id_str = str(current_user.id)
+    if booking.client_id != user_id_str and booking.host_id != user_id_str:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not a participant in this booking",
+        )
+
+    # Get the review
+    review = await review_repo.get_for_booking(booking_id, load_relationships=True)
+    if review is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Review not found for this booking",
+        )
+
+    return ReviewWithUserResponse(
+        id=review.id,
+        booking_id=review.booking_id,
+        reviewer_id=review.reviewer_id,
+        reviewee_id=review.reviewee_id,
+        rating=review.rating,
+        comment=review.comment,
+        host_response=review.host_response,
+        host_responded_at=review.host_responded_at,
+        created_at=review.created_at,
+        updated_at=review.updated_at,
+        reviewer=ReviewUserSummary(
+            id=review.reviewer.id,
+            first_name=review.reviewer.first_name,
+            last_name=review.reviewer.last_name,
+        )
+        if review.reviewer
+        else None,
+        reviewee=ReviewUserSummary(
+            id=review.reviewee.id,
+            first_name=review.reviewee.first_name,
+            last_name=review.reviewee.last_name,
+        )
+        if review.reviewee
+        else None,
     )

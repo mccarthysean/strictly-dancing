@@ -14,6 +14,7 @@ from app.core.deps import CurrentUser
 from app.models.host_profile import VerificationStatus
 from app.repositories.availability import AvailabilityRepository
 from app.repositories.host_profile import HostProfileRepository
+from app.repositories.review import ReviewRepository
 from app.schemas.booking import (
     AvailabilityForDateRangeResponse,
     AvailabilityForDateResponse,
@@ -25,6 +26,11 @@ from app.schemas.host_profile import (
     HostProfileSummaryResponse,
     HostProfileWithUserResponse,
     HostSearchResponse,
+)
+from app.schemas.review import (
+    ReviewListResponse,
+    ReviewUserSummary,
+    ReviewWithUserResponse,
 )
 from app.schemas.stripe import (
     StripeAccountStatusResponse,
@@ -606,3 +612,123 @@ async def get_stripe_account_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Stripe error: {e.user_message or str(e)}",
         ) from e
+
+
+# Type aliases for reviews query parameters
+ReviewCursorQuery = Annotated[
+    str | None,
+    Query(description="Cursor for pagination (review ID from previous page)"),
+]
+ReviewLimitQuery = Annotated[
+    int,
+    Query(ge=1, le=50, description="Maximum number of reviews to return (1-50)"),
+]
+
+
+@router.get(
+    "/{host_id}/reviews",
+    response_model=ReviewListResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get reviews for a host",
+    description="Get reviews for a host profile with cursor-based pagination.",
+)
+async def get_host_reviews(
+    db: DbSession,
+    host_id: UUID,
+    cursor: ReviewCursorQuery = None,
+    limit: ReviewLimitQuery = 20,
+) -> ReviewListResponse:
+    """Get reviews for a host profile.
+
+    Reviews are public and can be viewed by anyone.
+    Results are ordered by created_at descending (newest first).
+
+    Args:
+        db: The database session (injected).
+        host_id: The host profile UUID.
+        cursor: Cursor for pagination (review ID from previous page).
+        limit: Maximum number of reviews to return (1-50).
+
+    Returns:
+        ReviewListResponse with reviews and pagination info.
+
+    Raises:
+        HTTPException: 404 if host profile not found.
+    """
+    host_repo = HostProfileRepository(db)
+    review_repo = ReviewRepository(db)
+
+    # Verify host exists
+    profile = await host_repo.get_by_id(host_id)
+    if profile is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Host profile not found",
+        )
+
+    # Parse cursor if provided
+    cursor_uuid = None
+    if cursor:
+        try:
+            cursor_uuid = UUID(cursor)
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid cursor format",
+            ) from e
+
+    # Fetch reviews with one extra to check for more pages
+    reviews = await review_repo.get_for_host_profile(
+        host_profile_id=host_id,
+        limit=limit + 1,
+        cursor=cursor_uuid,
+    )
+
+    # Determine if there are more results
+    has_more = len(reviews) > limit
+    if has_more:
+        reviews = reviews[:limit]
+
+    # Get total count
+    total = await review_repo.count_for_host_profile(host_id)
+
+    # Build response items
+    items = [
+        ReviewWithUserResponse(
+            id=review.id,
+            booking_id=review.booking_id,
+            reviewer_id=review.reviewer_id,
+            reviewee_id=review.reviewee_id,
+            rating=review.rating,
+            comment=review.comment,
+            host_response=review.host_response,
+            host_responded_at=review.host_responded_at,
+            created_at=review.created_at,
+            updated_at=review.updated_at,
+            reviewer=ReviewUserSummary(
+                id=review.reviewer.id,
+                first_name=review.reviewer.first_name,
+                last_name=review.reviewer.last_name,
+            )
+            if review.reviewer
+            else None,
+            reviewee=ReviewUserSummary(
+                id=review.reviewee.id,
+                first_name=review.reviewee.first_name,
+                last_name=review.reviewee.last_name,
+            )
+            if review.reviewee
+            else None,
+        )
+        for review in reviews
+    ]
+
+    # Set next cursor to the last item's ID if there are more results
+    next_cursor = reviews[-1].id if reviews and has_more else None
+
+    return ReviewListResponse(
+        items=items,
+        next_cursor=next_cursor,
+        has_more=has_more,
+        total=total,
+    )

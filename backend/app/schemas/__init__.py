@@ -55,6 +55,14 @@ from app.schemas.messaging import (
     StartConversationRequest,
     UnreadCountResponse,
 )
+from app.schemas.review import (
+    AddResponseRequest,
+    CreateReviewRequest,
+    ReviewListResponse,
+    ReviewResponse,
+    ReviewUserSummary,
+    ReviewWithUserResponse,
+)
 from app.schemas.stripe import (
     StripeAccountStatusResponse,
     StripeDashboardLinkResponse,
@@ -125,4 +133,11 @@ __all__ = [
     "ConversationListResponse",
     "MessageListResponse",
     "UnreadCountResponse",
+    # Review schemas
+    "CreateReviewRequest",
+    "ReviewResponse",
+    "ReviewWithUserResponse",
+    "ReviewListResponse",
+    "ReviewUserSummary",
+    "AddResponseRequest",
 ]

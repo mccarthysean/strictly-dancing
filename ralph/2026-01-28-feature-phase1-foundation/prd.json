@@ -907,14 +907,14 @@
       "id": "T057",
       "title": "Implement Review Endpoints",
       "description": "Create HTTP endpoints for reviews.",
-      "passes": false,
+      "passes": true,
       "phase": "phase5-reviews",
       "dependencies": ["T056"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "POST /api/v1/bookings/{id}/review endpoint", "verification": "test", "met": false},
-        {"id": "AC02", "criterion": "GET /api/v1/hosts/{id}/reviews endpoint", "verification": "test", "met": false},
-        {"id": "AC03", "criterion": "POST /api/v1/reviews/{id}/response for host replies", "verification": "test", "met": false},
-        {"id": "AC04", "criterion": "Only completed bookings can be reviewed", "verification": "test", "met": false}
+        {"id": "AC01", "criterion": "POST /api/v1/bookings/{id}/review endpoint", "verification": "test", "met": true},
+        {"id": "AC02", "criterion": "GET /api/v1/hosts/{id}/reviews endpoint", "verification": "test", "met": true},
+        {"id": "AC03", "criterion": "POST /api/v1/reviews/{id}/response for host replies", "verification": "test", "met": true},
+        {"id": "AC04", "criterion": "Only completed bookings can be reviewed", "verification": "test", "met": true}
       ],
       "testing": {"unit_tests": ["test_review_endpoints"]}
     },
