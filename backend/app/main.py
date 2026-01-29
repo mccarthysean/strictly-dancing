@@ -14,6 +14,7 @@ from app.routers import (
     hosts_router,
     messaging_router,
     users_router,
+    websocket_router,
 )
 
 
@@ -63,6 +64,7 @@ def create_app() -> FastAPI:
     app.include_router(hosts_router)
     app.include_router(messaging_router)
     app.include_router(users_router)
+    app.include_router(websocket_router)
 
     @app.get("/health")
     async def health_check() -> dict[str, str]:

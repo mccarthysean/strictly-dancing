@@ -1535,3 +1535,36 @@ strictly-dancing/
 
 **Next**: T052 - Implement WebSocket Chat Backend
 
+---
+
+### Entry [E-053] 2026-01-29T08:45:00Z
+
+**Task**: T052 - Implement WebSocket Chat Backend
+**Status**: DONE
+**Progress**: 52/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/services/websocket.py with WebSocketManager class
+- Implemented WebSocket endpoint /ws/chat/{conversation_id} in app/routers/websocket.py
+- WebSocket authentication via JWT token passed as query parameter
+- Token validation using verify_websocket_token() helper function
+- Validates user is participant in conversation before allowing connection
+- Implemented Redis Pub/Sub for cross-server message broadcasting
+- WebSocket message types: MESSAGE, MESSAGE_SENT, MESSAGE_RECEIVED, MESSAGES_READ, TYPING_START, TYPING_STOP, CONNECTED, DISCONNECTED, ERROR, USER_ONLINE, USER_OFFLINE
+- Handles typing indicators with handle_typing_start() and handle_typing_stop() methods
+- Connection tracking per conversation with get_online_users() and get_typing_users() helpers
+- Messages are persisted to database and broadcast to all participants
+- Added redis>=5.0.0 dependency to pyproject.toml
+- Updated routers/__init__.py to export websocket_router
+- Updated main.py to include websocket_router
+- Updated services/__init__.py to export WebSocket types
+- Created 31 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (957/957 total - 31 new tests added)
+- Files: app/services/websocket.py, app/routers/websocket.py, app/routers/__init__.py, app/main.py, app/services/__init__.py, tests/unit/test_websocket_chat.py
+- Linting: All checks passed
+- Key tests: TestWebSocketManager (18 tests), TestVerifyWebsocketToken (4 tests), TestWebSocketMessageHandling (2 tests), TestWebSocketEndpointBehavior (3 tests), TestWebSocketManagerConnectionTracking (4 tests)
+
+**Next**: T053 - Frontend Chat Page
+

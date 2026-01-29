@@ -832,14 +832,14 @@
       "id": "T052",
       "title": "Implement WebSocket Chat Backend",
       "description": "Create FastAPI WebSocket for real-time chat.",
-      "passes": false,
+      "passes": true,
       "phase": "phase4-realtime",
       "dependencies": ["T051"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "WebSocket endpoint /ws/chat/{conversation_id}", "verification": "test", "met": false},
-        {"id": "AC02", "criterion": "Authenticates WebSocket connection", "verification": "test", "met": false},
-        {"id": "AC03", "criterion": "Broadcasts messages via Redis Pub/Sub", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Handles typing indicators", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "WebSocket endpoint /ws/chat/{conversation_id}", "verification": "test", "met": true},
+        {"id": "AC02", "criterion": "Authenticates WebSocket connection", "verification": "test", "met": true},
+        {"id": "AC03", "criterion": "Broadcasts messages via Redis Pub/Sub", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Handles typing indicators", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": ["test_websocket_chat"]}
     },
