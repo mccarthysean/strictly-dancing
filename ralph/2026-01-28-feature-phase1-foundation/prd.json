@@ -304,15 +304,15 @@
       "id": "T017",
       "title": "Initialize PWA Frontend Project",
       "description": "Set up React + Vite + TypeScript frontend with TanStack Router.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T001"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "frontend/package.json exists with React, Vite, TanStack Router dependencies", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "frontend/vite.config.ts configured with PWA plugin", "verification": "file_exists", "met": false},
-        {"id": "AC03", "criterion": "frontend/src/routes/__root.tsx exists with basic layout", "verification": "file_exists", "met": false},
-        {"id": "AC04", "criterion": "TypeScript strict mode enabled in tsconfig.json", "verification": "code_review", "met": false},
-        {"id": "AC05", "criterion": "bun run dev starts development server on port 5175", "verification": "test", "met": false}
+        {"id": "AC01", "criterion": "frontend/package.json exists with React, Vite, TanStack Router dependencies", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "frontend/vite.config.ts configured with PWA plugin", "verification": "file_exists", "met": true},
+        {"id": "AC03", "criterion": "frontend/src/routes/__root.tsx exists with basic layout", "verification": "file_exists", "met": true},
+        {"id": "AC04", "criterion": "TypeScript strict mode enabled in tsconfig.json", "verification": "code_review", "met": true},
+        {"id": "AC05", "criterion": "bun run dev starts development server on port 5175", "verification": "test", "met": true}
       ],
       "testing": {"unit_tests": []}
     },

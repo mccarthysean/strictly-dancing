@@ -508,3 +508,29 @@ strictly-dancing/
 - Key tests: test_get_me_returns_200_on_success, test_get_me_returns_user_data, test_get_me_excludes_password_hash, test_get_me_requires_auth, test_get_me_returns_full_profile
 
 **Next**: T017 - Initialize PWA Frontend Project
+
+---
+
+### Entry [E-018] 2026-01-29T06:45:00Z
+
+**Task**: T017 - Initialize PWA Frontend Project
+**Status**: DONE
+**Progress**: 17/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created frontend/package.json with React 18, Vite 6, TanStack Router/Query dependencies
+- Configured frontend/vite.config.ts with VitePWA plugin for progressive web app support
+- Created frontend/src/routes/__root.tsx with header navigation layout
+- Created frontend/src/routes/index.tsx with homepage
+- Created placeholder routes for login and register pages
+- Enabled TypeScript strict mode with noUncheckedIndexedAccess and exactOptionalPropertyTypes
+- Verified dev server starts on port 5175 successfully
+- TypeScript check passes with no errors
+
+**Evidence**:
+- Files: package.json, vite.config.ts, tsconfig.json, tsconfig.node.json, index.html, src/main.tsx, src/routes/__root.tsx, src/routes/index.tsx
+- Dev server: Vite v6.4.1 ready on http://localhost:5175/
+- TypeScript: tsc --noEmit passes with no errors
+- PWA: manifest configured with Strictly Dancing branding
+
+**Next**: T018 - Configure Frontend API Client
