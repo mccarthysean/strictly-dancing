@@ -151,3 +151,26 @@ strictly-dancing/
 - Linting: All checks passed
 
 **Next**: T003 - Configure Database Connection
+
+---
+
+### Entry [E-004] 2026-01-29T05:35:00Z
+
+**Task**: T003 - Configure Database Connection
+**Status**: DONE
+**Progress**: 3/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/core/database.py with SQLAlchemy 2.0 async engine
+- Configured connection pooling (pool_size=2, max_overflow=8 = max 10 connections)
+- Created AsyncSessionLocal session factory with proper settings
+- Implemented get_db dependency for FastAPI routes with commit/rollback handling
+- Created 9 unit tests for database module (all passing)
+
+**Evidence**:
+- Tests: All passing (16/16 total)
+- Files: app/core/database.py, tests/unit/test_database.py
+- Linting: All checks passed
+- Connection pooling: pool_size=2, max_overflow=8, pool_pre_ping=True
+
+**Next**: T004 - Initialize Alembic Migrations
