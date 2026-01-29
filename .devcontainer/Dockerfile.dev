@@ -1,0 +1,49 @@
+FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
+
+# Enable BuildKit caching
+ENV DOCKER_BUILDKIT=1
+
+# Install system dependencies with apt caching
+RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
+    --mount=target=/var/cache/apt,type=cache,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    wget \
+    unzip \
+    jq \
+    postgresql-client \
+    zsh \
+    libpq-dev libffi-dev \
+    build-essential
+
+# Switch to vscode user for tool installations
+USER vscode
+WORKDIR /home/vscode
+
+# Install Bun
+ENV BUN_INSTALL="/home/vscode/.bun"
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="$BUN_INSTALL/bin:$PATH"
+
+# Install uv (fast Python package manager)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/home/vscode/.local/bin:$PATH"
+
+# Install Claude Code CLI (baked into image for fast startup)
+RUN curl -fsSL https://claude.ai/install.sh -o /tmp/claude-install.sh && \
+    bash /tmp/claude-install.sh && \
+    rm -f /tmp/claude-install.sh
+
+# Final setup
+WORKDIR /workspaces/strictly-dancing
+
+# Add paths to shell configs
+RUN echo 'export PATH="$HOME/.local/bin:$HOME/.bun/bin:$PATH"' >> ~/.zshrc && \
+    echo 'export PATH="$HOME/.local/bin:$HOME/.bun/bin:$PATH"' >> ~/.bashrc
+
+# Set up zsh as default shell (needs root)
+USER root
+RUN chsh -s $(which zsh) vscode
+
+# Switch back to vscode user
+USER vscode

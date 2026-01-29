@@ -1,6 +1,27 @@
 version: "3.8"
 
 services:
+  # Development container for VS Code devcontainer
+  dev:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile.dev
+    container_name: strictly-dancing-dev
+    volumes:
+      - .:/workspaces/strictly-dancing:cached
+      - strictly-dancing-claude-config:/home/vscode/.claude
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - CLAUDE_CONFIG_DIR=/home/vscode/.claude
+    ports:
+      - "5175:5175"  # Frontend (Vite)
+      - "8001:8001"  # Backend (FastAPI)
+    networks:
+      - strictly-dancing-network
+    stdin_open: true
+    tty: true
+
   # MCP PostgreSQL server for database queries
   mcp-postgres:
     build:
@@ -45,3 +66,5 @@ networks:
 
 volumes:
   redis-data:
+  strictly-dancing-claude-config:
+    name: strictly-dancing-claude-config
