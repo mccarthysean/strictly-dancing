@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
+from app.routers import auth_router
 
 
 @asynccontextmanager
@@ -49,6 +50,9 @@ def create_app() -> FastAPI:
         allow_methods=settings.cors_allow_methods,
         allow_headers=settings.cors_allow_headers,
     )
+
+    # Include routers
+    app.include_router(auth_router)
 
     @app.get("/health")
     async def health_check() -> dict[str, str]:

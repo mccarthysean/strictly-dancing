@@ -215,15 +215,15 @@
       "id": "T011",
       "title": "Implement User Registration Endpoint",
       "description": "Create POST /api/v1/auth/register with validation.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T007", "T008", "T010"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "POST /api/v1/auth/register endpoint exists", "verification": "test", "met": false},
-        {"id": "AC02", "criterion": "Validates email not already registered (case-insensitive)", "verification": "test", "met": false},
-        {"id": "AC03", "criterion": "Hashes password and creates user", "verification": "test", "met": false},
-        {"id": "AC04", "criterion": "Returns 201 with UserResponse", "verification": "test", "met": false},
-        {"id": "AC05", "criterion": "Returns 409 if email exists", "verification": "test", "met": false}
+        {"id": "AC01", "criterion": "POST /api/v1/auth/register endpoint exists", "verification": "test", "met": true},
+        {"id": "AC02", "criterion": "Validates email not already registered (case-insensitive)", "verification": "test", "met": true},
+        {"id": "AC03", "criterion": "Hashes password and creates user", "verification": "test", "met": true},
+        {"id": "AC04", "criterion": "Returns 201 with UserResponse", "verification": "test", "met": true},
+        {"id": "AC05", "criterion": "Returns 409 if email exists", "verification": "test", "met": true}
       ],
       "testing": {"unit_tests": ["test_registration_returns_201", "test_registration_duplicate_email_returns_409", "test_registration_creates_user_in_database"]}
     },

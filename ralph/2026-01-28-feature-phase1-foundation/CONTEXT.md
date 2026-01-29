@@ -357,3 +357,31 @@ strictly-dancing/
 - Key tests: test_auth_schema_email_validation, test_auth_schema_password_strength_requires_uppercase, test_auth_schema_password_strength_requires_lowercase, test_auth_schema_password_strength_requires_digit
 
 **Next**: T011 - Implement User Registration Endpoint
+
+---
+
+### Entry [E-012] 2026-01-29T06:30:00Z
+
+**Task**: T011 - Implement User Registration Endpoint
+**Status**: DONE
+**Progress**: 11/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/routers/__init__.py with router exports
+- Created backend/app/routers/auth.py with auth router
+- Implemented POST /api/v1/auth/register endpoint
+- Validates email not already registered (case-insensitive via exists_by_email)
+- Hashes password using password_service before storing
+- Returns 201 Created with UserResponse on success
+- Returns 409 Conflict if email already registered
+- Returns 422 for validation errors (invalid email, weak password, missing fields)
+- Updated main.py to include auth_router
+- Created 10 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (144/144 total)
+- Files: app/routers/__init__.py, app/routers/auth.py, tests/unit/test_auth_router.py
+- Linting: All checks passed
+- Key tests: test_registration_returns_201_on_success, test_registration_duplicate_email_returns_409, test_registration_creates_user_in_database
+
+**Next**: T012 - Implement Login Endpoint
