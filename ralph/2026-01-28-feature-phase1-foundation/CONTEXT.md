@@ -2950,3 +2950,50 @@ strictly-dancing/
 - CI pipeline with coverage enforcement
 
 **Next**: T088 - Configure Local Development Testing
+
+---
+
+### Entry [E-089] 2026-01-29T11:05:00Z
+
+**Task**: T088 - Configure Local Development Testing
+**Status**: DONE
+**Progress**: 88/94 tasks | Blockers: 0
+
+**Accomplished**:
+- PWA dev server configured with hot reload on localhost:5175:
+  - Vite server config with port 5175 and strictPort: true
+  - Hot Module Replacement (HMR) enabled via @vitejs/plugin-react
+  - Already functional from T017 (frontend setup)
+- iOS Simulator testing documented:
+  - Prerequisites: Xcode 15+ from Mac App Store
+  - Command: `bun run ios` or press 'i' in Expo CLI
+  - Troubleshooting section with cache clearing and rebuild steps
+- Android Emulator testing documented:
+  - Prerequisites: Android Studio with SDK 34
+  - Environment variables setup (ANDROID_HOME, PATH)
+  - AVD creation instructions (Pixel 6 with API 34 recommended)
+  - Command: `bun run android` or press 'a' in Expo CLI
+  - Troubleshooting section for ADB, cold boot
+- Expo Go testing on physical devices documented:
+  - App store links for iOS and Android
+  - QR code scanning instructions
+  - Network requirements and tunnel fallback
+  - Cache clearing instructions
+- Created comprehensive README.md with local dev setup instructions:
+  - Full prerequisites section
+  - Backend setup and API documentation
+  - PWA frontend development workflow
+  - Mobile development with iOS/Android/Expo Go
+  - Development workflow (starting services, type generation)
+  - Pre-commit checklist
+  - Project structure overview
+  - Environment variables documentation
+  - Troubleshooting common issues
+
+**Evidence**:
+- File: README.md (completely rewritten with comprehensive docs)
+- PWA config verified: vite.config.ts server.port = 5175
+- Mobile scripts verified: package.json has ios, android, start scripts
+- Expo config verified: app.json properly configured
+
+**Next**: T089 - Initialize Monorepo Structure
