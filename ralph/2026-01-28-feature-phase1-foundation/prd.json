@@ -109,13 +109,13 @@
       "id": "T004",
       "title": "Initialize Alembic Migrations",
       "description": "Set up Alembic with async support and create initial migration for extensions.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T003"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "backend/alembic.ini exists at backend root", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "backend/alembic/env.py configured for async SQLAlchemy", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Initial migration creates uuid-ossp and postgis extensions", "verification": "file_exists", "met": false}
+        {"id": "AC01", "criterion": "backend/alembic.ini exists at backend root", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "backend/alembic/env.py configured for async SQLAlchemy", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Initial migration creates uuid-ossp and postgis extensions", "verification": "file_exists", "met": true}
       ],
       "testing": {"unit_tests": []}
     },

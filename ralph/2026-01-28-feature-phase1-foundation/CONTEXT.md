@@ -174,3 +174,26 @@ strictly-dancing/
 - Connection pooling: pool_size=2, max_overflow=8, pool_pre_ping=True
 
 **Next**: T004 - Initialize Alembic Migrations
+
+---
+
+### Entry [E-005] 2026-01-29T05:45:00Z
+
+**Task**: T004 - Initialize Alembic Migrations
+**Status**: DONE
+**Progress**: 4/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/alembic.ini with async SQLAlchemy configuration
+- Created backend/alembic/env.py with async engine support for migrations
+- Created backend/alembic/script.py.mako template for migration files
+- Created initial migration (000000000001) enabling uuid-ossp and postgis extensions
+- Configured ruff as post-write hook for automatic linting of migrations
+
+**Evidence**:
+- Tests: All passing (16/16 total)
+- Files: alembic.ini, alembic/env.py, alembic/script.py.mako, alembic/versions/20260129_000000_initial_extensions.py
+- Linting: All checks passed
+- Alembic heads: 000000000001 recognized
+
+**Next**: T005 - Create User Database Model
