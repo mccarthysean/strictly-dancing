@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.deps import CurrentUser
+from app.core.geo import create_point_ewkt, extract_coordinates_from_geography
 from app.models.booking import BookingStatus
 from app.repositories.availability import AvailabilityRepository
 from app.repositories.booking import BookingRepository
@@ -65,6 +66,11 @@ def _build_booking_response(booking, *, include_details: bool = True):
     Returns:
         BookingWithDetailsResponse or BookingResponse.
     """
+    # Extract coordinates from PostGIS location
+    coords = extract_coordinates_from_geography(booking.location)
+    latitude = coords.latitude if coords else None
+    longitude = coords.longitude if coords else None
+
     base_response = {
         "id": str(booking.id),
         "client_id": str(booking.client_id),
@@ -79,8 +85,8 @@ def _build_booking_response(booking, *, include_details: bool = True):
         "actual_start": booking.actual_start,
         "actual_end": booking.actual_end,
         "duration_minutes": booking.duration_minutes,
-        "latitude": None,  # TODO: Extract from PostGIS location
-        "longitude": None,
+        "latitude": latitude,
+        "longitude": longitude,
         "location_name": booking.location_name,
         "location_notes": booking.location_notes,
         "hourly_rate_cents": booking.hourly_rate_cents,
@@ -275,6 +281,14 @@ async def create_booking(
                 detail=f"Stripe error: {e.user_message if hasattr(e, 'user_message') else e!s}",
             ) from e
 
+    # Create PostGIS point from location if provided
+    location_ewkt = None
+    if request.location:
+        location_ewkt = create_point_ewkt(
+            latitude=request.location.latitude,
+            longitude=request.location.longitude,
+        )
+
     # Create the booking record
     booking = await booking_repo.create(
         client_id=current_user.id,
@@ -288,7 +302,7 @@ async def create_booking(
         platform_fee_cents=platform_fee_cents,
         host_payout_cents=host_payout_cents,
         dance_style_id=dance_style_id,
-        location=None,  # TODO: Create PostGIS point from request.location
+        location=location_ewkt,
         location_name=request.location.location_name if request.location else None,
         location_notes=request.location.location_notes if request.location else None,
         client_notes=request.client_notes,

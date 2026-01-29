@@ -4279,7 +4279,7 @@
       "id": "T103",
       "title": "Implement PostGIS Location Extraction in Responses",
       "description": "Fix TODO: Extract lat/lng from PostGIS location in booking and host responses.",
-      "passes": false,
+      "passes": true,
       "phase": "phase2-host-profiles",
       "dependencies": [
         "T025"
@@ -4289,25 +4289,25 @@
           "id": "AC01",
           "criterion": "BookingResponse includes latitude/longitude extracted from PostGIS",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC02",
           "criterion": "HostProfileResponse includes latitude/longitude",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC03",
           "criterion": "Helper function to extract coords from Geography type",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC04",
           "criterion": "Unit tests verify coordinate extraction",
           "verification": "test",
-          "met": false
+          "met": true
         }
       ],
       "testing": {

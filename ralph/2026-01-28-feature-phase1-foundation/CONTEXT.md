@@ -3350,3 +3350,38 @@ All 94 tasks have been completed:
 **Next**: T096 - Add Unit Tests for Reviews Router (100% Coverage)
 
 ---
+
+
+### Entry [E-011] 2026-01-29T16:05:00Z
+
+**Task**: T103 - Implement PostGIS Location Extraction in Responses
+**Status**: DONE
+**Progress**: 96/121 tasks | Blockers: 0
+
+**Accomplished**:
+- Created `app/core/geo.py` with utility functions for geographic operations:
+  - `extract_coordinates_from_geography()`: Extracts lat/lng from WKT/EWKT/WKB PostGIS formats
+  - `create_point_wkt()`: Creates WKT POINT string from coordinates
+  - `create_point_ewkt()`: Creates EWKT POINT string with SRID
+  - `Coordinates` named tuple for type-safe coordinate pairs
+- Updated `app/routers/hosts.py`:
+  - `get_host_profile()` now extracts coordinates from PostGIS location field
+  - `_calculate_distance_km()` now calculates actual distance using Haversine formula
+- Updated `app/routers/bookings.py`:
+  - `_build_booking_response()` now extracts coordinates from PostGIS location
+  - `create_booking()` now creates PostGIS EWKT point from location request
+- Created comprehensive unit tests in `tests/unit/test_geo.py` (22 tests)
+
+**Evidence**:
+- Tests: 22/22 passing in test_geo.py
+- Tests: 150/150 passing in test_hosts_router.py + test_bookings_router.py
+- Coverage: hosts.py at 95%, bookings.py at 81%
+- Linting: All checks passed
+- AC01: BookingResponse includes lat/lng extracted from PostGIS ✓
+- AC02: HostProfileResponse includes lat/lng extracted from PostGIS ✓
+- AC03: Helper function in app/core/geo.py ✓
+- AC04: Unit tests in tests/unit/test_geo.py ✓
+
+**Next**: T104 - Implement Email Sending Service
+
+---

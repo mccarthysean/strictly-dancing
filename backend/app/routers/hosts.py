@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import CurrentUser
+from app.core.geo import extract_coordinates_from_geography
 from app.models.host_profile import VerificationStatus
 from app.repositories.availability import AvailabilityRepository
 from app.repositories.host_profile import HostProfileRepository
@@ -270,11 +271,30 @@ def _calculate_distance_km(lat: float, lng: float, profile) -> float | None:
     Returns:
         Distance in kilometers, or None if location not available.
     """
-    # For now, return None since extracting coordinates from PostGIS
-    # geometry requires additional setup. The repository's get_nearby
-    # method handles this properly.
-    # In a full implementation, we'd extract lat/lng from profile.location
-    return None
+    # Extract coordinates from PostGIS Geography field
+    coords = extract_coordinates_from_geography(profile.location)
+    if coords is None:
+        return None
+
+    # Haversine formula for distance calculation
+    from math import asin, cos, radians, sin, sqrt
+
+    # Convert to radians
+    lat1 = radians(lat)
+    lat2 = radians(coords.latitude)
+    lng1 = radians(lng)
+    lng2 = radians(coords.longitude)
+
+    # Haversine formula
+    dlat = lat2 - lat1
+    dlng = lng2 - lng1
+    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlng / 2) ** 2
+    c = 2 * asin(sqrt(a))
+
+    # Earth's radius in km
+    earth_radius_km = 6371.0
+
+    return earth_radius_km * c
 
 
 @router.get(
@@ -442,6 +462,11 @@ async def get_host_profile(
         for hds in dance_styles
     ]
 
+    # Extract coordinates from PostGIS location
+    coords = extract_coordinates_from_geography(profile.location)
+    latitude = coords.latitude if coords else None
+    longitude = coords.longitude if coords else None
+
     # Build and return response
     return HostProfileWithUserResponse(
         id=str(profile.id),
@@ -453,8 +478,8 @@ async def get_host_profile(
         total_reviews=profile.total_reviews,
         total_sessions=profile.total_sessions,
         verification_status=profile.verification_status,
-        latitude=None,  # PostGIS location extraction would go here
-        longitude=None,  # PostGIS location extraction would go here
+        latitude=latitude,
+        longitude=longitude,
         stripe_onboarding_complete=profile.stripe_onboarding_complete,
         created_at=profile.created_at,
         updated_at=profile.updated_at,
