@@ -3842,3 +3842,54 @@ All 94 tasks have been completed:
 **Next**: T114, T118, or T115
 
 ---
+
+### Entry [E-022] 2026-01-29T18:30:00Z
+
+**Task**: T121 - Update Mobile App for Passwordless Auth (Completion)
+**Status**: DONE
+**Progress**: 117/121 tasks | Blockers: 0
+
+**Accomplished**:
+- Completed all acceptance criteria for T121:
+  1. Login screen shows email input and 'Send Magic Link' button ✓
+  2. Code entry screen for 6-digit verification ✓
+  3. Register screen removes password fields ✓
+  4. Auth store updated for magic link flow ✓
+  5. Deep link handling for magic link URLs ✓
+
+- Deep linking implementation:
+  - Created `apps/mobile/hooks/useDeepLinking.ts`:
+    - Handles deep links for magic link authentication
+    - Supports `strictlydancing://auth/verify?email=...&code=...` for login
+    - Supports `strictlydancing://auth/register/verify?email=...&code=...` for registration
+    - Auto-verifies and redirects on successful verification
+    - Navigates to auth screens with error on failure
+  - Integrated into `app/_layout.tsx`:
+    - Added `useDeepLinking()` hook call in RootLayout
+    - Deep links processed after auth initialization
+
+- Verified:
+  - TypeScript compilation passes (mobile and frontend)
+  - All 1567 backend tests pass (82.99% coverage)
+  - Python linting passes
+
+**Evidence**:
+- Files: apps/mobile/hooks/useDeepLinking.ts (new)
+- Files: apps/mobile/app/_layout.tsx (updated)
+- Files: apps/mobile/app/(auth)/login.tsx (updated)
+- Files: apps/mobile/app/(auth)/register.tsx (updated)
+- Files: apps/mobile/stores/auth.ts (updated)
+- TypeScript: Compiles without errors (mobile and frontend)
+- Backend tests: 1567 passing, 82.99% coverage
+- Linting: All checks passed
+
+**All T121 Acceptance Criteria Met**:
+- AC01: Login screen shows email input and 'Send Magic Link' button ✓
+- AC02: Code entry screen for 6-digit verification ✓
+- AC03: Register screen removes password fields ✓
+- AC04: Auth store updated for magic link flow ✓
+- AC05: Deep link handling for magic link URLs ✓
+
+**Next**: T114, or T115
+
+---
