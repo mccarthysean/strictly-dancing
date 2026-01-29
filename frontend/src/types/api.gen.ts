@@ -104,6 +104,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List bookings for current user
+         * @description Get a list of bookings for the authenticated user with cursor-based pagination.
+         */
+        get: operations["list_bookings_api_v1_bookings_get"];
+        put?: never;
+        /**
+         * Create a new booking
+         * @description Create a new booking with payment authorization.
+         */
+        post: operations["create_booking_api_v1_bookings_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/bookings/{booking_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm a booking
+         * @description Host confirms a pending booking request.
+         */
+        post: operations["confirm_booking_api_v1_bookings__booking_id__confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/bookings/{booking_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a booking
+         * @description Client or host cancels a pending or confirmed booking.
+         */
+        post: operations["cancel_booking_api_v1_bookings__booking_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/bookings/{booking_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Complete a booking session
+         * @description Host completes an in-progress session, capturing payment and transferring funds.
+         */
+        post: operations["complete_booking_api_v1_bookings__booking_id__complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/hosts": {
         parameters: {
             query?: never;
@@ -124,6 +208,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/hosts/{host_id}/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get host availability
+         * @description Get available time slots for a host over a date range.
+         */
+        get: operations["get_host_availability_api_v1_hosts__host_id__availability_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/hosts/{host_id}": {
         parameters: {
             query?: never;
@@ -136,6 +240,46 @@ export interface paths {
          * @description Get a public host profile by its unique identifier.
          */
         get: operations["get_host_profile_api_v1_hosts__host_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hosts/stripe/onboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Initiate Stripe Connect onboarding
+         * @description Start the Stripe Connect onboarding process for a host.
+         */
+        post: operations["initiate_stripe_onboarding_api_v1_hosts_stripe_onboard_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hosts/stripe/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Stripe account status
+         * @description Get the current status of the host's Stripe Connect account.
+         */
+        get: operations["get_stripe_account_status_api_v1_hosts_stripe_status_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -228,6 +372,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/me/host-profile/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get host availability
+         * @description Get the current user's host availability schedule including recurring and overrides.
+         */
+        get: operations["get_my_host_availability_api_v1_users_me_host_profile_availability_get"];
+        /**
+         * Set host availability
+         * @description Replace the host's weekly recurring availability schedule.
+         */
+        put: operations["set_my_host_availability_api_v1_users_me_host_profile_availability_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/me/host-profile/availability/overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add availability override
+         * @description Add a one-time availability override (available or blocked).
+         */
+        post: operations["add_availability_override_api_v1_users_me_host_profile_availability_overrides_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/me/host-profile/availability/overrides/{override_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete availability override
+         * @description Delete an availability override.
+         */
+        delete: operations["delete_availability_override_api_v1_users_me_host_profile_availability_overrides__override_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -252,6 +460,400 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AvailabilityForDateRangeResponse
+         * @description Response containing available slots for a date range.
+         */
+        AvailabilityForDateRangeResponse: {
+            /**
+             * Host Profile Id
+             * @description Host profile UUID
+             */
+            host_profile_id: string;
+            /**
+             * Start Date
+             * Format: date
+             * @description Start of date range
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             * @description End of date range
+             */
+            end_date: string;
+            /**
+             * Availability
+             * @description Available slots by date
+             */
+            availability?: components["schemas"]["AvailabilityForDateResponse"][];
+        };
+        /**
+         * AvailabilityForDateResponse
+         * @description Response containing available slots for a specific date.
+         */
+        AvailabilityForDateResponse: {
+            /**
+             * Availability Date
+             * Format: date
+             * @description The date
+             */
+            availability_date: string;
+            /**
+             * Slots
+             * @description Available time slots
+             */
+            slots?: components["schemas"]["AvailabilitySlot"][];
+        };
+        /**
+         * AvailabilityOverrideRequest
+         * @description Schema for creating an availability override.
+         */
+        AvailabilityOverrideRequest: {
+            /**
+             * Override Date
+             * Format: date
+             * @description Date of the override
+             */
+            override_date: string;
+            /** @description Type: 'available' or 'blocked' */
+            override_type: components["schemas"]["AvailabilityOverrideType"];
+            /**
+             * Start Time
+             * @description Start time (null for all-day)
+             */
+            start_time?: string | null;
+            /**
+             * End Time
+             * @description End time (null for all-day)
+             */
+            end_time?: string | null;
+            /**
+             * All Day
+             * @description Whether this applies to entire day
+             * @default false
+             */
+            all_day: boolean;
+            /**
+             * Reason
+             * @description Reason for override
+             */
+            reason?: string | null;
+        };
+        /**
+         * AvailabilityOverrideResponse
+         * @description Schema for availability override in responses.
+         */
+        AvailabilityOverrideResponse: {
+            /**
+             * Id
+             * @description Override UUID
+             */
+            id: string;
+            /**
+             * Override Date
+             * Format: date
+             * @description Date of the override
+             */
+            override_date: string;
+            /** @description Type: 'available' or 'blocked' */
+            override_type: components["schemas"]["AvailabilityOverrideType"];
+            /**
+             * Start Time
+             * @description Start time (null for all-day)
+             */
+            start_time?: string | null;
+            /**
+             * End Time
+             * @description End time (null for all-day)
+             */
+            end_time?: string | null;
+            /**
+             * All Day
+             * @description Whether this applies to entire day
+             */
+            all_day: boolean;
+            /**
+             * Reason
+             * @description Reason for override
+             */
+            reason?: string | null;
+        };
+        /**
+         * AvailabilityOverrideType
+         * @description Type of availability override.
+         * @enum {string}
+         */
+        AvailabilityOverrideType: "available" | "blocked";
+        /**
+         * AvailabilitySlot
+         * @description Schema for an availability time slot.
+         */
+        AvailabilitySlot: {
+            /**
+             * Start Time
+             * Format: time
+             * @description Start time of the slot
+             */
+            start_time: string;
+            /**
+             * End Time
+             * Format: time
+             * @description End time of the slot
+             */
+            end_time: string;
+        };
+        /**
+         * BookingListCursorResponse
+         * @description Cursor-based paginated response for booking list.
+         *
+         *     Uses cursor-based pagination for efficient traversal of large result sets.
+         *     The cursor is the booking ID of the last item in the current page.
+         */
+        BookingListCursorResponse: {
+            /**
+             * Items
+             * @description List of bookings
+             */
+            items: components["schemas"]["BookingWithDetailsResponse"][];
+            /**
+             * Next Cursor
+             * @description Cursor for next page (booking ID), null if no more results
+             */
+            next_cursor?: string | null;
+            /**
+             * Has More
+             * @description Whether there are more results after this page
+             */
+            has_more: boolean;
+            /**
+             * Limit
+             * @description Maximum number of results per page
+             */
+            limit: number;
+        };
+        /**
+         * BookingLocationRequest
+         * @description Schema for booking location.
+         */
+        BookingLocationRequest: {
+            /**
+             * Latitude
+             * @description Latitude (-90 to 90)
+             */
+            latitude: number;
+            /**
+             * Longitude
+             * @description Longitude (-180 to 180)
+             */
+            longitude: number;
+            /**
+             * Location Name
+             * @description Human-readable location name/address
+             */
+            location_name?: string | null;
+            /**
+             * Location Notes
+             * @description Additional location instructions
+             */
+            location_notes?: string | null;
+        };
+        /**
+         * BookingStatus
+         * @description Booking status enumeration.
+         * @enum {string}
+         */
+        BookingStatus: "pending" | "confirmed" | "in_progress" | "completed" | "cancelled" | "disputed";
+        /**
+         * BookingWithDetailsResponse
+         * @description Booking response with related entity details.
+         */
+        BookingWithDetailsResponse: {
+            /**
+             * Id
+             * @description Booking UUID
+             */
+            id: string;
+            /**
+             * Client Id
+             * @description Client user UUID
+             */
+            client_id: string;
+            /**
+             * Host Id
+             * @description Host user UUID
+             */
+            host_id: string;
+            /**
+             * Host Profile Id
+             * @description Host profile UUID
+             */
+            host_profile_id: string;
+            /**
+             * Dance Style Id
+             * @description Dance style UUID
+             */
+            dance_style_id?: string | null;
+            /** @description Current booking status */
+            status: components["schemas"]["BookingStatus"];
+            /**
+             * Scheduled Start
+             * Format: date-time
+             * @description Scheduled start time
+             */
+            scheduled_start: string;
+            /**
+             * Scheduled End
+             * Format: date-time
+             * @description Scheduled end time
+             */
+            scheduled_end: string;
+            /**
+             * Actual Start
+             * @description Actual start time
+             */
+            actual_start?: string | null;
+            /**
+             * Actual End
+             * @description Actual end time
+             */
+            actual_end?: string | null;
+            /**
+             * Duration Minutes
+             * @description Duration in minutes
+             */
+            duration_minutes: number;
+            /**
+             * Latitude
+             * @description Location latitude
+             */
+            latitude?: number | null;
+            /**
+             * Longitude
+             * @description Location longitude
+             */
+            longitude?: number | null;
+            /**
+             * Location Name
+             * @description Location name/address
+             */
+            location_name?: string | null;
+            /**
+             * Location Notes
+             * @description Location notes
+             */
+            location_notes?: string | null;
+            /**
+             * Hourly Rate Cents
+             * @description Hourly rate at booking time (cents)
+             */
+            hourly_rate_cents: number;
+            /**
+             * Amount Cents
+             * @description Total amount (cents)
+             */
+            amount_cents: number;
+            /**
+             * Platform Fee Cents
+             * @description Platform fee (cents)
+             */
+            platform_fee_cents: number;
+            /**
+             * Host Payout Cents
+             * @description Host payout amount (cents)
+             */
+            host_payout_cents: number;
+            /**
+             * Client Notes
+             * @description Notes from client
+             */
+            client_notes?: string | null;
+            /**
+             * Host Notes
+             * @description Notes from host
+             */
+            host_notes?: string | null;
+            /**
+             * Cancellation Reason
+             * @description Cancellation reason
+             */
+            cancellation_reason?: string | null;
+            /**
+             * Cancelled By Id
+             * @description Who cancelled (user UUID)
+             */
+            cancelled_by_id?: string | null;
+            /**
+             * Cancelled At
+             * @description When cancelled
+             */
+            cancelled_at?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             * @description Creation timestamp
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description Last update timestamp
+             */
+            updated_at: string;
+            /** @description Client details */
+            client?: components["schemas"]["UserSummaryResponse"] | null;
+            /** @description Host details */
+            host?: components["schemas"]["UserSummaryResponse"] | null;
+            /** @description Dance style details */
+            dance_style?: components["schemas"]["DanceStyleSummaryResponse"] | null;
+        };
+        /**
+         * CancelBookingRequest
+         * @description Schema for cancelling a booking.
+         */
+        CancelBookingRequest: {
+            /**
+             * Reason
+             * @description Reason for cancellation
+             */
+            reason?: string | null;
+        };
+        /**
+         * CreateBookingRequest
+         * @description Schema for creating a new booking.
+         *
+         *     Duration must be between 30 and 240 minutes (0.5 to 4 hours).
+         */
+        CreateBookingRequest: {
+            /**
+             * Host Id
+             * @description UUID of the host to book
+             */
+            host_id: string;
+            /**
+             * Dance Style Id
+             * @description UUID of the dance style (optional)
+             */
+            dance_style_id?: string | null;
+            /**
+             * Scheduled Start
+             * Format: date-time
+             * @description Scheduled start time (with timezone)
+             */
+            scheduled_start: string;
+            /**
+             * Duration Minutes
+             * @description Duration in minutes (30-240)
+             */
+            duration_minutes: number;
+            /** @description Session location */
+            location?: components["schemas"]["BookingLocationRequest"] | null;
+            /**
+             * Client Notes
+             * @description Notes from the client
+             */
+            client_notes?: string | null;
+        };
         /**
          * CreateHostProfileRequest
          * @description Schema for creating a new host profile.
@@ -329,10 +931,53 @@ export interface components {
              */
             description?: string | null;
         };
+        /**
+         * DanceStyleSummaryResponse
+         * @description Condensed dance style info for booking responses.
+         */
+        DanceStyleSummaryResponse: {
+            /**
+             * Id
+             * @description Dance style UUID
+             */
+            id: string;
+            /**
+             * Name
+             * @description Dance style name
+             */
+            name: string;
+        };
+        /**
+         * DayOfWeek
+         * @description Day of week enumeration (0=Monday, 6=Sunday).
+         * @enum {integer}
+         */
+        DayOfWeek: 0 | 1 | 2 | 3 | 4 | 5 | 6;
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * HostAvailabilityResponse
+         * @description Response containing host's full availability.
+         */
+        HostAvailabilityResponse: {
+            /**
+             * Host Profile Id
+             * @description Host profile UUID
+             */
+            host_profile_id: string;
+            /**
+             * Recurring
+             * @description Weekly recurring schedules
+             */
+            recurring?: components["schemas"]["RecurringAvailabilityResponse"][];
+            /**
+             * Overrides
+             * @description One-time overrides
+             */
+            overrides?: components["schemas"]["AvailabilityOverrideResponse"][];
         };
         /**
          * HostDanceStyleResponse
@@ -642,6 +1287,56 @@ export interface components {
             password: string;
         };
         /**
+         * RecurringAvailabilityRequest
+         * @description Schema for setting recurring availability.
+         */
+        RecurringAvailabilityRequest: {
+            /** @description Day of week (0=Monday, 6=Sunday) */
+            day_of_week: components["schemas"]["DayOfWeek"];
+            /**
+             * Start Time
+             * Format: time
+             * @description Start time
+             */
+            start_time: string;
+            /**
+             * End Time
+             * Format: time
+             * @description End time
+             */
+            end_time: string;
+        };
+        /**
+         * RecurringAvailabilityResponse
+         * @description Schema for recurring availability in responses.
+         */
+        RecurringAvailabilityResponse: {
+            /**
+             * Id
+             * @description Recurring availability UUID
+             */
+            id: string;
+            /** @description Day of week (0=Monday, 6=Sunday) */
+            day_of_week: components["schemas"]["DayOfWeek"];
+            /**
+             * Start Time
+             * Format: time
+             * @description Start time
+             */
+            start_time: string;
+            /**
+             * End Time
+             * Format: time
+             * @description End time
+             */
+            end_time: string;
+            /**
+             * Is Active
+             * @description Whether this schedule is active
+             */
+            is_active: boolean;
+        };
+        /**
          * RefreshRequest
          * @description Schema for token refresh request.
          */
@@ -709,6 +1404,89 @@ export interface components {
              * @default client
              */
             user_type: components["schemas"]["UserType"];
+        };
+        /**
+         * SetAvailabilityRequest
+         * @description Schema for setting host's complete weekly availability.
+         *
+         *     Replaces all existing recurring availability with the provided schedule.
+         */
+        SetAvailabilityRequest: {
+            /**
+             * Recurring
+             * @description Weekly recurring schedules (replaces existing)
+             */
+            recurring?: components["schemas"]["RecurringAvailabilityRequest"][];
+        };
+        /**
+         * StripeAccountStatusResponse
+         * @description Response with Stripe account status details.
+         */
+        StripeAccountStatusResponse: {
+            /**
+             * Account Id
+             * @description The Stripe Connect account ID
+             */
+            account_id: string;
+            /**
+             * Status
+             * @description Account status: not_created, pending, active, restricted, or rejected
+             */
+            status: string;
+            /**
+             * Charges Enabled
+             * @description Whether the account can accept charges
+             */
+            charges_enabled: boolean;
+            /**
+             * Payouts Enabled
+             * @description Whether the account can receive payouts
+             */
+            payouts_enabled: boolean;
+            /**
+             * Details Submitted
+             * @description Whether onboarding details have been submitted
+             */
+            details_submitted: boolean;
+            /**
+             * Requirements Due
+             * @description List of requirements that need to be fulfilled
+             */
+            requirements_due?: string[];
+        };
+        /**
+         * StripeOnboardRequest
+         * @description Request body for initiating Stripe Connect onboarding.
+         */
+        StripeOnboardRequest: {
+            /**
+             * Refresh Url
+             * Format: uri
+             * @description URL to redirect to if the onboarding link expires
+             */
+            refresh_url: string;
+            /**
+             * Return Url
+             * Format: uri
+             * @description URL to redirect to after onboarding completion
+             */
+            return_url: string;
+        };
+        /**
+         * StripeOnboardResponse
+         * @description Response for Stripe Connect onboarding initiation.
+         */
+        StripeOnboardResponse: {
+            /**
+             * Account Id
+             * @description The Stripe Connect account ID
+             */
+            account_id: string;
+            /**
+             * Onboarding Url
+             * @description URL to redirect the host to for onboarding
+             */
+            onboarding_url: string;
         };
         /**
          * TokenResponse
@@ -817,6 +1595,27 @@ export interface components {
              * @description Last update timestamp
              */
             updated_at: string;
+        };
+        /**
+         * UserSummaryResponse
+         * @description Condensed user info for booking responses.
+         */
+        UserSummaryResponse: {
+            /**
+             * Id
+             * @description User UUID
+             */
+            id: string;
+            /**
+             * First Name
+             * @description First name
+             */
+            first_name: string;
+            /**
+             * Last Name
+             * @description Last name
+             */
+            last_name: string;
         };
         /**
          * UserType
@@ -985,6 +1784,176 @@ export interface operations {
             };
         };
     };
+    list_bookings_api_v1_bookings_get: {
+        parameters: {
+            query?: {
+                /** @description Filter by booking status (can specify multiple) */
+                status?: components["schemas"]["BookingStatus"][] | null;
+                /** @description Filter bookings scheduled after this datetime (ISO 8601) */
+                start_date?: string | null;
+                /** @description Filter bookings scheduled before this datetime (ISO 8601) */
+                end_date?: string | null;
+                /** @description Cursor for pagination (booking ID from previous page) */
+                cursor?: string | null;
+                /** @description Maximum number of bookings to return (1-100) */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingListCursorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_booking_api_v1_bookings_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBookingRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingWithDetailsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_booking_api_v1_bookings__booking_id__confirm_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                booking_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingWithDetailsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_booking_api_v1_bookings__booking_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                booking_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CancelBookingRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingWithDetailsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_booking_api_v1_bookings__booking_id__complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                booking_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingWithDetailsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     search_hosts_api_v1_hosts_get: {
         parameters: {
             query?: {
@@ -1037,6 +2006,42 @@ export interface operations {
             };
         };
     };
+    get_host_availability_api_v1_hosts__host_id__availability_get: {
+        parameters: {
+            query?: {
+                /** @description Start date (default: today) */
+                start_date?: string | null;
+                /** @description End date (default: 14 days from start) */
+                end_date?: string | null;
+            };
+            header?: never;
+            path: {
+                host_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailabilityForDateRangeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_host_profile_api_v1_hosts__host_id__get: {
         parameters: {
             query?: never;
@@ -1064,6 +2069,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    initiate_stripe_onboarding_api_v1_hosts_stripe_onboard_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StripeOnboardRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StripeOnboardResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_stripe_account_status_api_v1_hosts_stripe_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StripeAccountStatusResponse"];
                 };
             };
         };
@@ -1193,6 +2251,135 @@ export interface operations {
             header?: never;
             path: {
                 dance_style_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_my_host_availability_api_v1_users_me_host_profile_availability_get: {
+        parameters: {
+            query?: {
+                /** @description Start date for overrides (default: today) */
+                start_date?: string | null;
+                /** @description End date for overrides (default: 30 days from start) */
+                end_date?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostAvailabilityResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_my_host_availability_api_v1_users_me_host_profile_availability_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetAvailabilityRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostAvailabilityResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_availability_override_api_v1_users_me_host_profile_availability_overrides_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvailabilityOverrideRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailabilityOverrideResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_availability_override_api_v1_users_me_host_profile_availability_overrides__override_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                override_id: string;
             };
             cookie?: never;
         };

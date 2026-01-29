@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HostsIndexRouteImport } from './routes/hosts/index'
 import { Route as HostsHostIdRouteImport } from './routes/hosts/$hostId'
+import { Route as HostsHostIdBookRouteImport } from './routes/hosts/$hostId/book'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -40,42 +41,69 @@ const HostsHostIdRoute = HostsHostIdRouteImport.update({
   path: '/hosts/$hostId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HostsHostIdBookRoute = HostsHostIdBookRouteImport.update({
+  id: '/book',
+  path: '/book',
+  getParentRoute: () => HostsHostIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/hosts/$hostId': typeof HostsHostIdRoute
+  '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
   '/hosts/': typeof HostsIndexRoute
+  '/hosts/$hostId/book': typeof HostsHostIdBookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/hosts/$hostId': typeof HostsHostIdRoute
+  '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
   '/hosts': typeof HostsIndexRoute
+  '/hosts/$hostId/book': typeof HostsHostIdBookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/hosts/$hostId': typeof HostsHostIdRoute
+  '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
   '/hosts/': typeof HostsIndexRoute
+  '/hosts/$hostId/book': typeof HostsHostIdBookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/register' | '/hosts/$hostId' | '/hosts/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/hosts/$hostId'
+    | '/hosts/'
+    | '/hosts/$hostId/book'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/register' | '/hosts/$hostId' | '/hosts'
-  id: '__root__' | '/' | '/login' | '/register' | '/hosts/$hostId' | '/hosts/'
+  to:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/hosts/$hostId'
+    | '/hosts'
+    | '/hosts/$hostId/book'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/register'
+    | '/hosts/$hostId'
+    | '/hosts/'
+    | '/hosts/$hostId/book'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
-  HostsHostIdRoute: typeof HostsHostIdRoute
+  HostsHostIdRoute: typeof HostsHostIdRouteWithChildren
   HostsIndexRoute: typeof HostsIndexRoute
 }
 
@@ -116,14 +144,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HostsHostIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/hosts/$hostId/book': {
+      id: '/hosts/$hostId/book'
+      path: '/book'
+      fullPath: '/hosts/$hostId/book'
+      preLoaderRoute: typeof HostsHostIdBookRouteImport
+      parentRoute: typeof HostsHostIdRoute
+    }
   }
 }
+
+interface HostsHostIdRouteChildren {
+  HostsHostIdBookRoute: typeof HostsHostIdBookRoute
+}
+
+const HostsHostIdRouteChildren: HostsHostIdRouteChildren = {
+  HostsHostIdBookRoute: HostsHostIdBookRoute,
+}
+
+const HostsHostIdRouteWithChildren = HostsHostIdRoute._addFileChildren(
+  HostsHostIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
-  HostsHostIdRoute: HostsHostIdRoute,
+  HostsHostIdRoute: HostsHostIdRouteWithChildren,
   HostsIndexRoute: HostsIndexRoute,
 }
 export const routeTree = rootRouteImport
