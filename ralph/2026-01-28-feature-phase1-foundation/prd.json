@@ -892,14 +892,14 @@
       "id": "T056",
       "title": "Implement Review Repository",
       "description": "Create review operations.",
-      "passes": false,
+      "passes": true,
       "phase": "phase5-reviews",
       "dependencies": ["T055"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "backend/app/repositories/review.py exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "create(), get_for_booking(), get_for_user() methods", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "add_response() method for host replies", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "calculate_rating_average() method", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "backend/app/repositories/review.py exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "create(), get_for_booking(), get_for_user() methods", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "add_response() method for host replies", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "calculate_rating_average() method", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": ["test_review_repository"]}
     },

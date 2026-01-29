@@ -1676,3 +1676,36 @@ strictly-dancing/
 
 **Next**: T056 - Implement Review Repository
 
+---
+
+### Entry [E-057] 2026-01-29T09:10:00Z
+
+**Task**: T056 - Implement Review Repository
+**Status**: DONE
+**Progress**: 56/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/repositories/review.py with ReviewRepository class
+- Implemented create() method with rating validation (1-5)
+- Implemented get_by_id() and get_for_booking() methods
+- Implemented get_for_user() with as_reviewer/as_reviewee filters and cursor pagination
+- Implemented get_for_host_profile() for host reviews with cursor pagination
+- Implemented add_response() method for host replies (sets host_responded_at timestamp)
+- Implemented remove_response() method to remove host replies
+- Implemented calculate_rating_average() method returning (avg, count) tuple
+- Implemented update_host_profile_rating() for manual rating recalculation
+- Implemented exists_for_booking() and count_for_host_profile() helpers
+- Implemented delete() method for review removal
+- Updated repositories/__init__.py to export ReviewRepository
+- Created 36 comprehensive unit tests (all passing)
+- All 1034 backend tests pass
+- Linting passes
+
+**Evidence**:
+- Tests: All passing (1034/1034 total - 36 new tests added)
+- Files: app/repositories/review.py, app/repositories/__init__.py, tests/unit/test_review_repository.py
+- Linting: All checks passed
+- Key tests: TestCreateReview, TestGetForBooking, TestGetForUser, TestAddResponse, TestCalculateRatingAverage
+
+**Next**: T057 - Implement Review Endpoints
+
