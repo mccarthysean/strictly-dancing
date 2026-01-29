@@ -223,3 +223,28 @@ strictly-dancing/
 - Alembic heads: 000000000002 recognized
 
 **Next**: T006 - Create User Pydantic Schemas
+
+---
+
+### Entry [E-007] 2026-01-29T06:15:00Z
+
+**Task**: T006 - Create User Pydantic Schemas
+**Status**: DONE
+**Progress**: 6/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created app/schemas/user.py with UserCreate, UserUpdate, UserResponse schemas
+- UserCreate includes email validation (EmailStr from pydantic)
+- UserCreate enforces password minimum length (8 characters)
+- UserResponse explicitly excludes password_hash (never exposed in API)
+- UserUpdate has all fields optional for partial updates
+- Added pydantic[email] dependency for email validation
+- Created 16 unit tests for schema validation (all passing)
+
+**Evidence**:
+- Tests: All passing (45/45 total)
+- Files: app/schemas/user.py, app/schemas/__init__.py, tests/unit/test_user_schemas.py
+- Linting: All checks passed
+- Key tests: test_user_create_schema_validates_email, test_user_response_excludes_password_hash
+
+**Next**: T007 - Implement User Repository Layer
