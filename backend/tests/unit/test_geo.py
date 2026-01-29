@@ -114,7 +114,7 @@ class TestExtractCoordinatesFromGeography:
     def test_handles_string_representation(self):
         """Should handle string representation from SQLAlchemy."""
         # Sometimes SQLAlchemy returns the value as a string
-        wkt_str = str("POINT(-74.006 40.7128)")
+        wkt_str = "POINT(-74.006 40.7128)"
         result = extract_coordinates_from_geography(wkt_str)
 
         assert result is not None
