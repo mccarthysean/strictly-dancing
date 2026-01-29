@@ -1164,15 +1164,15 @@
       "id": "T074",
       "title": "Implement Host Verification Backend",
       "description": "Create host identity and background verification system.",
-      "passes": false,
+      "passes": true,
       "phase": "phase5-reviews",
       "dependencies": ["T026"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "backend/app/services/verification.py exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Submit ID document for verification", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "POST /api/v1/hosts/verification/submit endpoint", "verification": "test", "met": false},
-        {"id": "AC04", "criterion": "Verification status: pending, verified, rejected", "verification": "code_review", "met": false},
-        {"id": "AC05", "criterion": "Verified badge on host profile", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "backend/app/services/verification.py exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Submit ID document for verification", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "POST /api/v1/hosts/verification/submit endpoint", "verification": "test", "met": true},
+        {"id": "AC04", "criterion": "Verification status: pending, verified, rejected", "verification": "code_review", "met": true},
+        {"id": "AC05", "criterion": "Verified badge on host profile", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": ["test_host_verification"]}
     },

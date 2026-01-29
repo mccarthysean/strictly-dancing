@@ -15,6 +15,7 @@ from app.models.host_profile import HostProfile, VerificationStatus
 from app.models.push_token import DevicePlatform, PushToken
 from app.models.review import Review
 from app.models.user import User, UserType
+from app.models.verification_document import DocumentType, VerificationDocument
 
 __all__ = [
     "AvailabilityOverride",
@@ -27,6 +28,7 @@ __all__ = [
     "DanceStyleCategory",
     "DayOfWeek",
     "DevicePlatform",
+    "DocumentType",
     "HostDanceStyle",
     "HostProfile",
     "Message",
@@ -36,5 +38,6 @@ __all__ = [
     "Review",
     "User",
     "UserType",
+    "VerificationDocument",
     "VerificationStatus",
 ]

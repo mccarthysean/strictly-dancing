@@ -37,7 +37,14 @@ from app.schemas.stripe import (
     StripeOnboardRequest,
     StripeOnboardResponse,
 )
+from app.schemas.verification import (
+    SubmitVerificationRequest,
+    SubmitVerificationResponse,
+    VerificationDocumentResponse,
+    VerificationStatusResponse,
+)
 from app.services.stripe import StripeAccountStatus, stripe_service
+from app.services.verification import get_verification_service
 
 router = APIRouter(prefix="/api/v1/hosts", tags=["hosts"])
 
@@ -731,4 +738,137 @@ async def get_host_reviews(
         next_cursor=next_cursor,
         has_more=has_more,
         total=total,
+    )
+
+
+# ==================== Verification Endpoints ====================
+
+
+@router.post(
+    "/verification/submit",
+    response_model=SubmitVerificationResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Submit verification documents",
+    description="Submit ID documents for host identity verification.",
+)
+async def submit_verification(
+    db: DbSession,
+    current_user: CurrentUser,
+    request: SubmitVerificationRequest,
+) -> SubmitVerificationResponse:
+    """Submit verification documents for a host profile.
+
+    Hosts must submit identity verification documents before they
+    can be verified. Once submitted, the verification status changes
+    to PENDING until an admin reviews the documents.
+
+    Args:
+        db: The database session (injected).
+        current_user: The authenticated user (injected).
+        request: The verification submission request.
+
+    Returns:
+        SubmitVerificationResponse with submission status.
+
+    Raises:
+        HTTPException: 404 if user is not a host.
+        HTTPException: 400 if already verified or pending.
+    """
+    host_repo = HostProfileRepository(db)
+    verification_service = get_verification_service(db)
+
+    # Get the host profile
+    profile = await host_repo.get_by_user_id(current_user.id)
+    if profile is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Host profile not found. Please become a host first.",
+        )
+
+    # Submit verification
+    result = await verification_service.submit_verification(
+        host_profile_id=profile.id,
+        document_type=request.document_type,
+        document_url=request.document_url,
+        document_number=request.document_number,
+        notes=request.notes,
+    )
+
+    if not result.success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=result.error_message,
+        )
+
+    return SubmitVerificationResponse(
+        success=True,
+        document_id=result.document_id,
+        message="Verification documents submitted successfully. Please allow 1-3 business days for review.",
+    )
+
+
+@router.get(
+    "/verification/status",
+    response_model=VerificationStatusResponse,
+    summary="Get verification status",
+    description="Get the current verification status for the authenticated host.",
+)
+async def get_verification_status(
+    db: DbSession,
+    current_user: CurrentUser,
+) -> VerificationStatusResponse:
+    """Get the verification status for the authenticated host.
+
+    Returns the current verification status, whether the host can
+    submit new documents, and any rejection reason if applicable.
+
+    Args:
+        db: The database session (injected).
+        current_user: The authenticated user (injected).
+
+    Returns:
+        VerificationStatusResponse with status and documents.
+
+    Raises:
+        HTTPException: 404 if user is not a host.
+    """
+    host_repo = HostProfileRepository(db)
+    verification_service = get_verification_service(db)
+
+    # Get the host profile
+    profile = await host_repo.get_by_user_id(current_user.id)
+    if profile is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Host profile not found. Please become a host first.",
+        )
+
+    # Get verification status
+    status_result = await verification_service.get_verification_status(profile.id)
+    if status_result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Host profile not found.",
+        )
+
+    # Convert documents to response format
+    documents = [
+        VerificationDocumentResponse(
+            id=doc.id,
+            document_type=doc.document_type,
+            document_url=doc.document_url,
+            document_number=doc.document_number,
+            notes=doc.notes,
+            reviewer_notes=doc.reviewer_notes,
+            reviewed_at=doc.reviewed_at,
+            created_at=doc.created_at,
+        )
+        for doc in status_result.documents
+    ]
+
+    return VerificationStatusResponse(
+        status=status_result.status,
+        can_submit=status_result.can_submit,
+        rejection_reason=status_result.rejection_reason,
+        documents=documents,
     )

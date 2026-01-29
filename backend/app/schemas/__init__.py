@@ -76,6 +76,14 @@ from app.schemas.stripe import (
     StripeOnboardResponse,
 )
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
+from app.schemas.verification import (
+    ApproveVerificationRequest,
+    RejectVerificationRequest,
+    SubmitVerificationRequest,
+    SubmitVerificationResponse,
+    VerificationDocumentResponse,
+    VerificationStatusResponse,
+)
 
 __all__ = [
     # User schemas
@@ -151,4 +159,11 @@ __all__ = [
     "UnregisterPushTokenRequest",
     "PushTokenResponse",
     "PushTokenListResponse",
+    # Verification schemas
+    "SubmitVerificationRequest",
+    "SubmitVerificationResponse",
+    "VerificationStatusResponse",
+    "VerificationDocumentResponse",
+    "ApproveVerificationRequest",
+    "RejectVerificationRequest",
 ]

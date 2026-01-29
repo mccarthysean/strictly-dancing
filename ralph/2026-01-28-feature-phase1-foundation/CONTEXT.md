@@ -2424,3 +2424,50 @@ strictly-dancing/
 
 **Next**: T074 - Implement Host Verification Backend
 
+---
+
+### Entry [E-075] 2026-01-29T10:50:00Z
+
+**Task**: T074 - Implement Host Verification Backend
+**Status**: DONE
+**Progress**: 74/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/models/verification_document.py with VerificationDocument model:
+  - DocumentType enum (government_id, passport, drivers_license, other)
+  - Fields: host_profile_id, document_type, document_url, document_number, notes
+  - Review fields: reviewer_notes, reviewed_at, reviewed_by
+  - Cascade delete from host_profile
+- Created backend/app/services/verification.py with VerificationService class:
+  - submit_verification() - Creates document and sets status to PENDING
+  - get_verification_status() - Returns current status and documents
+  - approve_verification() - Admin method to verify hosts
+  - reject_verification() - Admin method to reject with reason
+  - VerificationResult and VerificationStatusResult dataclasses
+- Created backend/app/schemas/verification.py with Pydantic schemas:
+  - SubmitVerificationRequest with document_type validation
+  - VerificationStatusResponse with status and documents
+  - SubmitVerificationResponse with success message
+  - ApproveVerificationRequest and RejectVerificationRequest for admin
+- Added endpoints to backend/app/routers/hosts.py:
+  - POST /api/v1/hosts/verification/submit - Submit verification documents
+  - GET /api/v1/hosts/verification/status - Get current verification status
+- Created Alembic migration (20260129_110000) for verification_documents table
+- Updated frontend/src/routes/hosts/$hostId.tsx with enhanced verification badge:
+  - Verified badge (green with checkmark icon) for verified hosts
+  - Pending badge (yellow with clock icon) for pending verification
+- Created 28 comprehensive unit tests (all passing)
+- All 1259 backend tests pass
+- TypeScript compiles with no errors
+- Frontend builds successfully (128.90 KB gzipped)
+
+**Evidence**:
+- Tests: All passing (1259/1259 total - 28 new tests added)
+- Files: app/models/verification_document.py, app/services/verification.py, app/schemas/verification.py, app/routers/hosts.py, frontend/src/routes/hosts/$hostId.tsx
+- Migration: alembic/versions/20260129_110000_create_verification_documents_table.py
+- Test file: tests/unit/test_host_verification.py
+- Linting: All checks passed
+- Key features: submit endpoint, status endpoint, verified badge, pending badge
+
+**Next**: T075 - Initialize React Native Expo Mobile Project
+

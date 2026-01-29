@@ -15,6 +15,12 @@ from app.services.push_notifications import (
 )
 from app.services.stripe import AccountStatus, StripeAccountStatus, StripeService
 from app.services.token import TokenPayload, TokenService
+from app.services.verification import (
+    VerificationResult,
+    VerificationService,
+    VerificationStatusResult,
+    get_verification_service,
+)
 from app.services.websocket import (
     ConnectionInfo,
     WebSocketManager,
@@ -45,11 +51,15 @@ __all__ = [
     "StripeService",
     "TokenPayload",
     "TokenService",
+    "VerificationResult",
+    "VerificationService",
+    "VerificationStatusResult",
     "WebSocketManager",
     "WebSocketMessage",
     "WebSocketMessageType",
     "get_notification_trigger_service",
     "get_push_notification_service",
+    "get_verification_service",
     "LocationConnectionInfo",
     "LocationMessage",
     "LocationMessageType",

@@ -68,7 +68,38 @@ function HostProfilePage() {
     if (status === 'verified') {
       return (
         <span style={styles.verifiedBadge}>
+          <svg
+            style={styles.verifiedIcon}
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M16.403 12.652a3 3 0 000-5.304 3 3 0 00-3.75-3.751 3 3 0 00-5.305 0 3 3 0 00-3.751 3.75 3 3 0 000 5.305 3 3 0 003.75 3.751 3 3 0 005.305 0 3 3 0 003.751-3.75zm-2.546-4.46a.75.75 0 00-1.214-.883l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+              clipRule="evenodd"
+            />
+          </svg>
           Verified Host
+        </span>
+      )
+    }
+    if (status === 'pending') {
+      return (
+        <span style={styles.pendingBadge}>
+          <svg
+            style={styles.pendingIcon}
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Verification Pending
         </span>
       )
     }
@@ -311,12 +342,32 @@ const styles: Record<string, React.CSSProperties> = {
   verifiedBadge: {
     display: 'inline-flex',
     alignItems: 'center',
+    gap: '0.25rem',
     padding: '0.25rem 0.75rem',
     backgroundColor: '#dcfce7',
     color: '#166534',
     borderRadius: '9999px',
     fontSize: '0.75rem',
     fontWeight: 500,
+  },
+  verifiedIcon: {
+    width: '16px',
+    height: '16px',
+  },
+  pendingBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.25rem',
+    padding: '0.25rem 0.75rem',
+    backgroundColor: '#fef3c7',
+    color: '#92400e',
+    borderRadius: '9999px',
+    fontSize: '0.75rem',
+    fontWeight: 500,
+  },
+  pendingIcon: {
+    width: '14px',
+    height: '14px',
   },
   headline: {
     color: '#6b7280',
