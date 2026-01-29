@@ -304,3 +304,30 @@ strictly-dancing/
 - Key tests: test_password_hashing_produces_valid_format, test_password_verification_succeeds_fails_correctly, test_different_hashes_for_same_password
 
 **Next**: T009 - Implement JWT Token Service
+
+---
+
+### Entry [E-010] 2026-01-29T06:10:00Z
+
+**Task**: T009 - Implement JWT Token Service
+**Status**: DONE
+**Progress**: 9/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created app/services/token.py with TokenService class
+- TokenPayload dataclass for decoded JWT payload (sub, exp, iat, jti, token_type)
+- create_access_token() creates short-lived tokens (15-minute expiration by default)
+- create_refresh_token() creates long-lived tokens (7-day expiration by default)
+- verify_token() validates signature and expiration, raises ValueError for invalid/expired tokens
+- All token payloads include sub (user_id), exp, iat, jti fields
+- Singleton token_service instance configured from application settings
+- Uses python-jose[cryptography] for JWT encoding/decoding
+- Created 23 unit tests for TokenService (all passing)
+
+**Evidence**:
+- Tests: All passing (109/109 total)
+- Files: app/services/token.py, tests/unit/test_token_service.py
+- Linting: All checks passed
+- Key tests: test_access_token_has_15_minute_expiration, test_refresh_token_has_7_day_expiration, test_token_payload_includes_sub, test_verify_token_validates_signature, test_verify_token_validates_expiration
+
+**Next**: T010 - Create Authentication Pydantic Schemas

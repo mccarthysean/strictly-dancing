@@ -184,15 +184,15 @@
       "id": "T009",
       "title": "Implement JWT Token Service",
       "description": "Create JWT service for access/refresh tokens using RS256.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T002"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "backend/app/services/token.py exists with TokenService", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Access tokens have 15-minute expiration", "verification": "test", "met": false},
-        {"id": "AC03", "criterion": "Refresh tokens have 7-day expiration", "verification": "test", "met": false},
-        {"id": "AC04", "criterion": "Token payload includes sub (user_id), exp, iat, jti", "verification": "test", "met": false},
-        {"id": "AC05", "criterion": "verify_token() validates signature and expiration", "verification": "test", "met": false}
+        {"id": "AC01", "criterion": "backend/app/services/token.py exists with TokenService", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Access tokens have 15-minute expiration", "verification": "test", "met": true},
+        {"id": "AC03", "criterion": "Refresh tokens have 7-day expiration", "verification": "test", "met": true},
+        {"id": "AC04", "criterion": "Token payload includes sub (user_id), exp, iat, jti", "verification": "test", "met": true},
+        {"id": "AC05", "criterion": "verify_token() validates signature and expiration", "verification": "test", "met": true}
       ],
       "testing": {"unit_tests": ["test_token_creation_and_verification", "test_expired_token_raises_error", "test_token_payload_structure"]}
     },
