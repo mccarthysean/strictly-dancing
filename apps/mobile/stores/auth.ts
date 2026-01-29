@@ -16,13 +16,21 @@ interface User {
   updated_at: string;
 }
 
-// Registration data
+// Registration data (legacy password-based)
 interface RegisterData {
   email: string;
   password: string;
   first_name: string;
   last_name: string;
   user_type: 'client' | 'host' | 'both';
+}
+
+// Registration data for magic link (passwordless)
+interface RegisterWithMagicLinkData {
+  email: string;
+  first_name: string;
+  last_name: string;
+  user_type?: 'client' | 'host' | 'both';
 }
 
 // Token response from API
@@ -52,6 +60,11 @@ interface AuthActions {
   refreshAccessToken: () => Promise<boolean>;
   fetchUser: () => Promise<void>;
   clearError: () => void;
+  // Magic link authentication
+  requestMagicLink: (email: string) => Promise<void>;
+  verifyMagicLink: (email: string, code: string) => Promise<void>;
+  registerWithMagicLink: (data: RegisterWithMagicLinkData) => Promise<void>;
+  verifyRegistration: (email: string, code: string) => Promise<void>;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -266,5 +279,136 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   // Clear error state
   clearError: () => {
     set({ error: null });
+  },
+
+  // Request magic link for login
+  requestMagicLink: async (email: string) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/magic-link/request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail ?? 'Failed to send magic link');
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to send magic link';
+      set({ error: message });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Verify magic link code for login
+  verifyMagicLink: async (email: string, code: string) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/magic-link/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail ?? 'Invalid or expired code');
+      }
+
+      const tokens: TokenResponse = await response.json();
+
+      // Store tokens securely
+      await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, tokens.access_token);
+      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, tokens.refresh_token);
+
+      set({
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+      });
+
+      // Fetch user data
+      await get().fetchUser();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Invalid or expired code';
+      set({ error: message });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Register with magic link (passwordless)
+  registerWithMagicLink: async (data: RegisterWithMagicLinkData) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/register/magic-link`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: data.email,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          user_type: data.user_type ?? 'client',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail ?? 'Registration failed');
+      }
+
+      // Registration initiated - user needs to verify with code
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Registration failed';
+      set({ error: message });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Verify registration magic link
+  verifyRegistration: async (email: string, code: string) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/register/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail ?? 'Invalid or expired code');
+      }
+
+      const tokens: TokenResponse = await response.json();
+
+      // Store tokens securely
+      await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, tokens.access_token);
+      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, tokens.refresh_token);
+
+      set({
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+      });
+
+      // Fetch user data
+      await get().fetchUser();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Invalid or expired code';
+      set({ error: message });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
   },
 }));

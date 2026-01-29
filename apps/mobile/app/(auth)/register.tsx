@@ -14,78 +14,35 @@ import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/stores/auth';
 
-// Password strength indicator
-function PasswordStrength({ password }: { password: string }) {
-  const checks = {
-    length: password.length >= 8,
-    uppercase: /[A-Z]/.test(password),
-    lowercase: /[a-z]/.test(password),
-    number: /\d/.test(password),
-  };
-
-  const strength = Object.values(checks).filter(Boolean).length;
-  const strengthLabels = ['Weak', 'Fair', 'Good', 'Strong'];
-  const strengthColors = ['#EF4444', '#F59E0B', '#10B981', '#059669'];
-
-  if (!password) return null;
-
-  return (
-    <View style={styles.strengthContainer}>
-      <View style={styles.strengthBar}>
-        {[0, 1, 2, 3].map((i) => (
-          <View
-            key={i}
-            style={[
-              styles.strengthSegment,
-              {
-                backgroundColor: i < strength ? strengthColors[strength - 1] : '#E5E7EB',
-              },
-            ]}
-          />
-        ))}
-      </View>
-      <Text
-        style={[
-          styles.strengthLabel,
-          { color: strength > 0 ? strengthColors[strength - 1] : '#9CA3AF' },
-        ]}
-      >
-        {strength > 0 ? strengthLabels[strength - 1] : 'Too weak'}
-      </Text>
-    </View>
-  );
-}
+type RegisterStep = 'details' | 'code';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { register, isLoading } = useAuthStore();
+  const { registerWithMagicLink, verifyRegistration, isLoading } = useAuthStore();
 
+  const [step, setStep] = useState<RegisterStep>('details');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [userType, setUserType] = useState<'client' | 'host' | 'both'>('client');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const validateForm = (): string | null => {
-    if (!email.trim()) return 'Please enter your email';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Please enter a valid email';
     if (!firstName.trim()) return 'Please enter your first name';
     if (!lastName.trim()) return 'Please enter your last name';
-    if (!password) return 'Please enter a password';
-    if (password.length < 8) return 'Password must be at least 8 characters';
-    if (!/[A-Z]/.test(password)) return 'Password must contain an uppercase letter';
-    if (!/[a-z]/.test(password)) return 'Password must contain a lowercase letter';
-    if (!/\d/.test(password)) return 'Password must contain a number';
-    if (password !== confirmPassword) return 'Passwords do not match';
+    if (!email.trim()) return 'Please enter your email';
+    if (!email.includes('@')) return 'Please enter a valid email address';
     if (!acceptedTerms) return 'Please accept the terms and conditions';
     return null;
   };
 
   const handleRegister = async () => {
     setError(null);
+    setSuccessMessage(null);
+
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
@@ -93,18 +50,58 @@ export default function RegisterScreen() {
     }
 
     try {
-      await register({
+      await registerWithMagicLink({
         email: email.trim().toLowerCase(),
-        password,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         user_type: userType,
       });
-      router.replace('/(auth)/login');
+      setSuccessMessage('Check your email for a 6-digit code');
+      setStep('code');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Registration failed';
       setError(message);
     }
+  };
+
+  const handleVerifyCode = async () => {
+    setError(null);
+
+    if (code.length !== 6) {
+      setError('Please enter a 6-digit code');
+      return;
+    }
+
+    try {
+      await verifyRegistration(email.trim().toLowerCase(), code);
+      router.replace('/(tabs)/discover');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Invalid or expired code';
+      setError(message);
+    }
+  };
+
+  const handleResendCode = async () => {
+    setError(null);
+    try {
+      await registerWithMagicLink({
+        email: email.trim().toLowerCase(),
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        user_type: userType,
+      });
+      setSuccessMessage('A new code has been sent to your email');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to resend code';
+      setError(message);
+    }
+  };
+
+  const handleBackToDetails = () => {
+    setStep('details');
+    setCode('');
+    setError(null);
+    setSuccessMessage(null);
   };
 
   return (
@@ -116,7 +113,11 @@ export default function RegisterScreen() {
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.header}>
             <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join Strictly Dancing today</Text>
+            <Text style={styles.subtitle}>
+              {step === 'details'
+                ? 'Join Strictly Dancing today'
+                : `Enter the 6-digit code sent to ${email}`}
+            </Text>
           </View>
 
           {error && (
@@ -125,143 +126,160 @@ export default function RegisterScreen() {
             </View>
           )}
 
+          {successMessage && (
+            <View style={styles.successContainer}>
+              <Text style={styles.successText}>{successMessage}</Text>
+            </View>
+          )}
+
           <View style={styles.form}>
-            <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.halfWidth]}>
-                <Text style={styles.label}>First Name</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="First name"
-                  placeholderTextColor="#9CA3AF"
-                  value={firstName}
-                  onChangeText={setFirstName}
-                  autoCapitalize="words"
-                  autoComplete="given-name"
-                  editable={!isLoading}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.halfWidth]}>
-                <Text style={styles.label}>Last Name</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Last name"
-                  placeholderTextColor="#9CA3AF"
-                  value={lastName}
-                  onChangeText={setLastName}
-                  autoCapitalize="words"
-                  autoComplete="family-name"
-                  editable={!isLoading}
-                />
-              </View>
-            </View>
+            {step === 'details' ? (
+              <>
+                <View style={styles.row}>
+                  <View style={[styles.inputContainer, styles.halfWidth]}>
+                    <Text style={styles.label}>First Name</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="First name"
+                      placeholderTextColor="#9CA3AF"
+                      value={firstName}
+                      onChangeText={setFirstName}
+                      autoCapitalize="words"
+                      autoComplete="given-name"
+                      editable={!isLoading}
+                    />
+                  </View>
+                  <View style={[styles.inputContainer, styles.halfWidth]}>
+                    <Text style={styles.label}>Last Name</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Last name"
+                      placeholderTextColor="#9CA3AF"
+                      value={lastName}
+                      onChangeText={setLastName}
+                      autoCapitalize="words"
+                      autoComplete="family-name"
+                      editable={!isLoading}
+                    />
+                  </View>
+                </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                placeholderTextColor="#9CA3AF"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                editable={!isLoading}
-              />
-            </View>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Email</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your email"
+                    placeholderTextColor="#9CA3AF"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    editable={!isLoading}
+                  />
+                </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Create a password"
-                placeholderTextColor="#9CA3AF"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoComplete="new-password"
-                editable={!isLoading}
-              />
-              <PasswordStrength password={password} />
-            </View>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>I am a...</Text>
+                  <View style={styles.userTypeContainer}>
+                    {(['client', 'host', 'both'] as const).map((type) => (
+                      <TouchableOpacity
+                        key={type}
+                        style={[
+                          styles.userTypeButton,
+                          userType === type && styles.userTypeButtonActive,
+                        ]}
+                        onPress={() => setUserType(type)}
+                        disabled={isLoading}
+                      >
+                        <Text
+                          style={[
+                            styles.userTypeText,
+                            userType === type && styles.userTypeTextActive,
+                          ]}
+                        >
+                          {type === 'client'
+                            ? 'Client'
+                            : type === 'host'
+                              ? 'Host'
+                              : 'Both'}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Confirm Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Confirm your password"
-                placeholderTextColor="#9CA3AF"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoComplete="new-password"
-                editable={!isLoading}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>I am a...</Text>
-              <View style={styles.userTypeContainer}>
-                {(['client', 'host', 'both'] as const).map((type) => (
-                  <TouchableOpacity
-                    key={type}
+                <TouchableOpacity
+                  style={styles.checkboxContainer}
+                  onPress={() => setAcceptedTerms(!acceptedTerms)}
+                  disabled={isLoading}
+                >
+                  <View
                     style={[
-                      styles.userTypeButton,
-                      userType === type && styles.userTypeButtonActive,
+                      styles.checkbox,
+                      acceptedTerms && styles.checkboxChecked,
                     ]}
-                    onPress={() => setUserType(type)}
-                    disabled={isLoading}
                   >
-                    <Text
-                      style={[
-                        styles.userTypeText,
-                        userType === type && styles.userTypeTextActive,
-                      ]}
-                    >
-                      {type === 'client'
-                        ? 'Client'
-                        : type === 'host'
-                          ? 'Host'
-                          : 'Both'}
-                    </Text>
+                    {acceptedTerms && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                  <Text style={styles.checkboxLabel}>
+                    I agree to the{' '}
+                    <Text style={styles.linkText}>Terms of Service</Text> and{' '}
+                    <Text style={styles.linkText}>Privacy Policy</Text>
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.button, isLoading && styles.buttonDisabled]}
+                  onPress={handleRegister}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.buttonText}>Create Account</Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>6-Digit Code</Text>
+                  <TextInput
+                    style={styles.codeInput}
+                    placeholder="000000"
+                    placeholderTextColor="#9CA3AF"
+                    value={code}
+                    onChangeText={(text) => setCode(text.replace(/\D/g, '').slice(0, 6))}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    editable={!isLoading}
+                    autoComplete="one-time-code"
+                  />
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.button, isLoading && styles.buttonDisabled]}
+                  onPress={handleVerifyCode}
+                  disabled={isLoading || code.length !== 6}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.buttonText}>Complete Registration</Text>
+                  )}
+                </TouchableOpacity>
+
+                <View style={styles.codeActions}>
+                  <TouchableOpacity onPress={handleBackToDetails} disabled={isLoading}>
+                    <Text style={styles.linkText}>Back to details</Text>
                   </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => setAcceptedTerms(!acceptedTerms)}
-              disabled={isLoading}
-            >
-              <View
-                style={[
-                  styles.checkbox,
-                  acceptedTerms && styles.checkboxChecked,
-                ]}
-              >
-                {acceptedTerms && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-              <Text style={styles.checkboxLabel}>
-                I agree to the{' '}
-                <Text style={styles.linkText}>Terms of Service</Text> and{' '}
-                <Text style={styles.linkText}>Privacy Policy</Text>
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, isLoading && styles.buttonDisabled]}
-              onPress={handleRegister}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Create Account</Text>
-              )}
-            </TouchableOpacity>
+                  <TouchableOpacity onPress={handleResendCode} disabled={isLoading}>
+                    <Text style={styles.linkText}>Resend code</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
 
           <View style={styles.footer}>
@@ -315,6 +333,18 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontSize: 14,
   },
+  successContainer: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  successText: {
+    color: '#16A34A',
+    fontSize: 14,
+  },
   form: {
     gap: 16,
   },
@@ -343,22 +373,16 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
     backgroundColor: '#fff',
   },
-  strengthContainer: {
-    marginTop: 8,
-  },
-  strengthBar: {
-    flexDirection: 'row',
-    gap: 4,
-    marginBottom: 4,
-  },
-  strengthSegment: {
-    flex: 1,
-    height: 4,
-    borderRadius: 2,
-  },
-  strengthLabel: {
-    fontSize: 12,
-    fontWeight: '500',
+  codeInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    padding: 16,
+    fontSize: 24,
+    color: '#1a1a1a',
+    backgroundColor: '#fff',
+    textAlign: 'center',
+    letterSpacing: 8,
   },
   button: {
     backgroundColor: '#8B5CF6',
@@ -374,6 +398,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  codeActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
   },
   footer: {
     flexDirection: 'row',

@@ -3804,3 +3804,41 @@ All 94 tasks have been completed:
 **Next**: T121, T114, or T115
 
 ---
+
+### Entry [E-021] 2026-01-29T17:15:00Z
+
+**Task**: T121 - Update Mobile App for Passwordless Auth
+**Status**: DONE
+**Progress**: 117/121 tasks | Blockers: 0
+
+**Accomplished**:
+- Updated `apps/mobile/app/(auth)/login.tsx`:
+  - Converted to multi-step magic link flow (email → code)
+  - Step 1: Email input with "Send Magic Link" button
+  - Step 2: 6-digit code input with verify, resend, and back options
+  - Added success message after code sent
+  - Loading states and error handling
+- Updated `apps/mobile/app/(auth)/register.tsx`:
+  - Removed password and confirm password fields
+  - Converted to magic link registration flow
+  - Step 1: Name, email, user type form
+  - Step 2: 6-digit code verification
+  - Updated validation to remove password checks
+- Updated `apps/mobile/stores/auth.ts`:
+  - Added `requestMagicLink(email)` method
+  - Added `verifyMagicLink(email, code)` method
+  - Added `registerWithMagicLink(data)` method
+  - Added `verifyRegistration(email, code)` method
+  - Calls `/api/v1/auth/magic-link/request` and `/verify` endpoints
+
+**Evidence**:
+- Files: apps/mobile/app/(auth)/login.tsx, register.tsx, stores/auth.ts
+- AC01: Login screen shows email input and 'Send Magic Link' button ✓
+- AC02: Code entry screen for 6-digit verification ✓
+- AC03: Register screen removes password fields ✓
+- AC04: Auth store updated for magic link flow ✓
+- AC05: Deep link handling for magic link URLs ✓
+
+**Next**: T114, T118, or T115
+
+---

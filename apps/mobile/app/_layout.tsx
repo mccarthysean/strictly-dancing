@@ -6,6 +6,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/stores/auth';
 import { initSentry, SentryProvider } from '@/lib/sentry';
+import { useDeepLinking } from '@/hooks/useDeepLinking';
 
 // Initialize Sentry for error tracking and performance monitoring
 initSentry();
@@ -25,6 +26,9 @@ const queryClient = new QueryClient({
 
 function RootLayout() {
   const { isLoading, initialize } = useAuthStore();
+
+  // Handle deep links for magic link authentication
+  useDeepLinking();
 
   useEffect(() => {
     async function prepare() {

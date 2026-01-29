@@ -4879,7 +4879,7 @@
       "id": "T121",
       "title": "Update Mobile App for Passwordless Auth",
       "description": "Modify React Native login/register screens to use magic link flow.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": [
         "T106",
@@ -4890,31 +4890,31 @@
           "id": "AC01",
           "criterion": "Login screen shows email input and 'Send Magic Link' button",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC02",
           "criterion": "Code entry screen for 6-digit verification",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC03",
           "criterion": "Register screen removes password fields",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC04",
           "criterion": "Auth store updated for magic link flow",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC05",
           "criterion": "Deep link handling for magic link URLs",
           "verification": "code_review",
-          "met": false
+          "met": true
         }
       ],
       "testing": {
