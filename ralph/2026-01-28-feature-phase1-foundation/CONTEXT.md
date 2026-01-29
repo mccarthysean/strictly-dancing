@@ -410,3 +410,28 @@ strictly-dancing/
 - Key tests: test_login_valid_credentials_returns_tokens, test_login_invalid_credentials_returns_401, test_login_same_error_for_invalid_email_and_password
 
 **Next**: T013 - Implement Token Refresh Endpoint
+
+---
+
+### Entry [E-014] 2026-01-29T06:30:00Z
+
+**Task**: T013 - Implement Token Refresh Endpoint
+**Status**: DONE
+**Progress**: 13/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created RefreshResponse schema in app/schemas/auth.py
+- Implemented POST /api/v1/auth/refresh endpoint in app/routers/auth.py
+- Validates refresh token signature and expiration via token_service.verify_token()
+- Returns 401 for invalid tokens, expired tokens, or wrong token type (access vs refresh)
+- Issues new access token using user ID from refresh token payload
+- Returns RefreshResponse with access_token, token_type, and expires_in
+- Added 8 unit tests for refresh endpoint (all passing)
+
+**Evidence**:
+- Tests: All passing (162/162 total)
+- Files: app/schemas/auth.py, app/routers/auth.py, tests/unit/test_auth_router.py
+- Linting: All checks passed
+- Key tests: test_refresh_valid_token_returns_new_access_token, test_refresh_invalid_token_returns_401, test_refresh_expired_token_returns_401, test_refresh_with_access_token_returns_401
+
+**Next**: T014 - Implement Authentication Middleware

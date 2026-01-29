@@ -8,7 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.repositories.user import UserRepository
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
+from app.schemas.auth import (
+    LoginRequest,
+    RefreshRequest,
+    RefreshResponse,
+    RegisterRequest,
+    TokenResponse,
+)
 from app.schemas.user import UserCreate, UserResponse
 from app.services.password import password_service
 from app.services.token import token_service
@@ -134,6 +140,72 @@ async def login(
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=expires_in,
+    )
+
+
+# Invalid token error
+INVALID_TOKEN_ERROR = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Invalid or expired refresh token",
+    headers={"WWW-Authenticate": "Bearer"},
+)
+
+
+@router.post(
+    "/refresh",
+    response_model=RefreshResponse,
+    summary="Refresh access token",
+    description="Exchange a valid refresh token for a new access token.",
+)
+async def refresh(
+    request: RefreshRequest,
+) -> RefreshResponse:
+    """Refresh access token using a valid refresh token.
+
+    Validates the refresh token and issues a new access token.
+    The refresh token itself is not rotated.
+
+    Args:
+        request: The refresh request with the refresh token.
+
+    Returns:
+        RefreshResponse with new access_token and expiration info.
+
+    Raises:
+        HTTPException 401: If refresh token is invalid or expired.
+    """
+    # Verify the refresh token
+    try:
+        payload = token_service.verify_token(request.refresh_token)
+    except ValueError as e:
+        error_message = str(e).lower()
+        if "expired" in error_message:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh token has expired",
+                headers={"WWW-Authenticate": "Bearer"},
+            ) from e
+        raise INVALID_TOKEN_ERROR from e
+
+    # Ensure it's a refresh token, not an access token
+    if payload.token_type != "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token type: must be a refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Create a new access token
+    access_token = token_service.create_access_token(payload.sub)
+
+    # Get expiration time in seconds from settings
+    settings = get_settings()
+    expires_in = settings.jwt_access_token_expire_minutes * 60
+
+    return RefreshResponse(
+        access_token=access_token,
         token_type="bearer",
         expires_in=expires_in,
     )

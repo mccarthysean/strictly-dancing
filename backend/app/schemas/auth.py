@@ -89,3 +89,19 @@ class RefreshRequest(BaseModel):
     """Schema for token refresh request."""
 
     refresh_token: str = Field(..., description="The refresh token to use")
+
+
+class RefreshResponse(BaseModel):
+    """Schema for token refresh response.
+
+    Returns a new access token (refresh token is not rotated).
+    """
+
+    access_token: str = Field(..., description="New JWT access token")
+    token_type: str = Field(
+        default="bearer", description="Token type (always 'bearer')"
+    )
+    expires_in: int = Field(
+        ...,
+        description="Access token expiration time in seconds",
+    )

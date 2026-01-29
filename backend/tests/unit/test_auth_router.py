@@ -587,3 +587,127 @@ class TestLoginEndpoint:
             assert response.status_code == status.HTTP_200_OK
             # EmailStr normalizes domain to lowercase, local part preserves case
             mock_repo.get_by_email.assert_called_once_with("TEST@example.com")
+
+
+class TestRefreshEndpoint:
+    """Tests for POST /api/v1/auth/refresh endpoint."""
+
+    def test_refresh_endpoint_exists(self, client: TestClient) -> None:
+        """Test that the refresh endpoint exists and accepts POST."""
+        with patch("app.routers.auth.token_service") as mock_token_service:
+            mock_token_service.verify_token.side_effect = ValueError("Invalid token")
+
+            response = client.post(
+                "/api/v1/auth/refresh",
+                json={"refresh_token": "some_token"},
+            )
+            # Should not be 404 (endpoint exists)
+            assert response.status_code != status.HTTP_404_NOT_FOUND
+
+    def test_refresh_valid_token_returns_200(self, client: TestClient) -> None:
+        """Test that valid refresh token returns 200 OK."""
+        with patch("app.routers.auth.token_service") as mock_token_service:
+            mock_payload = MagicMock()
+            mock_payload.sub = "550e8400-e29b-41d4-a716-446655440000"
+            mock_payload.token_type = "refresh"
+            mock_token_service.verify_token.return_value = mock_payload
+            mock_token_service.create_access_token.return_value = "new_access_token"
+
+            response = client.post(
+                "/api/v1/auth/refresh",
+                json={"refresh_token": "valid_refresh_token"},
+            )
+            assert response.status_code == status.HTTP_200_OK
+
+    def test_refresh_valid_token_returns_new_access_token(
+        self, client: TestClient
+    ) -> None:
+        """Test that refresh returns a new access token."""
+        with patch("app.routers.auth.token_service") as mock_token_service:
+            mock_payload = MagicMock()
+            mock_payload.sub = "550e8400-e29b-41d4-a716-446655440000"
+            mock_payload.token_type = "refresh"
+            mock_token_service.verify_token.return_value = mock_payload
+            mock_token_service.create_access_token.return_value = (
+                "brand_new_access_token"
+            )
+
+            response = client.post(
+                "/api/v1/auth/refresh",
+                json={"refresh_token": "valid_refresh_token"},
+            )
+
+            data = response.json()
+            assert "access_token" in data
+            assert data["access_token"] == "brand_new_access_token"
+            assert data["token_type"] == "bearer"
+            assert "expires_in" in data
+            assert data["expires_in"] == 15 * 60  # 15 minutes in seconds
+
+    def test_refresh_invalid_token_returns_401(self, client: TestClient) -> None:
+        """Test that invalid refresh token returns 401."""
+        with patch("app.routers.auth.token_service") as mock_token_service:
+            mock_token_service.verify_token.side_effect = ValueError("Invalid token")
+
+            response = client.post(
+                "/api/v1/auth/refresh",
+                json={"refresh_token": "invalid_token"},
+            )
+            assert response.status_code == status.HTTP_401_UNAUTHORIZED
+            assert "Invalid" in response.json()["detail"]
+
+    def test_refresh_expired_token_returns_401(self, client: TestClient) -> None:
+        """Test that expired refresh token returns 401."""
+        with patch("app.routers.auth.token_service") as mock_token_service:
+            mock_token_service.verify_token.side_effect = ValueError(
+                "Token has expired"
+            )
+
+            response = client.post(
+                "/api/v1/auth/refresh",
+                json={"refresh_token": "expired_token"},
+            )
+            assert response.status_code == status.HTTP_401_UNAUTHORIZED
+            assert "expired" in response.json()["detail"].lower()
+
+    def test_refresh_with_access_token_returns_401(self, client: TestClient) -> None:
+        """Test that using an access token for refresh returns 401."""
+        with patch("app.routers.auth.token_service") as mock_token_service:
+            mock_payload = MagicMock()
+            mock_payload.sub = "550e8400-e29b-41d4-a716-446655440000"
+            mock_payload.token_type = "access"  # Wrong token type
+            mock_token_service.verify_token.return_value = mock_payload
+
+            response = client.post(
+                "/api/v1/auth/refresh",
+                json={"refresh_token": "access_token_not_refresh"},
+            )
+            assert response.status_code == status.HTTP_401_UNAUTHORIZED
+            assert "refresh token" in response.json()["detail"].lower()
+
+    def test_refresh_creates_token_with_correct_user_id(
+        self, client: TestClient
+    ) -> None:
+        """Test that refresh creates new access token with correct user ID."""
+        with patch("app.routers.auth.token_service") as mock_token_service:
+            user_id = "550e8400-e29b-41d4-a716-446655440000"
+            mock_payload = MagicMock()
+            mock_payload.sub = user_id
+            mock_payload.token_type = "refresh"
+            mock_token_service.verify_token.return_value = mock_payload
+            mock_token_service.create_access_token.return_value = "new_access"
+
+            client.post(
+                "/api/v1/auth/refresh",
+                json={"refresh_token": "valid_refresh_token"},
+            )
+
+            mock_token_service.create_access_token.assert_called_once_with(user_id)
+
+    def test_refresh_missing_token_returns_422(self, client: TestClient) -> None:
+        """Test that missing refresh token returns 422."""
+        response = client.post(
+            "/api/v1/auth/refresh",
+            json={},
+        )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
