@@ -1504,3 +1504,34 @@ strictly-dancing/
 
 **Next**: T051 - Implement Messaging Endpoints
 
+---
+
+### Entry [E-052] 2026-01-29T08:55:00Z
+
+**Task**: T051 - Implement Messaging Endpoints
+**Status**: DONE
+**Progress**: 51/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/routers/messaging.py with messaging router
+- Implemented GET /api/v1/conversations endpoint for listing user's conversations with cursor pagination
+- Implemented POST /api/v1/conversations endpoint for starting/getting conversations with optional initial_message
+- Implemented GET /api/v1/conversations/{id} endpoint returning conversation with messages
+- Implemented POST /api/v1/conversations/{id}/messages endpoint for sending messages
+- Implemented POST /api/v1/conversations/{id}/read endpoint for marking messages as read (204 No Content)
+- Implemented GET /api/v1/conversations/{id}/messages endpoint with cursor pagination for loading more
+- Implemented GET /api/v1/conversations/unread endpoint for total unread count
+- All endpoints require authentication and validate user is participant
+- Returns 403 Forbidden for non-participants, 404 for not found conversations
+- Updated app/routers/__init__.py to export messaging_router
+- Updated app/main.py to include messaging_router
+- Created 30 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (926/926 total - 30 new tests added)
+- Files: app/routers/messaging.py, app/routers/__init__.py, app/main.py, tests/unit/test_messaging_endpoints.py
+- Linting: All checks passed
+- Key tests: TestListConversationsEndpoint (4 tests), TestStartConversationEndpoint (5 tests), TestGetConversationEndpoint (5 tests), TestSendMessageEndpoint (5 tests), TestMarkConversationReadEndpoint (4 tests), TestGetMessagesEndpoint (4 tests), TestGetUnreadCountEndpoint (3 tests)
+
+**Next**: T052 - Implement WebSocket Chat Backend
+
