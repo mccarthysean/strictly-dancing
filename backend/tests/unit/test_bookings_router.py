@@ -2673,3 +2673,534 @@ class TestCompleteBookingEndpoint:
                     )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+class TestListBookingsEndpoint:
+    """Tests for GET /api/v1/bookings endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_list_bookings_endpoint_exists(
+        self,
+        mock_db,
+        sample_user,
+    ):
+        """Test that the list bookings endpoint exists and returns 200."""
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_for_user_with_cursor.return_value = []
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.get(
+                        "/api/v1/bookings",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.asyncio
+    async def test_list_bookings_returns_user_bookings(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+    ):
+        """Test that list bookings returns bookings for the authenticated user."""
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_for_user_with_cursor.return_value = [
+                    sample_booking
+                ]
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.get(
+                        "/api/v1/bookings",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert "items" in data
+        assert len(data["items"]) == 1
+        assert data["items"][0]["id"] == str(sample_booking.id)
+
+    @pytest.mark.asyncio
+    async def test_list_bookings_filter_by_status(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+    ):
+        """Test that list bookings can filter by status."""
+        sample_booking.status = BookingStatus.CONFIRMED
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_for_user_with_cursor.return_value = [
+                    sample_booking
+                ]
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.get(
+                        "/api/v1/bookings?status=confirmed",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        # Verify the status filter was passed to the repository
+        call_args = mock_booking_repo.get_for_user_with_cursor.call_args
+        assert call_args.kwargs.get("status") == [BookingStatus.CONFIRMED]
+
+    @pytest.mark.asyncio
+    async def test_list_bookings_filter_by_multiple_statuses(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+    ):
+        """Test that list bookings can filter by multiple statuses."""
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_for_user_with_cursor.return_value = []
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.get(
+                        "/api/v1/bookings?status=pending&status=confirmed",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        # Verify the status filter was passed to the repository
+        call_args = mock_booking_repo.get_for_user_with_cursor.call_args
+        assert call_args.kwargs.get("status") == [
+            BookingStatus.PENDING,
+            BookingStatus.CONFIRMED,
+        ]
+
+    @pytest.mark.asyncio
+    async def test_list_bookings_filter_by_date_range(
+        self,
+        mock_db,
+        sample_user,
+    ):
+        """Test that list bookings can filter by date range."""
+        start_date = "2026-01-01T00:00:00Z"
+        end_date = "2026-01-31T23:59:59Z"
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_for_user_with_cursor.return_value = []
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.get(
+                        f"/api/v1/bookings?start_date={start_date}&end_date={end_date}",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        # Verify date filters were passed to the repository
+        call_args = mock_booking_repo.get_for_user_with_cursor.call_args
+        assert call_args.kwargs.get("start_date") is not None
+        assert call_args.kwargs.get("end_date") is not None
+
+    @pytest.mark.asyncio
+    async def test_list_bookings_cursor_pagination(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+    ):
+        """Test that list bookings supports cursor-based pagination."""
+        cursor_id = uuid4()
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_for_user_with_cursor.return_value = [
+                    sample_booking
+                ]
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.get(
+                        f"/api/v1/bookings?cursor={cursor_id}",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        # Verify cursor was passed to the repository
+        call_args = mock_booking_repo.get_for_user_with_cursor.call_args
+        assert call_args.kwargs.get("cursor") == cursor_id
+
+    @pytest.mark.asyncio
+    async def test_list_bookings_has_more_flag(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+    ):
+        """Test that list bookings returns has_more=True when more results exist."""
+        # Create multiple bookings to simulate more results than limit
+        bookings = []
+        for i in range(6):  # 6 bookings when limit is 5
+            booking = MagicMock()
+            booking.id = uuid4()
+            booking.client_id = str(sample_user.id)
+            booking.host_id = str(uuid4())
+            booking.host_profile_id = str(uuid4())
+            booking.dance_style_id = None
+            booking.status = BookingStatus.PENDING
+            booking.scheduled_start = datetime.now(UTC) + timedelta(days=i + 1)
+            booking.scheduled_end = booking.scheduled_start + timedelta(hours=1)
+            booking.actual_start = None
+            booking.actual_end = None
+            booking.duration_minutes = 60
+            booking.hourly_rate_cents = 5000
+            booking.amount_cents = 5000
+            booking.platform_fee_cents = 750
+            booking.host_payout_cents = 4250
+            booking.location = None
+            booking.location_name = None
+            booking.location_notes = None
+            booking.client_notes = None
+            booking.host_notes = None
+            booking.cancellation_reason = None
+            booking.cancelled_by_id = None
+            booking.cancelled_at = None
+            booking.created_at = datetime.now(UTC)
+            booking.updated_at = datetime.now(UTC)
+            booking.client = sample_user
+            booking.host = MagicMock()
+            booking.host.id = uuid4()
+            booking.host.first_name = "Host"
+            booking.host.last_name = f"User{i}"
+            booking.dance_style = None
+            bookings.append(booking)
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_for_user_with_cursor.return_value = bookings
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.get(
+                        "/api/v1/bookings?limit=5",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["has_more"] is True
+        assert data["next_cursor"] is not None
+        assert len(data["items"]) == 5  # Only limit items returned
+
+    @pytest.mark.asyncio
+    async def test_list_bookings_no_more_results(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+    ):
+        """Test that list bookings returns has_more=False when no more results."""
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                # Return fewer items than limit
+                mock_booking_repo.get_for_user_with_cursor.return_value = [
+                    sample_booking
+                ]
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.get(
+                        "/api/v1/bookings?limit=10",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["has_more"] is False
+        assert data["next_cursor"] is None
+
+    @pytest.mark.asyncio
+    async def test_list_bookings_invalid_cursor_returns_400(
+        self,
+        mock_db,
+        sample_user,
+    ):
+        """Test that list bookings returns 400 for invalid cursor format."""
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository"),
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.get(
+                        "/api/v1/bookings?cursor=not-a-valid-uuid",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "Invalid cursor format" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_list_bookings_requires_authentication(
+        self,
+        mock_db,
+    ):
+        """Test that list bookings requires authentication."""
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+        ):
+            async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test"
+            ) as client:
+                response = await client.get("/api/v1/bookings")
+
+        # HTTPBearer returns 401 Unauthorized for missing credentials
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    @pytest.mark.asyncio
+    async def test_list_bookings_limit_validation(
+        self,
+        mock_db,
+        sample_user,
+    ):
+        """Test that list bookings validates limit parameter."""
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_for_user_with_cursor.return_value = []
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    # Test limit=0 (should fail validation)
+                    response = await client.get(
+                        "/api/v1/bookings?limit=0",
+                        headers=get_auth_header(sample_user.id),
+                    )
+                    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+                    # Test limit=101 (should fail validation)
+                    response = await client.get(
+                        "/api/v1/bookings?limit=101",
+                        headers=get_auth_header(sample_user.id),
+                    )
+                    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.asyncio
+    async def test_list_bookings_response_format(
+        self,
+        mock_db,
+        sample_user,
+        sample_booking,
+    ):
+        """Test that list bookings response has correct format."""
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_for_user_with_cursor.return_value = [
+                    sample_booking
+                ]
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.get(
+                        "/api/v1/bookings",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+
+        # Check response structure
+        assert "items" in data
+        assert "next_cursor" in data
+        assert "has_more" in data
+        assert "limit" in data
+
+        # Check booking item structure
+        booking_item = data["items"][0]
+        assert "id" in booking_item
+        assert "client_id" in booking_item
+        assert "host_id" in booking_item
+        assert "status" in booking_item
+        assert "scheduled_start" in booking_item
+        assert "scheduled_end" in booking_item
+        assert "amount_cents" in booking_item
+        # Check nested details
+        assert "client" in booking_item
+        assert "host" in booking_item

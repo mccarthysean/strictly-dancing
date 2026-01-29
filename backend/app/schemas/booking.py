@@ -155,13 +155,30 @@ class BookingWithDetailsResponse(BookingResponse):
 
 
 class BookingListResponse(BaseModel):
-    """Paginated response for booking list."""
+    """Paginated response for booking list (page-based)."""
 
     items: list[BookingWithDetailsResponse] = Field(..., description="List of bookings")
     total: int = Field(..., description="Total number of bookings")
     page: int = Field(..., description="Current page number")
     page_size: int = Field(..., description="Results per page")
     total_pages: int = Field(..., description="Total number of pages")
+
+
+class BookingListCursorResponse(BaseModel):
+    """Cursor-based paginated response for booking list.
+
+    Uses cursor-based pagination for efficient traversal of large result sets.
+    The cursor is the booking ID of the last item in the current page.
+    """
+
+    items: list[BookingWithDetailsResponse] = Field(..., description="List of bookings")
+    next_cursor: str | None = Field(
+        None, description="Cursor for next page (booking ID), null if no more results"
+    )
+    has_more: bool = Field(
+        ..., description="Whether there are more results after this page"
+    )
+    limit: int = Field(..., description="Maximum number of results per page")
 
 
 # --- Availability Schemas ---

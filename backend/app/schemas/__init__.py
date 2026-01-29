@@ -14,6 +14,7 @@ from app.schemas.booking import (
     AvailabilityOverrideResponse,
     AvailabilitySlot,
     AvailabilitySlotWithDate,
+    BookingListCursorResponse,
     BookingListResponse,
     BookingLocationRequest,
     BookingResponse,
@@ -77,6 +78,7 @@ __all__ = [
     "BookingResponse",
     "BookingWithDetailsResponse",
     "BookingListResponse",
+    "BookingListCursorResponse",
     "UserSummaryResponse",
     "DanceStyleSummaryResponse",
     # Availability schemas

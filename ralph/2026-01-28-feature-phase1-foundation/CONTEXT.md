@@ -1286,3 +1286,32 @@ strictly-dancing/
 
 **Next**: T044 - Implement Booking List Endpoint
 
+---
+
+### Entry [E-045] 2026-01-29T08:05:00Z
+
+**Task**: T044 - Implement Booking List Endpoint
+**Status**: DONE
+**Progress**: 44/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Implemented GET /api/v1/bookings endpoint in app/routers/bookings.py
+- Returns user's bookings where user is either client or host
+- Added status filter supporting multiple statuses (query param: ?status=pending&status=confirmed)
+- Added date range filters (start_date, end_date) for filtering by scheduled_start
+- Implemented cursor-based pagination using booking ID as cursor
+- Response includes items, next_cursor, has_more, and limit fields
+- Added get_for_user_with_cursor() method to BookingRepository
+- Added count_for_user() method to BookingRepository for count queries
+- Created BookingListCursorResponse Pydantic schema
+- Used Annotated type pattern for Query parameters to pass ruff linting
+- Created 12 comprehensive unit tests for list endpoint (all passing)
+
+**Evidence**:
+- Tests: All passing (751/751 total - 12 new tests added)
+- Files: app/routers/bookings.py, app/repositories/booking.py, app/schemas/booking.py, tests/unit/test_bookings_router.py
+- Linting: All checks passed
+- Key tests: test_list_bookings_endpoint_exists, test_list_bookings_returns_user_bookings, test_list_bookings_filter_by_status, test_list_bookings_filter_by_date_range, test_list_bookings_cursor_pagination
+
+**Next**: T045 - Implement Availability Endpoints
+

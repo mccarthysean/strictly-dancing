@@ -1,12 +1,12 @@
 """Bookings router for booking management operations."""
 
 import contextlib
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
 import stripe
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -17,6 +17,7 @@ from app.repositories.availability import AvailabilityRepository
 from app.repositories.booking import BookingRepository
 from app.repositories.host_profile import HostProfileRepository
 from app.schemas.booking import (
+    BookingListCursorResponse,
     BookingResponse,
     BookingWithDetailsResponse,
     CancelBookingRequest,
@@ -549,3 +550,118 @@ async def complete_booking(
     booking = await booking_repo.get_by_id(booking_id, load_relationships=True)
 
     return _build_booking_response(booking, include_details=True)
+
+
+# Type aliases for query parameters with validation
+StatusFilterQuery = Annotated[
+    list[BookingStatus] | None,
+    Query(
+        alias="status", description="Filter by booking status (can specify multiple)"
+    ),
+]
+StartDateQuery = Annotated[
+    datetime | None,
+    Query(description="Filter bookings scheduled after this datetime (ISO 8601)"),
+]
+EndDateQuery = Annotated[
+    datetime | None,
+    Query(description="Filter bookings scheduled before this datetime (ISO 8601)"),
+]
+CursorQuery = Annotated[
+    str | None,
+    Query(description="Cursor for pagination (booking ID from previous page)"),
+]
+LimitQuery = Annotated[
+    int,
+    Query(ge=1, le=100, description="Maximum number of bookings to return (1-100)"),
+]
+
+
+@router.get(
+    "",
+    response_model=BookingListCursorResponse,
+    status_code=status.HTTP_200_OK,
+    summary="List bookings for current user",
+    description="Get a list of bookings for the authenticated user with cursor-based pagination.",
+)
+async def list_bookings(
+    db: DbSession,
+    current_user: CurrentUser,
+    status_filter: StatusFilterQuery = None,
+    start_date: StartDateQuery = None,
+    end_date: EndDateQuery = None,
+    cursor: CursorQuery = None,
+    limit: LimitQuery = 20,
+) -> BookingListCursorResponse:
+    """Get bookings for the authenticated user.
+
+    This endpoint returns all bookings where the authenticated user is either
+    the client or the host. Results use cursor-based pagination for efficient
+    traversal of large result sets.
+
+    Filters:
+    - status: Filter by one or more booking statuses
+    - start_date: Only include bookings scheduled on or after this datetime
+    - end_date: Only include bookings scheduled on or before this datetime
+
+    Pagination:
+    - Results are ordered by scheduled_start descending (newest first)
+    - Use the cursor parameter with the ID from the last item to get the next page
+    - The response includes has_more and next_cursor for pagination
+
+    Args:
+        db: The database session (injected).
+        current_user: The authenticated user (injected).
+        status_filter: Optional status filter(s).
+        start_date: Optional minimum scheduled_start datetime.
+        end_date: Optional maximum scheduled_start datetime.
+        cursor: Cursor from previous page (booking ID).
+        limit: Maximum number of results to return.
+
+    Returns:
+        BookingListCursorResponse with bookings and pagination info.
+    """
+    booking_repo = BookingRepository(db)
+
+    # Parse cursor if provided
+    cursor_uuid = None
+    if cursor:
+        try:
+            cursor_uuid = UUID(cursor)
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid cursor format",
+            ) from e
+
+    # Fetch bookings with one extra to check for more pages
+    bookings = await booking_repo.get_for_user_with_cursor(
+        user_id=current_user.id,
+        status=status_filter,
+        start_date=start_date,
+        end_date=end_date,
+        cursor=cursor_uuid,
+        limit=limit,
+        load_relationships=True,
+    )
+
+    # Determine if there are more results
+    has_more = len(bookings) > limit
+    if has_more:
+        # Remove the extra item used for checking
+        bookings = bookings[:limit]
+
+    # Build response items
+    items = [
+        _build_booking_response(booking, include_details=True) for booking in bookings
+    ]
+
+    # Set next cursor to the last item's ID if there are results
+    next_cursor = str(bookings[-1].id) if bookings and has_more else None
+
+    return BookingListCursorResponse(
+        items=items,
+        next_cursor=next_cursor,
+        has_more=has_more,
+        limit=limit,
+    )

@@ -543,3 +543,133 @@ class BookingRepository:
         booking.host_notes = notes
         await self._session.flush()
         return booking
+
+    async def get_for_user_with_cursor(
+        self,
+        user_id: UUID,
+        *,
+        status: BookingStatus | list[BookingStatus] | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        cursor: UUID | None = None,
+        limit: int = 20,
+        load_relationships: bool = True,
+    ) -> list[Booking]:
+        """Get all bookings for a user with cursor-based pagination.
+
+        Uses the booking ID as a cursor for efficient pagination.
+        Results are ordered by scheduled_start descending, then by ID for consistency.
+
+        Args:
+            user_id: The user's ID.
+            status: Filter by status (single status or list of statuses).
+            start_date: Filter bookings starting after this datetime.
+            end_date: Filter bookings starting before this datetime.
+            cursor: Booking ID to start from (exclusive, for pagination).
+            limit: Maximum number of bookings to return.
+            load_relationships: If True, eagerly load related entities.
+
+        Returns:
+            List of Booking records ordered by scheduled_start descending.
+        """
+        user_id_str = str(user_id)
+        conditions = [
+            or_(
+                Booking.client_id == user_id_str,
+                Booking.host_id == user_id_str,
+            )
+        ]
+
+        if status is not None:
+            if isinstance(status, list):
+                conditions.append(Booking.status.in_(status))
+            else:
+                conditions.append(Booking.status == status)
+
+        if start_date is not None:
+            conditions.append(Booking.scheduled_start >= start_date)
+
+        if end_date is not None:
+            conditions.append(Booking.scheduled_start <= end_date)
+
+        # For cursor-based pagination, we need to get the cursor booking first
+        # to compare against its scheduled_start and id
+        if cursor is not None:
+            cursor_booking = await self.get_by_id(cursor, load_relationships=False)
+            if cursor_booking is not None:
+                # Get items that are "after" the cursor in our sort order
+                # Sort is: scheduled_start DESC, id DESC
+                # So "after" means: scheduled_start < cursor's scheduled_start
+                #                OR (scheduled_start == cursor's and id < cursor's id)
+                conditions.append(
+                    or_(
+                        Booking.scheduled_start < cursor_booking.scheduled_start,
+                        and_(
+                            Booking.scheduled_start == cursor_booking.scheduled_start,
+                            Booking.id < str(cursor),
+                        ),
+                    )
+                )
+
+        stmt = (
+            select(Booking)
+            .where(and_(*conditions))
+            .order_by(Booking.scheduled_start.desc(), Booking.id.desc())
+            .limit(limit + 1)  # Fetch one extra to check for more
+        )
+
+        if load_relationships:
+            stmt = stmt.options(
+                joinedload(Booking.client),
+                joinedload(Booking.host),
+                joinedload(Booking.host_profile),
+                joinedload(Booking.dance_style),
+            )
+
+        result = await self._session.execute(stmt)
+        return list(result.unique().scalars().all())
+
+    async def count_for_user(
+        self,
+        user_id: UUID,
+        *,
+        status: BookingStatus | list[BookingStatus] | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> int:
+        """Count bookings for a user (as either client or host).
+
+        Args:
+            user_id: The user's ID.
+            status: Filter by status (single status or list of statuses).
+            start_date: Filter bookings starting after this datetime.
+            end_date: Filter bookings starting before this datetime.
+
+        Returns:
+            Number of matching bookings.
+        """
+        from sqlalchemy import func as sql_func
+
+        user_id_str = str(user_id)
+        conditions = [
+            or_(
+                Booking.client_id == user_id_str,
+                Booking.host_id == user_id_str,
+            )
+        ]
+
+        if status is not None:
+            if isinstance(status, list):
+                conditions.append(Booking.status.in_(status))
+            else:
+                conditions.append(Booking.status == status)
+
+        if start_date is not None:
+            conditions.append(Booking.scheduled_start >= start_date)
+
+        if end_date is not None:
+            conditions.append(Booking.scheduled_start <= end_date)
+
+        stmt = select(sql_func.count()).select_from(Booking).where(and_(*conditions))
+        result = await self._session.execute(stmt)
+        return result.scalar_one()

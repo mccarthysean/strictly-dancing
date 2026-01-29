@@ -713,14 +713,14 @@
       "id": "T044",
       "title": "Implement Booking List Endpoint",
       "description": "Create GET /api/v1/bookings with filters.",
-      "passes": false,
+      "passes": true,
       "phase": "phase3-booking-system",
       "dependencies": ["T037", "T038"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "GET /api/v1/bookings endpoint exists", "verification": "test", "met": false},
-        {"id": "AC02", "criterion": "Returns user's bookings (as client or host)", "verification": "test", "met": false},
-        {"id": "AC03", "criterion": "Filter by status, date range", "verification": "test", "met": false},
-        {"id": "AC04", "criterion": "Cursor-based pagination", "verification": "test", "met": false}
+        {"id": "AC01", "criterion": "GET /api/v1/bookings endpoint exists", "verification": "test", "met": true},
+        {"id": "AC02", "criterion": "Returns user's bookings (as client or host)", "verification": "test", "met": true},
+        {"id": "AC03", "criterion": "Filter by status, date range", "verification": "test", "met": true},
+        {"id": "AC04", "criterion": "Cursor-based pagination", "verification": "test", "met": true}
       ],
       "testing": {"unit_tests": ["test_list_bookings"]}
     },
