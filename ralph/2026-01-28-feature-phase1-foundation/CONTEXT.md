@@ -460,3 +460,27 @@ strictly-dancing/
 - Key tests: test_auth_middleware_valid_token_returns_user, test_auth_middleware_missing_token_returns_401, test_auth_middleware_expired_token_returns_401
 
 **Next**: T015 - Implement Logout Endpoint
+
+---
+
+### Entry [E-016] 2026-01-29T06:15:00Z
+
+**Task**: T015 - Implement Logout Endpoint
+**Status**: DONE
+**Progress**: 15/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created POST /api/v1/auth/logout endpoint in app/routers/auth.py
+- Endpoint requires authentication via CurrentUser dependency
+- Returns 204 No Content on successful logout
+- Endpoint is idempotent (can be called multiple times safely)
+- JWT is stateless, so client discards tokens; endpoint validates auth for security
+- Created 5 unit tests for logout endpoint (all passing)
+
+**Evidence**:
+- Tests: All passing (181/181 total)
+- Files: app/routers/auth.py, tests/unit/test_auth_router.py
+- Linting: All checks passed
+- Key tests: test_logout_endpoint_exists, test_logout_returns_204_on_success, test_logout_requires_authentication, test_logout_idempotent, test_logout_with_invalid_token_returns_401
+
+**Next**: T016 - Implement Get Current User Endpoint

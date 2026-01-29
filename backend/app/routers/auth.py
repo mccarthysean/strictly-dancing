@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.database import get_db
+from app.core.deps import CurrentUser
 from app.repositories.user import UserRepository
 from app.schemas.auth import (
     LoginRequest,
@@ -209,3 +210,31 @@ async def refresh(
         token_type="bearer",
         expires_in=expires_in,
     )
+
+
+@router.post(
+    "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Logout user",
+    description="Invalidate the current session. Client should discard tokens.",
+)
+async def logout(
+    current_user: CurrentUser,  # noqa: ARG001 - User validated but not used
+) -> None:
+    """Logout the current authenticated user.
+
+    This endpoint is idempotent - it always succeeds for authenticated users.
+    Since we use stateless JWT tokens, the actual token invalidation happens
+    client-side by discarding the tokens. The server validates authentication
+    to ensure the request is legitimate.
+
+    Args:
+        current_user: The authenticated user (injected, validates auth).
+
+    Returns:
+        None (204 No Content).
+    """
+    # JWT is stateless, so logout is handled client-side by discarding tokens.
+    # This endpoint exists for consistency and could be extended in the future
+    # to support token blacklisting if needed.
+    return None

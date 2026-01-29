@@ -711,3 +711,74 @@ class TestRefreshEndpoint:
             json={},
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+class TestLogoutEndpoint:
+    """Tests for POST /api/v1/auth/logout endpoint."""
+
+    def test_logout_endpoint_exists(self, client: TestClient) -> None:
+        """Test that the logout endpoint exists and accepts POST."""
+        # Without auth, should return 401/403, not 404
+        response = client.post("/api/v1/auth/logout")
+        assert response.status_code != status.HTTP_404_NOT_FOUND
+
+    def test_logout_returns_204_on_success(self, client: TestClient) -> None:
+        """Test that successful logout returns 204 No Content."""
+        from app.core.deps import get_current_user
+        from app.main import create_app
+
+        mock_user = MagicMock()
+        mock_user.id = "550e8400-e29b-41d4-a716-446655440000"
+        mock_user.email = "test@example.com"
+        mock_user.is_active = True
+
+        app = create_app()
+        app.dependency_overrides[get_current_user] = lambda: mock_user
+
+        with TestClient(app) as test_client:
+            response = test_client.post(
+                "/api/v1/auth/logout",
+                headers={"Authorization": "Bearer valid_token"},
+            )
+            assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_logout_requires_authentication(self, client: TestClient) -> None:
+        """Test that logout requires authentication."""
+        response = client.post("/api/v1/auth/logout")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_logout_idempotent(self, client: TestClient) -> None:
+        """Test that logout is idempotent (can be called multiple times)."""
+        from app.core.deps import get_current_user
+        from app.main import create_app
+
+        mock_user = MagicMock()
+        mock_user.id = "550e8400-e29b-41d4-a716-446655440000"
+        mock_user.email = "test@example.com"
+        mock_user.is_active = True
+
+        app = create_app()
+        app.dependency_overrides[get_current_user] = lambda: mock_user
+
+        with TestClient(app) as test_client:
+            # First logout
+            response1 = test_client.post(
+                "/api/v1/auth/logout",
+                headers={"Authorization": "Bearer valid_token"},
+            )
+            assert response1.status_code == status.HTTP_204_NO_CONTENT
+
+            # Second logout (should also succeed)
+            response2 = test_client.post(
+                "/api/v1/auth/logout",
+                headers={"Authorization": "Bearer valid_token"},
+            )
+            assert response2.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_logout_with_invalid_token_returns_401(self, client: TestClient) -> None:
+        """Test that logout with invalid token returns 401."""
+        response = client.post(
+            "/api/v1/auth/logout",
+            headers={"Authorization": "Bearer invalid_token"},
+        )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
