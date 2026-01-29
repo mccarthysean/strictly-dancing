@@ -180,3 +180,41 @@ jobs:
 
       - name: Build success
         run: echo "All builds completed successfully!"
+
+  # EAS Build for mobile apps on tagged releases
+  mobile-build:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [backend-tests, frontend-tests, mobile-tests]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: |
+          cd apps/mobile
+          bun install
+
+      - name: Run EAS Build (iOS)
+        run: |
+          cd apps/mobile
+          eas build --platform ios --non-interactive --no-wait
+
+      - name: Run EAS Build (Android)
+        run: |
+          cd apps/mobile
+          eas build --platform android --non-interactive --no-wait
+
+      - name: Build triggered
+        run: echo "EAS builds triggered for iOS and Android!"

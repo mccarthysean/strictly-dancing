@@ -3083,3 +3083,33 @@ strictly-dancing/
 - Key configuration: Redis broker, JSON serialization, Celery Beat scheduler
 
 **Next**: T091 - Configure CI/CD Pipeline
+
+---
+
+### Entry [E-092] 2026-01-29T11:40:00Z
+
+**Task**: T091 - Configure CI/CD Pipeline
+**Status**: DONE
+**Progress**: 91/94 tasks | Blockers: 0
+
+**Accomplished**:
+- .github/workflows/ci.yml already existed with comprehensive test jobs
+- Verified CI pipeline includes:
+  - Backend tests: Python 3.11, PostgreSQL service, uv sync, ruff check/format, mypy, pytest with 80% coverage
+  - Frontend tests: Bun, TypeScript check, ESLint, Vitest with 70% coverage
+  - Mobile tests: Bun, TypeScript check, ESLint, Jest with 60% coverage
+  - Build job: Depends on all test jobs passing, builds frontend
+- Added EAS Build trigger for mobile on tagged releases:
+  - Triggers on tags matching v* (e.g., v1.0.0)
+  - Runs after all tests pass
+  - Uses expo-github-action for EAS setup
+  - Triggers iOS and Android builds in parallel (--no-wait)
+  - Requires EXPO_TOKEN secret
+- Codecov integration for all three platforms
+
+**Evidence**:
+- File: .github/workflows/ci.yml
+- Jobs: backend-tests, frontend-tests, mobile-tests, build, mobile-build
+- EAS Build: Triggers on tagged releases (refs/tags/v*)
+
+**Next**: T092 - Configure Analytics and Logging

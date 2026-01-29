@@ -1422,15 +1422,15 @@
       "id": "T091",
       "title": "Configure CI/CD Pipeline",
       "description": "Set up GitHub Actions for automated testing and deployment.",
-      "passes": false,
+      "passes": true,
       "phase": "phase5-reviews",
       "dependencies": ["T087"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": ".github/workflows/ci.yml exists with test jobs", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Backend tests run on push to main/PR", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Frontend TypeScript check runs on push", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Linting runs on all PRs", "verification": "code_review", "met": false},
-        {"id": "AC05", "criterion": "EAS Build trigger for mobile on tagged releases", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": ".github/workflows/ci.yml exists with test jobs", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Backend tests run on push to main/PR", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Frontend TypeScript check runs on push", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Linting runs on all PRs", "verification": "code_review", "met": true},
+        {"id": "AC05", "criterion": "EAS Build trigger for mobile on tagged releases", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },
