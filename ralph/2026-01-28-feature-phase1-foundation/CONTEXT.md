@@ -1824,3 +1824,43 @@ strictly-dancing/
 
 **Next**: T060 - Implement Host Dashboard
 
+---
+
+### Entry [E-061] 2026-01-29T09:20:00Z
+
+**Task**: T060 - Implement Host Dashboard
+**Status**: DONE
+**Progress**: 60/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created frontend/src/routes/host/dashboard.tsx with full host dashboard functionality
+- Displays upcoming bookings section:
+  - Fetches bookings where user is host with pending/confirmed/in_progress status
+  - Shows booking cards with client avatar, name, date/time, dance style, status badge, amount
+  - Click-to-navigate to booking detail page
+  - View all link to /bookings
+- Displays recent reviews section:
+  - Fetches reviews for host profile (limited to 3)
+  - Shows reviewer avatar, name, date, star rating, comment preview
+  - Indicates if host has responded to review
+  - View all link to host profile page
+- Displays earnings summary section:
+  - Stats grid showing: Rating, Total Sessions, This Month Earnings, Total Earnings
+  - Calculates earnings from completed bookings where user is host
+  - Shows host_payout_cents amounts (after platform fee)
+- Additional features:
+  - Quick actions grid: My Bookings, Messages, View Profile
+  - Authentication and host-type checks
+  - Loading states for all sections
+  - Error handling
+- TypeScript compiles with no errors
+- Frontend builds successfully (370.10 KB bundle)
+
+**Evidence**:
+- Files: frontend/src/routes/host/dashboard.tsx
+- TypeScript: tsc --noEmit passes with no errors
+- Build: vite build completes successfully
+- Key features: upcoming bookings, recent reviews, earnings summary, quick actions
+
+**Next**: T061 - Implement Settings Page
+

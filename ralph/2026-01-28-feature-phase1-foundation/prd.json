@@ -952,14 +952,14 @@
       "id": "T060",
       "title": "Implement Host Dashboard",
       "description": "Create host dashboard with earnings and stats.",
-      "passes": false,
+      "passes": true,
       "phase": "phase5-reviews",
       "dependencies": ["T029", "T044", "T057"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "frontend/src/routes/host/dashboard.tsx exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Displays upcoming bookings", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Displays recent reviews", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Displays earnings summary", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "frontend/src/routes/host/dashboard.tsx exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Displays upcoming bookings", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Displays recent reviews", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Displays earnings summary", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },

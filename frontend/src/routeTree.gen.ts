@@ -17,6 +17,7 @@ import { Route as HostsIndexRouteImport } from './routes/hosts/index'
 import { Route as BookingsIndexRouteImport } from './routes/bookings/index'
 import { Route as MessagesConversationIdRouteImport } from './routes/messages/$conversationId'
 import { Route as HostsHostIdRouteImport } from './routes/hosts/$hostId'
+import { Route as HostDashboardRouteImport } from './routes/host/dashboard'
 import { Route as BookingsBookingIdRouteImport } from './routes/bookings/$bookingId'
 import { Route as HostsHostIdBookRouteImport } from './routes/hosts/$hostId/book'
 
@@ -60,6 +61,11 @@ const HostsHostIdRoute = HostsHostIdRouteImport.update({
   path: '/hosts/$hostId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HostDashboardRoute = HostDashboardRouteImport.update({
+  id: '/host/dashboard',
+  path: '/host/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BookingsBookingIdRoute = BookingsBookingIdRouteImport.update({
   id: '/bookings/$bookingId',
   path: '/bookings/$bookingId',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
+  '/host/dashboard': typeof HostDashboardRoute
   '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/bookings/': typeof BookingsIndexRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
+  '/host/dashboard': typeof HostDashboardRoute
   '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/bookings': typeof BookingsIndexRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
+  '/host/dashboard': typeof HostDashboardRoute
   '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/bookings/': typeof BookingsIndexRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/bookings/$bookingId'
+    | '/host/dashboard'
     | '/hosts/$hostId'
     | '/messages/$conversationId'
     | '/bookings/'
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/bookings/$bookingId'
+    | '/host/dashboard'
     | '/hosts/$hostId'
     | '/messages/$conversationId'
     | '/bookings'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/bookings/$bookingId'
+    | '/host/dashboard'
     | '/hosts/$hostId'
     | '/messages/$conversationId'
     | '/bookings/'
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   BookingsBookingIdRoute: typeof BookingsBookingIdRoute
+  HostDashboardRoute: typeof HostDashboardRoute
   HostsHostIdRoute: typeof HostsHostIdRouteWithChildren
   MessagesConversationIdRoute: typeof MessagesConversationIdRoute
   BookingsIndexRoute: typeof BookingsIndexRoute
@@ -217,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HostsHostIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/host/dashboard': {
+      id: '/host/dashboard'
+      path: '/host/dashboard'
+      fullPath: '/host/dashboard'
+      preLoaderRoute: typeof HostDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bookings/$bookingId': {
       id: '/bookings/$bookingId'
       path: '/bookings/$bookingId'
@@ -251,6 +271,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   BookingsBookingIdRoute: BookingsBookingIdRoute,
+  HostDashboardRoute: HostDashboardRoute,
   HostsHostIdRoute: HostsHostIdRouteWithChildren,
   MessagesConversationIdRoute: MessagesConversationIdRoute,
   BookingsIndexRoute: BookingsIndexRoute,
