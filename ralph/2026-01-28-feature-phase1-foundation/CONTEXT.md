@@ -1003,3 +1003,34 @@ strictly-dancing/
 
 **Next**: T035 - Create Host Availability Model
 
+---
+
+### Entry [E-036] 2026-01-29T07:25:00Z
+
+**Task**: T035 - Create Host Availability Model
+**Status**: DONE
+**Progress**: 35/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/models/availability.py with two models:
+  - RecurringAvailability: Weekly recurring schedules (day_of_week, start_time, end_time)
+  - AvailabilityOverride: One-time overrides for both available and blocked time periods
+- Implemented DayOfWeek enum (0=Monday to 6=Sunday) as int enum
+- Implemented AvailabilityOverrideType enum (available, blocked) as string enum
+- RecurringAvailability fields: host_profile_id (FK), day_of_week, start_time, end_time, is_active
+- AvailabilityOverride fields: host_profile_id (FK), override_date, override_type, start_time, end_time, all_day, reason
+- Created composite indexes for query performance:
+  - ix_recurring_availability_host_day (host_profile_id, day_of_week)
+  - ix_availability_overrides_host_date (host_profile_id, override_date)
+- Created Alembic migration (000000000007) with check constraint for valid day_of_week (0-6)
+- Updated models/__init__.py with new exports
+- Created 26 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (491/491 total - 26 new tests added)
+- Files: app/models/availability.py, app/models/__init__.py, alembic/versions/20260129_060000_create_availability_tables.py, tests/unit/test_availability_model.py
+- Linting: All checks passed
+- Alembic heads: 000000000007 recognized
+
+**Next**: T036 - Implement Availability Repository
+
