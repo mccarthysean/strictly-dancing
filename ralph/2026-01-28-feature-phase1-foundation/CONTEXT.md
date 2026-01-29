@@ -1140,3 +1140,38 @@ strictly-dancing/
 
 **Next**: T039 - Integrate Stripe Connect
 
+---
+
+### Entry [E-040] 2026-01-29T07:55:00Z
+
+**Task**: T039 - Integrate Stripe Connect
+**Status**: DONE
+**Progress**: 39/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/services/stripe.py with StripeService class
+- Implemented create_connect_account() for creating Express accounts
+- Implemented create_account_link() for generating onboarding URLs
+- Implemented get_account_status() to retrieve account status and capabilities
+- Created additional helper methods:
+  - create_payment_intent() for booking payments with manual capture
+  - capture_payment_intent() for capturing authorized payments
+  - cancel_payment_intent() for releasing authorization
+- Created StripeAccountStatus enum (NOT_CREATED, PENDING, ACTIVE, RESTRICTED, REJECTED)
+- Created AccountStatus dataclass for returning status details
+- Created backend/app/schemas/stripe.py with Pydantic schemas:
+  - StripeOnboardRequest, StripeOnboardResponse
+  - StripeAccountStatusResponse, StripeDashboardLinkResponse
+- Added POST /api/v1/hosts/stripe/onboard endpoint for initiating onboarding
+- Added GET /api/v1/hosts/stripe/status endpoint for checking account status
+- Added stripe>=8.0.0 dependency to pyproject.toml
+- Created 32 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (688/688 total - 32 new tests added)
+- Files: app/services/stripe.py, app/schemas/stripe.py, app/routers/hosts.py (updated), tests/unit/test_stripe_service.py
+- Linting: All checks passed
+- Key tests: test_create_connect_account_success, test_create_account_link_success, test_get_account_status_active
+
+**Next**: T040 - Implement Booking Creation with Payment Hold
+

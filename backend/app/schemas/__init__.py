@@ -39,6 +39,12 @@ from app.schemas.host_profile import (
     LocationRequest,
     UpdateHostProfileRequest,
 )
+from app.schemas.stripe import (
+    StripeAccountStatusResponse,
+    StripeDashboardLinkResponse,
+    StripeOnboardRequest,
+    StripeOnboardResponse,
+)
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
 
 __all__ = [
@@ -83,4 +89,9 @@ __all__ = [
     "HostAvailabilityResponse",
     "AvailabilityForDateResponse",
     "AvailabilityForDateRangeResponse",
+    # Stripe schemas
+    "StripeOnboardRequest",
+    "StripeOnboardResponse",
+    "StripeAccountStatusResponse",
+    "StripeDashboardLinkResponse",
 ]

@@ -4,10 +4,12 @@ import math
 from typing import Annotated
 from uuid import UUID
 
+import stripe
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.deps import CurrentUser
 from app.models.host_profile import VerificationStatus
 from app.repositories.host_profile import HostProfileRepository
 from app.schemas.host_profile import (
@@ -17,6 +19,12 @@ from app.schemas.host_profile import (
     HostProfileWithUserResponse,
     HostSearchResponse,
 )
+from app.schemas.stripe import (
+    StripeAccountStatusResponse,
+    StripeOnboardRequest,
+    StripeOnboardResponse,
+)
+from app.services.stripe import StripeAccountStatus, stripe_service
 
 router = APIRouter(prefix="/api/v1/hosts", tags=["hosts"])
 
@@ -324,3 +332,160 @@ async def get_host_profile(
         first_name=profile.user.first_name,
         last_name=profile.user.last_name,
     )
+
+
+@router.post(
+    "/stripe/onboard",
+    response_model=StripeOnboardResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Initiate Stripe Connect onboarding",
+    description="Start the Stripe Connect onboarding process for a host.",
+)
+async def initiate_stripe_onboarding(
+    db: DbSession,
+    current_user: CurrentUser,
+    request: StripeOnboardRequest,
+) -> StripeOnboardResponse:
+    """Initiate Stripe Connect onboarding for a host.
+
+    Creates a Stripe Connect Express account if the host doesn't have one,
+    then returns an onboarding URL for the host to complete their setup.
+
+    Args:
+        db: The database session (injected).
+        current_user: The authenticated user (injected).
+        request: The onboarding request with redirect URLs.
+
+    Returns:
+        StripeOnboardResponse with account ID and onboarding URL.
+
+    Raises:
+        HTTPException: 404 if user is not a host.
+        HTTPException: 500 if Stripe API fails.
+    """
+    host_repo = HostProfileRepository(db)
+
+    # Get the host profile
+    profile = await host_repo.get_by_user_id(current_user.id)
+    if profile is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Host profile not found. Please become a host first.",
+        )
+
+    try:
+        # Create Stripe Connect account if not exists
+        if not profile.stripe_account_id:
+            account_id = await stripe_service.create_connect_account(
+                email=current_user.email,
+            )
+            # Update host profile with account ID
+            await host_repo.update(
+                profile.id,
+                stripe_account_id=account_id,
+            )
+        else:
+            account_id = profile.stripe_account_id
+
+        # Create onboarding link
+        onboarding_url = await stripe_service.create_account_link(
+            account_id=account_id,
+            refresh_url=str(request.refresh_url),
+            return_url=str(request.return_url),
+        )
+
+        return StripeOnboardResponse(
+            account_id=account_id,
+            onboarding_url=onboarding_url,
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        ) from e
+    except stripe.StripeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Stripe error: {e.user_message or str(e)}",
+        ) from e
+
+
+@router.get(
+    "/stripe/status",
+    response_model=StripeAccountStatusResponse,
+    summary="Get Stripe account status",
+    description="Get the current status of the host's Stripe Connect account.",
+)
+async def get_stripe_account_status(
+    db: DbSession,
+    current_user: CurrentUser,
+) -> StripeAccountStatusResponse:
+    """Get the status of a host's Stripe Connect account.
+
+    Args:
+        db: The database session (injected).
+        current_user: The authenticated user (injected).
+
+    Returns:
+        StripeAccountStatusResponse with account status details.
+
+    Raises:
+        HTTPException: 404 if user is not a host or has no Stripe account.
+        HTTPException: 500 if Stripe API fails.
+    """
+    host_repo = HostProfileRepository(db)
+
+    # Get the host profile
+    profile = await host_repo.get_by_user_id(current_user.id)
+    if profile is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Host profile not found.",
+        )
+
+    if not profile.stripe_account_id:
+        return StripeAccountStatusResponse(
+            account_id="",
+            status=StripeAccountStatus.NOT_CREATED,
+            charges_enabled=False,
+            payouts_enabled=False,
+            details_submitted=False,
+            requirements_due=[],
+        )
+
+    try:
+        account_status = await stripe_service.get_account_status(
+            profile.stripe_account_id
+        )
+
+        # Update onboarding status if now complete
+        if (
+            account_status.charges_enabled
+            and account_status.payouts_enabled
+            and not profile.stripe_onboarding_complete
+        ):
+            await host_repo.update(
+                profile.id,
+                stripe_onboarding_complete=True,
+            )
+
+        return StripeAccountStatusResponse(
+            account_id=account_status.account_id,
+            status=account_status.status,
+            charges_enabled=account_status.charges_enabled,
+            payouts_enabled=account_status.payouts_enabled,
+            details_submitted=account_status.details_submitted,
+            requirements_due=account_status.requirements_due,
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        ) from e
+    except stripe.StripeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Stripe error: {e.user_message or str(e)}",
+        ) from e

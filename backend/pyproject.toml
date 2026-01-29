@@ -19,6 +19,7 @@ dependencies = [
     "httpx>=0.26.0",
     "geoalchemy2>=0.14.0",
     "shapely>=2.0.0",
+    "stripe>=8.0.0",
 ]
 
 [project.optional-dependencies]
