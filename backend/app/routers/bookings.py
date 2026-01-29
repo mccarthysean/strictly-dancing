@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.deps import CurrentUser
+from app.models.booking import BookingStatus
 from app.repositories.availability import AvailabilityRepository
 from app.repositories.booking import BookingRepository
 from app.repositories.host_profile import HostProfileRepository
@@ -286,5 +287,68 @@ async def create_booking(
 
     # Reload with relationships for response
     booking = await booking_repo.get_by_id(booking.id, load_relationships=True)
+
+    return _build_booking_response(booking, include_details=True)
+
+
+@router.post(
+    "/{booking_id}/confirm",
+    response_model=BookingWithDetailsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Confirm a booking",
+    description="Host confirms a pending booking request.",
+)
+async def confirm_booking(
+    booking_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> BookingWithDetailsResponse:
+    """Confirm a pending booking.
+
+    This endpoint allows a host to confirm a booking request from a client.
+    Only the host can confirm their own bookings.
+
+    Args:
+        booking_id: The booking's unique identifier.
+        db: The database session (injected).
+        current_user: The authenticated user (injected).
+
+    Returns:
+        BookingWithDetailsResponse with the confirmed booking.
+
+    Raises:
+        HTTPException: 400 if booking is not in pending status.
+        HTTPException: 403 if user is not the host of the booking.
+        HTTPException: 404 if booking not found.
+    """
+    booking_repo = BookingRepository(db)
+
+    # Get the booking
+    booking = await booking_repo.get_by_id(booking_id, load_relationships=True)
+    if booking is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Booking not found",
+        )
+
+    # Verify that the current user is the host
+    if booking.host_id != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the host can confirm this booking",
+        )
+
+    # Verify the booking is in pending status
+    if booking.status != BookingStatus.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only pending bookings can be confirmed",
+        )
+
+    # Update the status to confirmed
+    booking = await booking_repo.update_status(booking_id, BookingStatus.CONFIRMED)
+
+    # Reload with relationships for response
+    booking = await booking_repo.get_by_id(booking_id, load_relationships=True)
 
     return _build_booking_response(booking, include_details=True)

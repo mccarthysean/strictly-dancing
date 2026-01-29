@@ -668,14 +668,14 @@
       "id": "T041",
       "title": "Implement Booking Confirmation",
       "description": "Create POST /api/v1/bookings/{id}/confirm for host acceptance.",
-      "passes": false,
+      "passes": true,
       "phase": "phase3-booking-system",
       "dependencies": ["T040"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "POST /api/v1/bookings/{id}/confirm endpoint exists", "verification": "test", "met": false},
-        {"id": "AC02", "criterion": "Only host can confirm their bookings", "verification": "test", "met": false},
-        {"id": "AC03", "criterion": "Updates status to confirmed", "verification": "test", "met": false},
-        {"id": "AC04", "criterion": "Returns 400 if not pending status", "verification": "test", "met": false}
+        {"id": "AC01", "criterion": "POST /api/v1/bookings/{id}/confirm endpoint exists", "verification": "test", "met": true},
+        {"id": "AC02", "criterion": "Only host can confirm their bookings", "verification": "test", "met": true},
+        {"id": "AC03", "criterion": "Updates status to confirmed", "verification": "test", "met": true},
+        {"id": "AC04", "criterion": "Returns 400 if not pending status", "verification": "test", "met": true}
       ],
       "testing": {"unit_tests": ["test_confirm_booking"]}
     },

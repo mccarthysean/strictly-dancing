@@ -1207,3 +1207,28 @@ strictly-dancing/
 
 **Next**: T041 - Implement Booking Confirmation
 
+---
+
+### Entry [E-042] 2026-01-29T07:45:00Z
+
+**Task**: T041 - Implement Booking Confirmation
+**Status**: DONE
+**Progress**: 41/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Implemented POST /api/v1/bookings/{id}/confirm endpoint in app/routers/bookings.py
+- Only the host can confirm their own bookings (returns 403 if not host)
+- Updates booking status from PENDING to CONFIRMED
+- Returns 400 if booking is not in PENDING status
+- Returns 404 if booking not found
+- Returns BookingWithDetailsResponse with full booking details
+- Added 8 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (711/711 total - 8 new tests added)
+- Files: app/routers/bookings.py, tests/unit/test_bookings_router.py
+- Linting: All checks passed
+- Key tests: test_confirm_booking_endpoint_exists, test_confirm_booking_only_host_can_confirm, test_confirm_booking_updates_status_to_confirmed, test_confirm_booking_not_pending_returns_400
+
+**Next**: T042 - Implement Booking Cancellation
+

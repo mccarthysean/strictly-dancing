@@ -947,3 +947,444 @@ class TestBookingPricing:
         # $33.33 booking (3333 cents) = 15% = 499.95 -> 499 cents
         # Actually 3333 * 15 / 100 = 499 (integer division)
         assert _calculate_platform_fee(3333) == 499
+
+
+class TestConfirmBookingEndpoint:
+    """Tests for POST /api/v1/bookings/{id}/confirm endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_confirm_booking_endpoint_exists(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that the confirm booking endpoint exists and returns 200."""
+        # Set booking status to PENDING for confirmation
+        sample_booking.status = BookingStatus.PENDING
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+
+                # Create confirmed booking for second get_by_id call
+                confirmed_booking = MagicMock()
+                confirmed_booking.id = sample_booking.id
+                confirmed_booking.client_id = sample_booking.client_id
+                confirmed_booking.host_id = sample_booking.host_id
+                confirmed_booking.host_profile_id = sample_booking.host_profile_id
+                confirmed_booking.dance_style_id = sample_booking.dance_style_id
+                confirmed_booking.status = BookingStatus.CONFIRMED
+                confirmed_booking.scheduled_start = sample_booking.scheduled_start
+                confirmed_booking.scheduled_end = sample_booking.scheduled_end
+                confirmed_booking.actual_start = None
+                confirmed_booking.actual_end = None
+                confirmed_booking.duration_minutes = sample_booking.duration_minutes
+                confirmed_booking.hourly_rate_cents = sample_booking.hourly_rate_cents
+                confirmed_booking.amount_cents = sample_booking.amount_cents
+                confirmed_booking.platform_fee_cents = sample_booking.platform_fee_cents
+                confirmed_booking.host_payout_cents = sample_booking.host_payout_cents
+                confirmed_booking.location = None
+                confirmed_booking.location_name = sample_booking.location_name
+                confirmed_booking.location_notes = sample_booking.location_notes
+                confirmed_booking.client_notes = sample_booking.client_notes
+                confirmed_booking.host_notes = None
+                confirmed_booking.cancellation_reason = None
+                confirmed_booking.cancelled_by_id = None
+                confirmed_booking.cancelled_at = None
+                confirmed_booking.stripe_payment_intent_id = (
+                    sample_booking.stripe_payment_intent_id
+                )
+                confirmed_booking.created_at = sample_booking.created_at
+                confirmed_booking.updated_at = sample_booking.updated_at
+                confirmed_booking.client = sample_booking.client
+                confirmed_booking.host = sample_booking.host
+                confirmed_booking.host_profile = sample_booking.host_profile
+                confirmed_booking.dance_style = sample_booking.dance_style
+
+                # First call returns pending, second call (after update) returns confirmed
+                mock_booking_repo.get_by_id.side_effect = [
+                    sample_booking,
+                    confirmed_booking,
+                ]
+                mock_booking_repo.update_status.return_value = confirmed_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/confirm",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.asyncio
+    async def test_confirm_booking_only_host_can_confirm(
+        self,
+        mock_db,
+        sample_user,  # Client user, not the host
+        sample_booking,
+    ):
+        """Test that only the host can confirm their booking."""
+        sample_booking.status = BookingStatus.PENDING
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/confirm",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert "Only the host can confirm" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_confirm_booking_updates_status_to_confirmed(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that confirm updates booking status to CONFIRMED."""
+        sample_booking.status = BookingStatus.PENDING
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+
+                # Track update_status calls
+                update_calls = []
+
+                # Create confirmed booking for second get_by_id call
+                confirmed_booking = MagicMock()
+                confirmed_booking.id = sample_booking.id
+                confirmed_booking.client_id = sample_booking.client_id
+                confirmed_booking.host_id = sample_booking.host_id
+                confirmed_booking.host_profile_id = sample_booking.host_profile_id
+                confirmed_booking.dance_style_id = sample_booking.dance_style_id
+                confirmed_booking.status = BookingStatus.CONFIRMED
+                confirmed_booking.scheduled_start = sample_booking.scheduled_start
+                confirmed_booking.scheduled_end = sample_booking.scheduled_end
+                confirmed_booking.actual_start = None
+                confirmed_booking.actual_end = None
+                confirmed_booking.duration_minutes = sample_booking.duration_minutes
+                confirmed_booking.hourly_rate_cents = sample_booking.hourly_rate_cents
+                confirmed_booking.amount_cents = sample_booking.amount_cents
+                confirmed_booking.platform_fee_cents = sample_booking.platform_fee_cents
+                confirmed_booking.host_payout_cents = sample_booking.host_payout_cents
+                confirmed_booking.location = None
+                confirmed_booking.location_name = sample_booking.location_name
+                confirmed_booking.location_notes = sample_booking.location_notes
+                confirmed_booking.client_notes = sample_booking.client_notes
+                confirmed_booking.host_notes = None
+                confirmed_booking.cancellation_reason = None
+                confirmed_booking.cancelled_by_id = None
+                confirmed_booking.cancelled_at = None
+                confirmed_booking.stripe_payment_intent_id = (
+                    sample_booking.stripe_payment_intent_id
+                )
+                confirmed_booking.created_at = sample_booking.created_at
+                confirmed_booking.updated_at = sample_booking.updated_at
+                confirmed_booking.client = sample_booking.client
+                confirmed_booking.host = sample_booking.host
+                confirmed_booking.host_profile = sample_booking.host_profile
+                confirmed_booking.dance_style = sample_booking.dance_style
+
+                # First call returns pending, second call (after update) returns confirmed
+                mock_booking_repo.get_by_id.side_effect = [
+                    sample_booking,
+                    confirmed_booking,
+                ]
+
+                async def mock_update_status(booking_id, new_status, **kwargs):
+                    update_calls.append((booking_id, new_status, kwargs))
+                    return confirmed_booking
+
+                mock_booking_repo.update_status = mock_update_status
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/confirm",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["status"] == BookingStatus.CONFIRMED.value
+
+        # Verify update_status was called with CONFIRMED status
+        assert len(update_calls) == 1
+        _, new_status, _ = update_calls[0]
+        assert new_status == BookingStatus.CONFIRMED
+
+    @pytest.mark.asyncio
+    async def test_confirm_booking_not_pending_returns_400(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that confirming a non-pending booking returns 400."""
+        # Set booking to CONFIRMED (not PENDING)
+        sample_booking.status = BookingStatus.CONFIRMED
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/confirm",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "pending" in response.json()["detail"].lower()
+
+    @pytest.mark.asyncio
+    async def test_confirm_booking_cancelled_returns_400(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that confirming a cancelled booking returns 400."""
+        sample_booking.status = BookingStatus.CANCELLED
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/confirm",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.asyncio
+    async def test_confirm_booking_not_found_returns_404(
+        self,
+        mock_db,
+        sample_host_user,
+    ):
+        """Test that confirming a non-existent booking returns 404."""
+        non_existent_id = uuid4()
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = None
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{non_existent_id}/confirm",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.asyncio
+    async def test_confirm_booking_requires_authentication(self):
+        """Test that confirming a booking requires authentication."""
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.post(
+                f"/api/v1/bookings/{uuid4()}/confirm",
+                # No auth header
+            )
+
+        assert response.status_code in [
+            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_403_FORBIDDEN,
+        ]
+
+    @pytest.mark.asyncio
+    async def test_confirm_booking_returns_booking_response(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that confirm returns a proper booking response with details."""
+        sample_booking.status = BookingStatus.PENDING
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+
+                confirmed_booking = MagicMock()
+                confirmed_booking.id = sample_booking.id
+                confirmed_booking.client_id = sample_booking.client_id
+                confirmed_booking.host_id = sample_booking.host_id
+                confirmed_booking.host_profile_id = sample_booking.host_profile_id
+                confirmed_booking.dance_style_id = sample_booking.dance_style_id
+                confirmed_booking.status = BookingStatus.CONFIRMED
+                confirmed_booking.scheduled_start = sample_booking.scheduled_start
+                confirmed_booking.scheduled_end = sample_booking.scheduled_end
+                confirmed_booking.actual_start = None
+                confirmed_booking.actual_end = None
+                confirmed_booking.duration_minutes = sample_booking.duration_minutes
+                confirmed_booking.hourly_rate_cents = sample_booking.hourly_rate_cents
+                confirmed_booking.amount_cents = sample_booking.amount_cents
+                confirmed_booking.platform_fee_cents = sample_booking.platform_fee_cents
+                confirmed_booking.host_payout_cents = sample_booking.host_payout_cents
+                confirmed_booking.location = None
+                confirmed_booking.location_name = sample_booking.location_name
+                confirmed_booking.location_notes = sample_booking.location_notes
+                confirmed_booking.client_notes = sample_booking.client_notes
+                confirmed_booking.host_notes = None
+                confirmed_booking.cancellation_reason = None
+                confirmed_booking.cancelled_by_id = None
+                confirmed_booking.cancelled_at = None
+                confirmed_booking.stripe_payment_intent_id = (
+                    sample_booking.stripe_payment_intent_id
+                )
+                confirmed_booking.created_at = sample_booking.created_at
+                confirmed_booking.updated_at = sample_booking.updated_at
+                confirmed_booking.client = sample_booking.client
+                confirmed_booking.host = sample_booking.host
+                confirmed_booking.host_profile = sample_booking.host_profile
+                confirmed_booking.dance_style = sample_booking.dance_style
+
+                # First call returns pending, second call (after update) returns confirmed
+                mock_booking_repo.get_by_id.side_effect = [
+                    sample_booking,
+                    confirmed_booking,
+                ]
+                mock_booking_repo.update_status.return_value = confirmed_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/confirm",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert "id" in data
+        assert "client_id" in data
+        assert "host_id" in data
+        assert "status" in data
+        assert "client" in data  # Includes details
+        assert "host" in data  # Includes details
+        assert data["status"] == BookingStatus.CONFIRMED.value
