@@ -2997,3 +2997,47 @@ strictly-dancing/
 - Expo config verified: app.json properly configured
 
 **Next**: T089 - Initialize Monorepo Structure
+
+---
+
+### Entry [E-090] 2026-01-29T11:15:00Z
+
+**Task**: T089 - Initialize Monorepo Structure
+**Status**: DONE
+**Progress**: 89/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created root package.json with Bun workspaces configuration:
+  - Workspaces: ["frontend", "apps/mobile"]
+  - Convenience scripts for dev, build, test, lint across all packages
+  - Prettier as root dev dependency
+  - packageManager set to bun@1.1.0
+- Created root tsconfig.base.json with shared TypeScript strict settings:
+  - ES2022 target, ESNext module
+  - All strict type-checking options enabled
+  - Consistent settings for noImplicitAny, strictNullChecks, etc.
+- Updated frontend tsconfig.json to extend from root:
+  - Extends "../tsconfig.base.json"
+  - Adds frontend-specific: DOM libs, react-jsx, bundler mode
+  - Additional strict: noUncheckedIndexedAccess, exactOptionalPropertyTypes
+- Updated mobile tsconfig.json with root strict settings:
+  - Still extends expo/tsconfig.base for React Native compatibility
+  - Includes all strict settings from root config
+  - Mobile-specific: react-native jsx, jest types
+- Created shared ESLint base configuration (eslint.config.base.mjs):
+  - TypeScript rules: no-explicit-any, no-unused-vars, prefer-nullish-coalescing
+  - React rules: hooks rules, no react-in-jsx-scope
+  - General rules: no-console warn, prefer-const, no-var, eqeqeq
+- Created Prettier configuration (.prettierrc):
+  - Consistent settings: no semi, single quotes, 2-space tabs, trailing comma es5
+  - .prettierignore for node_modules, dist, generated files
+- Verified workspace linking: `bun pm ls` shows linked packages
+- TypeScript compilation passes in both frontend and mobile
+
+**Evidence**:
+- Files: package.json, tsconfig.base.json, .prettierrc, .prettierignore, eslint.config.base.mjs
+- Frontend tsconfig.json updated to extend root
+- Mobile tsconfig.json updated with shared strict settings
+- Workspace verification: `bun pm ls` shows strictly-dancing-frontend and strictly-dancing-mobile
+
+**Next**: T090 - Configure Background Job Processing

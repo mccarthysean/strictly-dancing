@@ -1,6 +1,7 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    /* Strict settings from root base config */
     "strict": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
@@ -11,9 +12,10 @@
     "strictFunctionTypes": true,
     "strictBindCallApply": true,
     "strictPropertyInitialization": true,
-    "exactOptionalPropertyTypes": false,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
+
+    /* Mobile-specific */
     "esModuleInterop": true,
     "skipLibCheck": true,
     "moduleResolution": "bundler",
@@ -21,10 +23,14 @@
     "target": "ESNext",
     "lib": ["ES2022", "DOM"],
     "jsx": "react-native",
+
+    /* Paths */
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
     },
+
+    /* Types */
     "types": ["jest"]
   },
   "include": [

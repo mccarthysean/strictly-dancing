@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.venv/
+
+# Build outputs
+dist/
+build/
+.expo/
+.next/
+
+# Generated files
+*.gen.ts
+api.gen.ts
+
+# Package locks
+bun.lock
+package-lock.json
+yarn.lock
+
+# Backend
+backend/
+*.py
+
+# Caches
+.cache/
+.turbo/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Coverage
+coverage/
+.nyc_output/
