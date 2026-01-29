@@ -2874,3 +2874,38 @@ strictly-dancing/
 - Key features: real-time WebSocket, keyboard avoiding, message bubbles
 
 **Next**: T086 - Mobile Messages List Screen
+
+---
+
+### Entry [E-087] 2026-01-29T12:45:00Z
+
+**Task**: T086 - Mobile Messages List Screen
+**Status**: DONE
+**Progress**: 86/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Implemented full inbox screen at apps/mobile/app/(tabs)/messages.tsx:
+  - FlatList of conversations
+  - Conversations sorted by last_message_at (API returns sorted)
+- Conversation items show:
+  - Avatar with participant initials
+  - Participant name (bold if unread)
+  - Last message preview (single line, bold if unread)
+  - Time ago (Just now, 5m, 2h, 3d, or date)
+- Unread badge:
+  - Rose colored badge with unread count
+  - Shows "99+" for counts over 99
+  - Conversation row highlighted in light rose
+- Additional features:
+  - Pull-to-refresh
+  - Cursor-based pagination with infinite scroll
+  - Empty state with "Find a Host" CTA
+  - Auth check with login redirect
+  - Navigate to chat on tap
+
+**Evidence**:
+- File: apps/mobile/app/(tabs)/messages.tsx
+- TypeScript: tsc --noEmit passes with no errors
+- Key features: sorted conversations, unread badges, message preview
+
+**Next**: T087 - Configure Unit Test Infrastructure
