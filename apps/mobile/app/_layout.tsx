@@ -5,6 +5,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/stores/auth';
+import { initSentry, SentryProvider } from '@/lib/sentry';
+
+// Initialize Sentry for error tracking and performance monitoring
+initSentry();
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -19,7 +23,7 @@ const queryClient = new QueryClient({
   },
 });
 
-export default function RootLayout() {
+function RootLayout() {
   const { isLoading, initialize } = useAuthStore();
 
   useEffect(() => {
@@ -56,3 +60,6 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+// Wrap the app with Sentry's error boundary
+export default SentryProvider(RootLayout);

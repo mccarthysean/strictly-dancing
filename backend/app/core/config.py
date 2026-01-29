@@ -58,6 +58,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_format: str = "json"  # "json" or "console"
 
+    # Sentry settings
+    sentry_dsn: str = ""  # Leave empty to disable Sentry
+    sentry_environment: str = "development"
+    sentry_traces_sample_rate: float = 0.1  # 10% of transactions for performance
+    sentry_profiles_sample_rate: float = 0.1  # 10% for profiling
+
 
 @lru_cache
 def get_settings() -> Settings:

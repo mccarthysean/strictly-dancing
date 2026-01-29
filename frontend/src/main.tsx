@@ -5,7 +5,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ToastProvider } from '@/components/Toast'
+import { initSentry } from '@/lib/sentry'
 import { routeTree } from './routeTree.gen'
+
+// Initialize Sentry for error tracking and performance monitoring
+initSentry()
 
 // Create a new query client with retry logic for network errors
 const queryClient = new QueryClient({

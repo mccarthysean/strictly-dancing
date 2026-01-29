@@ -3113,3 +3113,46 @@ strictly-dancing/
 - EAS Build: Triggers on tagged releases (refs/tags/v*)
 
 **Next**: T092 - Configure Analytics and Logging
+
+---
+
+### Entry [E-093] 2026-01-29T11:55:00Z
+
+**Task**: T092 - Configure Analytics and Logging
+**Status**: DONE
+**Progress**: 92/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Backend Sentry integration:
+  - Added sentry-sdk[fastapi]>=1.40.0 dependency
+  - Created app/core/sentry.py with init_sentry(), captureException(), setUser(), etc.
+  - Integrations: FastAPI, Starlette, SQLAlchemy, Logging, Redis, Celery
+  - Added SENTRY_DSN, SENTRY_ENVIRONMENT, traces/profiles sample rates to config
+  - Updated main.py to initialize Sentry at startup
+- Structured logging with request IDs:
+  - Updated app/core/logging.py with request_id context variable
+  - Created add_request_id processor for structlog
+  - Created app/core/middleware.py with RequestIdMiddleware
+  - X-Request-ID header added to all responses
+  - Request duration logged for performance tracking
+- PWA Frontend Sentry integration:
+  - Added @sentry/react dependency
+  - Created src/lib/sentry.ts with initSentry(), error boundary support
+  - Integrations: browserTracingIntegration, replayIntegration
+  - Updated main.tsx to initialize Sentry at startup
+- Mobile Sentry integration:
+  - Added @sentry/react-native dependency
+  - Created lib/sentry.ts with initSentry(), native crash handling
+  - Updated app/_layout.tsx with SentryProvider wrapper
+- Performance monitoring enabled:
+  - 10% transaction sampling for all platforms
+  - Profile sampling for backend and mobile
+  - Session replay for PWA frontend
+
+**Evidence**:
+- Backend files: app/core/sentry.py, app/core/logging.py, app/core/middleware.py, app/main.py
+- Frontend files: src/lib/sentry.ts, src/main.tsx
+- Mobile files: lib/sentry.ts, app/_layout.tsx
+- TypeScript: Both frontend and mobile compile with no errors
+
+**Next**: T093 - Prepare App Store Submission

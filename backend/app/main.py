@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
+from app.core.middleware import RequestIdMiddleware
+from app.core.sentry import init_sentry
 from app.routers import (
     auth_router,
     bookings_router,
@@ -44,6 +46,9 @@ def create_app() -> FastAPI:
     # Configure logging
     configure_logging()
 
+    # Initialize Sentry (if DSN is configured)
+    init_sentry()
+
     app = FastAPI(
         title=settings.app_name,
         description="Global dance host marketplace API",
@@ -51,6 +56,9 @@ def create_app() -> FastAPI:
         debug=settings.debug,
         lifespan=lifespan,
     )
+
+    # Request ID middleware for tracing
+    app.add_middleware(RequestIdMiddleware)
 
     # CORS middleware configured from settings
     app.add_middleware(
