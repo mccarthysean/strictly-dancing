@@ -1256,14 +1256,14 @@
       "id": "T080",
       "title": "Implement Mobile Protected Navigation",
       "description": "Set up navigation guards for authenticated screens.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T078", "T079"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "Auth layout for (auth) group", "verification": "code_review", "met": false},
-        {"id": "AC02", "criterion": "Protected layout for (tabs) group", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Splash screen during auth check", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Logout navigates to login", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "Auth layout for (auth) group", "verification": "code_review", "met": true},
+        {"id": "AC02", "criterion": "Protected layout for (tabs) group", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Splash screen during auth check", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Logout navigates to login", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },

@@ -2654,3 +2654,34 @@ strictly-dancing/
 - Key features: user type selector, terms checkbox, password strength, comprehensive validation
 
 **Next**: T080 - Implement Mobile Protected Navigation
+
+---
+
+### Entry [E-081] 2026-01-29T11:20:00Z
+
+**Task**: T080 - Implement Mobile Protected Navigation
+**Status**: DONE
+**Progress**: 80/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Verified auth layout for (auth) group:
+  - (auth)/_layout.tsx checks isAuthenticated
+  - Redirects to /(tabs)/discover if already authenticated
+  - Stack navigator for login/register screens
+- Verified protected layout for (tabs) group:
+  - (tabs)/_layout.tsx checks isAuthenticated
+  - Redirects to /(auth)/login if not authenticated
+  - Tab navigator with 4 tabs (Discover, Bookings, Messages, Profile)
+- Verified splash screen during auth check:
+  - app/_layout.tsx uses SplashScreen.preventAutoHideAsync()
+  - Returns null while isLoading is true (splash visible)
+  - SplashScreen.hideAsync() called after initialize() completes
+- Verified logout navigates to login:
+  - profile.tsx handleLogout() calls logout() then router.replace('/(auth)/login')
+
+**Evidence**:
+- Files: app/_layout.tsx, (auth)/_layout.tsx, (tabs)/_layout.tsx, (tabs)/profile.tsx
+- All navigation guards implemented and working
+- No code changes required - implementation was complete from T075
+
+**Next**: T081 - Mobile Host Discovery Screen
