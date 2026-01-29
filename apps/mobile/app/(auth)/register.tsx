@@ -65,6 +65,8 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [userType, setUserType] = useState<'client' | 'host' | 'both'>('client');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const validateForm = (): string | null => {
@@ -78,6 +80,7 @@ export default function RegisterScreen() {
     if (!/[a-z]/.test(password)) return 'Password must contain a lowercase letter';
     if (!/\d/.test(password)) return 'Password must contain a number';
     if (password !== confirmPassword) return 'Passwords do not match';
+    if (!acceptedTerms) return 'Please accept the terms and conditions';
     return null;
   };
 
@@ -95,7 +98,7 @@ export default function RegisterScreen() {
         password,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
-        user_type: 'client',
+        user_type: userType,
       });
       router.replace('/(auth)/login');
     } catch (err) {
@@ -197,6 +200,56 @@ export default function RegisterScreen() {
                 editable={!isLoading}
               />
             </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>I am a...</Text>
+              <View style={styles.userTypeContainer}>
+                {(['client', 'host', 'both'] as const).map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    style={[
+                      styles.userTypeButton,
+                      userType === type && styles.userTypeButtonActive,
+                    ]}
+                    onPress={() => setUserType(type)}
+                    disabled={isLoading}
+                  >
+                    <Text
+                      style={[
+                        styles.userTypeText,
+                        userType === type && styles.userTypeTextActive,
+                      ]}
+                    >
+                      {type === 'client'
+                        ? 'Client'
+                        : type === 'host'
+                          ? 'Host'
+                          : 'Both'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.checkboxContainer}
+              onPress={() => setAcceptedTerms(!acceptedTerms)}
+              disabled={isLoading}
+            >
+              <View
+                style={[
+                  styles.checkbox,
+                  acceptedTerms && styles.checkboxChecked,
+                ]}
+              >
+                {acceptedTerms && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <Text style={styles.checkboxLabel}>
+                I agree to the{' '}
+                <Text style={styles.linkText}>Terms of Service</Text> and{' '}
+                <Text style={styles.linkText}>Privacy Policy</Text>
+              </Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.button, isLoading && styles.buttonDisabled]}
@@ -335,5 +388,60 @@ const styles = StyleSheet.create({
     color: '#8B5CF6',
     fontSize: 14,
     fontWeight: '600',
+  },
+  userTypeContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  userTypeButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  userTypeButtonActive: {
+    borderColor: '#8B5CF6',
+    backgroundColor: '#F5F3FF',
+  },
+  userTypeText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  userTypeTextActive: {
+    color: '#8B5CF6',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 8,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  checkboxChecked: {
+    borderColor: '#8B5CF6',
+    backgroundColor: '#8B5CF6',
+  },
+  checkmark: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  checkboxLabel: {
+    flex: 1,
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
   },
 });

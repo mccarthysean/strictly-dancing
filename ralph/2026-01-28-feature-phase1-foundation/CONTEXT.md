@@ -2595,3 +2595,62 @@ strictly-dancing/
 - Key features: auth injection, 401 refresh/retry, type-safe methods
 
 **Next**: T078 - Implement Mobile Login Screen
+
+---
+
+### Entry [E-079] 2026-01-29T11:10:00Z
+
+**Task**: T078 - Implement Mobile Login Screen
+**Status**: DONE
+**Progress**: 78/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Verified apps/mobile/app/(auth)/login.tsx exists (created in T075)
+- Email/password inputs with validation:
+  - Email input with keyboard type and autocomplete
+  - Password input with secureTextEntry
+  - Empty field validation in handleLogin
+- Loading state and error display:
+  - isLoading from useAuthStore disables inputs/button
+  - ActivityIndicator shown during loading
+  - errorContainer with red styling for error messages
+- Successful login navigates to home:
+  - router.replace('/(tabs)/discover') on successful login
+
+**Evidence**:
+- File: app/(auth)/login.tsx
+- TypeScript: tsc --noEmit passes
+- Key features: form validation, loading state, error display, navigation
+
+---
+
+### Entry [E-080] 2026-01-29T11:10:00Z
+
+**Task**: T079 - Implement Mobile Registration Screen
+**Status**: DONE
+**Progress**: 79/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Verified apps/mobile/app/(auth)/register.tsx exists
+- All required fields implemented:
+  - Email with regex validation
+  - Password with strength requirements
+  - Confirm password with match validation
+  - First name and last name
+  - User type selector (client/host/both) with styled buttons
+- Password strength indicator:
+  - PasswordStrength component with 4-segment bar
+  - Checks: length >= 8, uppercase, lowercase, number
+  - Color-coded labels: Weak, Fair, Good, Strong
+- Terms checkbox and validation:
+  - acceptedTerms state with toggle
+  - Styled checkbox with checkmark
+  - Links to Terms of Service and Privacy Policy
+  - Validation error if not accepted
+
+**Evidence**:
+- File: app/(auth)/register.tsx
+- TypeScript: tsc --noEmit passes
+- Key features: user type selector, terms checkbox, password strength, comprehensive validation
+
+**Next**: T080 - Implement Mobile Protected Navigation

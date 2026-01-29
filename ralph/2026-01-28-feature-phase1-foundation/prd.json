@@ -1226,14 +1226,14 @@
       "id": "T078",
       "title": "Implement Mobile Login Screen",
       "description": "Create login screen for mobile app.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T077", "T012"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "apps/mobile/app/(auth)/login.tsx exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Email/password inputs with validation", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Loading state and error display", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Successful login navigates to home", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "apps/mobile/app/(auth)/login.tsx exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Email/password inputs with validation", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Loading state and error display", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Successful login navigates to home", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },
@@ -1241,14 +1241,14 @@
       "id": "T079",
       "title": "Implement Mobile Registration Screen",
       "description": "Create registration screen for mobile app.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T077", "T011"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "apps/mobile/app/(auth)/register.tsx exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Fields: email, password, confirm, names, user type", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Password strength indicator", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Terms checkbox and validation", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "apps/mobile/app/(auth)/register.tsx exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Fields: email, password, confirm, names, user type", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Password strength indicator", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Terms checkbox and validation", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },
