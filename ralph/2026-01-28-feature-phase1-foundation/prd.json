@@ -231,14 +231,14 @@
       "id": "T012",
       "title": "Implement Login Endpoint",
       "description": "Create POST /api/v1/auth/login returning JWT tokens.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T007", "T008", "T009", "T010"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "POST /api/v1/auth/login endpoint exists", "verification": "test", "met": false},
-        {"id": "AC02", "criterion": "Verifies credentials with same error for email/password mismatch", "verification": "test", "met": false},
-        {"id": "AC03", "criterion": "Returns 401 for invalid credentials", "verification": "test", "met": false},
-        {"id": "AC04", "criterion": "Returns TokenResponse with access_token and refresh_token", "verification": "test", "met": false}
+        {"id": "AC01", "criterion": "POST /api/v1/auth/login endpoint exists", "verification": "test", "met": true},
+        {"id": "AC02", "criterion": "Verifies credentials with same error for email/password mismatch", "verification": "test", "met": true},
+        {"id": "AC03", "criterion": "Returns 401 for invalid credentials", "verification": "test", "met": true},
+        {"id": "AC04", "criterion": "Returns TokenResponse with access_token and refresh_token", "verification": "test", "met": true}
       ],
       "testing": {"unit_tests": ["test_login_valid_credentials_returns_tokens", "test_login_invalid_credentials_returns_401"]}
     },

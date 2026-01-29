@@ -5,11 +5,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.database import get_db
 from app.repositories.user import UserRepository
-from app.schemas.auth import RegisterRequest
+from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
 from app.schemas.user import UserCreate, UserResponse
 from app.services.password import password_service
+from app.services.token import token_service
 
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
 
@@ -69,3 +71,69 @@ async def register(
     user = await user_repo.create(user_data=user_data, password_hash=password_hash)
 
     return UserResponse.model_validate(user)
+
+
+# Generic invalid credentials error - intentionally vague to prevent user enumeration
+INVALID_CREDENTIALS_ERROR = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Invalid email or password",
+    headers={"WWW-Authenticate": "Bearer"},
+)
+
+
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    summary="Authenticate user",
+    description="Authenticate with email and password to receive access and refresh tokens.",
+)
+async def login(
+    request: LoginRequest,
+    db: DbSession,
+) -> TokenResponse:
+    """Authenticate user and return JWT tokens.
+
+    Validates credentials and returns access/refresh tokens on success.
+    Uses the same error message for both invalid email and invalid password
+    to prevent user enumeration attacks.
+
+    Args:
+        request: The login request with email and password.
+        db: The database session (injected).
+
+    Returns:
+        TokenResponse with access_token, refresh_token, and expiration info.
+
+    Raises:
+        HTTPException 401: If credentials are invalid.
+    """
+    user_repo = UserRepository(db)
+
+    # Look up user by email (case-insensitive)
+    user = await user_repo.get_by_email(request.email)
+    if user is None:
+        # User not found - return same error as wrong password
+        raise INVALID_CREDENTIALS_ERROR
+
+    # Check if user is active
+    if not user.is_active:
+        raise INVALID_CREDENTIALS_ERROR
+
+    # Verify password
+    if not password_service.verify_password(request.password, user.password_hash):
+        raise INVALID_CREDENTIALS_ERROR
+
+    # Create tokens
+    access_token = token_service.create_access_token(user.id)
+    refresh_token = token_service.create_refresh_token(user.id)
+
+    # Get expiration time in seconds from settings
+    settings = get_settings()
+    expires_in = settings.jwt_access_token_expire_minutes * 60
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=expires_in,
+    )

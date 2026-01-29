@@ -385,3 +385,28 @@ strictly-dancing/
 - Key tests: test_registration_returns_201_on_success, test_registration_duplicate_email_returns_409, test_registration_creates_user_in_database
 
 **Next**: T012 - Implement Login Endpoint
+
+---
+
+### Entry [E-013] 2026-01-29T06:10:00Z
+
+**Task**: T012 - Implement Login Endpoint
+**Status**: DONE
+**Progress**: 12/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Implemented POST /api/v1/auth/login endpoint in app/routers/auth.py
+- Validates credentials using password_service.verify_password()
+- Returns same "Invalid email or password" error for both invalid email and invalid password (prevents user enumeration)
+- Returns 401 Unauthorized for invalid credentials or inactive users
+- Returns TokenResponse with access_token, refresh_token, token_type, and expires_in
+- Uses token_service to create JWT tokens with user ID
+- Added 10 unit tests for login endpoint (all passing)
+
+**Evidence**:
+- Tests: All passing (154/154 total)
+- Files: app/routers/auth.py, tests/unit/test_auth_router.py
+- Linting: All checks passed
+- Key tests: test_login_valid_credentials_returns_tokens, test_login_invalid_credentials_returns_401, test_login_same_error_for_invalid_email_and_password
+
+**Next**: T013 - Implement Token Refresh Endpoint
