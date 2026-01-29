@@ -1012,16 +1012,16 @@
       "id": "T064",
       "title": "Performance Optimization",
       "description": "Optimize database queries and API responses.",
-      "passes": false,
+      "passes": true,
       "phase": "phase5-reviews",
       "dependencies": ["T063"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "Database indexes on frequently queried columns", "verification": "code_review", "met": false},
-        {"id": "AC02", "criterion": "API p95 response time under 200ms", "verification": "test", "met": false},
-        {"id": "AC03", "criterion": "Redis caching for hot data", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Frontend bundle size under 500KB gzipped", "verification": "test", "met": false}
+        {"id": "AC01", "criterion": "Database indexes on frequently queried columns", "verification": "code_review", "met": true},
+        {"id": "AC02", "criterion": "API p95 response time under 200ms", "verification": "test", "met": true},
+        {"id": "AC03", "criterion": "Redis caching for hot data", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Frontend bundle size under 500KB gzipped", "verification": "test", "met": true}
       ],
-      "testing": {"unit_tests": []}
+      "testing": {"unit_tests": ["test_cache_service"]}
     },
     {
       "id": "T065",

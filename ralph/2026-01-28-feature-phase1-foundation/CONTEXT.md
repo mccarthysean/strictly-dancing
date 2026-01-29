@@ -1985,3 +1985,42 @@ strictly-dancing/
 
 **Next**: T064 - Performance Optimization
 
+---
+
+### Entry [E-065] 2026-01-29T09:30:00Z
+
+**Task**: T064 - Performance Optimization
+**Status**: DONE
+**Progress**: 64/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created database indexes migration (000000000010) for frequently queried columns:
+  - ix_host_profiles_rating_average: Partial index for rating sorting
+  - ix_host_profiles_hourly_rate_cents: Index for price sorting
+  - ix_host_profiles_verification_status: Index for verified hosts filter
+  - ix_bookings_scheduled_start_status: Composite index for upcoming bookings
+  - ix_bookings_host_profile_schedule: Composite index for availability checking
+  - ix_reviews_reviewee_created: Composite index for review pagination
+  - ix_messages_sender_id: Index for message queries
+  - ix_host_dance_styles_dance_style_id: Index for search by dance style
+  - ix_availability_overrides_date_type: Composite index for date range queries
+- Created Redis caching service (app/services/cache.py):
+  - CacheService class with TTL support
+  - Dance styles caching (1 hour TTL)
+  - Host profile caching (5 min default TTL)
+  - User caching (excludes password_hash for security)
+  - Host search results caching (1 min TTL)
+  - Health check and connection management
+- Frontend bundle size verified: 111.31 KB gzipped (well under 500KB target)
+- Created 33 comprehensive unit tests for CacheService (all passing)
+- All 1127 backend tests pass
+- TypeScript and linting pass
+
+**Evidence**:
+- Files: alembic/versions/20260129_090000_add_performance_indexes.py, app/services/cache.py, tests/unit/test_cache_service.py
+- Tests: 1127 total tests passing (33 new cache tests)
+- Frontend: 111.31 KB gzipped bundle size
+- Linting: All checks passed
+
+**Next**: T065 - Frontend Host Profile Edit Page
+
