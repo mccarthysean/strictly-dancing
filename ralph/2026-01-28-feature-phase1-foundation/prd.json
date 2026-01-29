@@ -1271,14 +1271,14 @@
       "id": "T081",
       "title": "Mobile Host Discovery Screen",
       "description": "Create main discovery with search, filters, map.",
-      "passes": false,
+      "passes": true,
       "phase": "phase2-host-profiles",
       "dependencies": ["T030", "T077"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "apps/mobile/app/(tabs)/discover.tsx exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Toggle list/map view", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Search bar and filter modal", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Location-based results from GPS", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "apps/mobile/app/(tabs)/discover.tsx exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Toggle list/map view", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Search bar and filter modal", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Location-based results from GPS", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },

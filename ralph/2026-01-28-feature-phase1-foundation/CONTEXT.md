@@ -2685,3 +2685,44 @@ strictly-dancing/
 - No code changes required - implementation was complete from T075
 
 **Next**: T081 - Mobile Host Discovery Screen
+
+---
+
+### Entry [E-082] 2026-01-29T11:30:00Z
+
+**Task**: T081 - Mobile Host Discovery Screen
+**Status**: DONE
+**Progress**: 81/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Implemented full discover.tsx with host search functionality:
+  - List/map view toggle in header (list icon, map icon)
+  - Map view placeholder (notes native integration required)
+- Search bar and filter modal:
+  - Search bar with search icon and text input
+  - Filter button opens modal sheet
+  - Filter options: search radius (10/25/50/100 km), min rating (Any/3+/4+/4.5+), max hourly rate (Any/$50/$100/$150), verified only checkbox
+  - Cancel/Reset/Apply buttons
+- Location-based results from GPS:
+  - Uses expo-location for permission and position
+  - Shows loading state while getting location
+  - Error state with retry button if permission denied
+  - Passes lat/lng/radius to /api/v1/hosts/search endpoint
+- Host cards display:
+  - Avatar with initials
+  - Name with verified badge
+  - Headline
+  - Rating with star icon and review count
+  - Hourly rate
+  - Distance from user
+- Created placeholder /hosts/[id].tsx route for host profile navigation
+- All 22 tests passing
+- TypeScript compiles with no errors
+
+**Evidence**:
+- Files: app/(tabs)/discover.tsx, app/hosts/[id].tsx
+- TypeScript: tsc --noEmit passes
+- Tests: 22/22 passing
+- Key features: GPS location, filter modal, view toggle, host cards
+
+**Next**: T082 - Mobile Host Profile Screen
