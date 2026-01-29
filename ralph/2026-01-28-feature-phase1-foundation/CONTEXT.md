@@ -558,3 +558,27 @@ strictly-dancing/
 - Dependencies: openapi-fetch@0.13.8, openapi-react-query@0.5.1
 
 **Next**: T019 - Create Frontend Auth Context
+
+---
+
+### Entry [E-020] 2026-01-29T07:15:00Z
+
+**Task**: T019 - Create Frontend Auth Context
+**Status**: DONE
+**Progress**: 19/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created frontend/src/contexts/AuthContext.tsx with full auth functionality
+- AuthContext provides: user, isAuthenticated, isLoading, login, logout, register, refreshAuth
+- Token storage in localStorage using setTokens/clearTokens from $api
+- Auto-refresh on page load via useEffect that calls fetchUser
+- Refresh logic attempts token refresh on 401 responses
+- Added AuthProvider wrapper to main.tsx
+- TypeScript check passes with no errors
+
+**Evidence**:
+- Files: src/contexts/AuthContext.tsx, src/main.tsx (updated)
+- TypeScript: tsc --noEmit passes with no errors
+- Features: login/logout/register functions, token refresh, auto-load user on mount
+
+**Next**: T020 - Implement Frontend Login Page
