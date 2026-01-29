@@ -864,3 +864,31 @@ strictly-dancing/
 
 **Next**: T030 - Implement Host Search Endpoint
 
+---
+
+### Entry [E-031] 2026-01-29T07:00:00Z
+
+**Task**: T030 - Implement Host Search Endpoint
+**Status**: DONE
+**Progress**: 30/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/routers/hosts.py with hosts router
+- Implemented GET /api/v1/hosts endpoint with comprehensive search functionality
+- Query params supported: lat, lng, radius_km, styles[], min_rating, max_price, verified_only
+- Sorting supported: sort_by (distance, rating, price, reviews) and sort_order (asc, desc)
+- Pagination implemented with page and page_size params
+- Returns HostSearchResponse with items, total, page, page_size, total_pages
+- All parameter validations working (lat/lng ranges, radius range, page/page_size constraints)
+- Updated routers/__init__.py to export hosts_router
+- Updated main.py to include hosts_router
+- Created 22 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (401/401 total - 22 new tests added)
+- Files: app/routers/hosts.py, app/routers/__init__.py, app/main.py, tests/unit/test_hosts_router.py
+- Linting: All checks passed
+- Key tests: test_search_hosts_endpoint_exists, test_search_hosts_with_lat_lng_params, test_search_hosts_with_styles_filter, test_search_hosts_sort_by_rating
+
+**Next**: T031 - Implement Get Host Profile Endpoint
+

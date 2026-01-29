@@ -502,14 +502,14 @@
       "id": "T030",
       "title": "Implement Host Search Endpoint",
       "description": "Create GET /api/v1/hosts with filtering and geospatial search.",
-      "passes": false,
+      "passes": true,
       "phase": "phase2-host-profiles",
       "dependencies": ["T026", "T027"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "GET /api/v1/hosts endpoint exists", "verification": "test", "met": false},
-        {"id": "AC02", "criterion": "Query params: lat, lng, radius_km, styles[], min_rating, max_price", "verification": "test", "met": false},
-        {"id": "AC03", "criterion": "Paginated response with total count", "verification": "test", "met": false},
-        {"id": "AC04", "criterion": "Orders by distance or rating", "verification": "test", "met": false}
+        {"id": "AC01", "criterion": "GET /api/v1/hosts endpoint exists", "verification": "test", "met": true},
+        {"id": "AC02", "criterion": "Query params: lat, lng, radius_km, styles[], min_rating, max_price", "verification": "test", "met": true},
+        {"id": "AC03", "criterion": "Paginated response with total count", "verification": "test", "met": true},
+        {"id": "AC04", "criterion": "Orders by distance or rating", "verification": "test", "met": true}
       ],
       "testing": {"unit_tests": ["test_host_search_geospatial", "test_host_search_filters"]}
     },
