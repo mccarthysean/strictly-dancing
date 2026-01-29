@@ -1,4 +1,8 @@
-"""Authentication router for user registration, login, and token management."""
+"""Authentication router for user registration, login, and token management.
+
+Implements passwordless authentication using magic link codes sent via email.
+Users request a code, receive it by email, and exchange it for JWT tokens.
+"""
 
 from typing import Annotated
 
@@ -10,15 +14,18 @@ from app.core.database import get_db
 from app.core.deps import CurrentUser
 from app.repositories.user import UserRepository
 from app.schemas.auth import (
-    LoginRequest,
+    MagicLinkRequest,
+    MagicLinkResponse,
     RefreshRequest,
     RefreshResponse,
     RegisterRequest,
     TokenResponse,
+    VerifyMagicLinkRequest,
 )
 from app.schemas.user import UserCreate, UserResponse
-from app.services.password import password_service
+from app.services.magic_link import magic_link_service
 from app.services.token import token_service
+from app.workers import send_magic_link_email, send_welcome_email
 
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
 
@@ -30,17 +37,18 @@ DbSession = Annotated[AsyncSession, Depends(get_db)]
     "/register",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Register a new user",
-    description="Create a new user account with email, password, and profile information.",
+    summary="Register a new user (passwordless)",
+    description="Create a new user account with email and profile information. "
+    "A magic link code will be sent to complete registration.",
 )
 async def register(
     request: RegisterRequest,
     db: DbSession,
 ) -> UserResponse:
-    """Register a new user account.
+    """Register a new user account (passwordless).
 
-    Validates that the email is not already registered (case-insensitive),
-    hashes the password securely, and creates the user in the database.
+    Creates a new user and sends a welcome email. The user can then
+    request a magic link to log in.
 
     Args:
         request: The registration request with user details.
@@ -51,7 +59,7 @@ async def register(
 
     Raises:
         HTTPException 409: If email is already registered.
-        HTTPException 422: If validation fails (invalid email, weak password, etc.).
+        HTTPException 422: If validation fails.
     """
     user_repo = UserRepository(db)
 
@@ -62,73 +70,124 @@ async def register(
             detail="Email already registered",
         )
 
-    # Hash the password
-    password_hash = password_service.hash_password(request.password)
-
-    # Create UserCreate schema for the repository
+    # Create UserCreate schema for the repository (no password)
     user_data = UserCreate(
         email=request.email,
-        password=request.password,  # Not used by repo, but required by schema
         first_name=request.first_name,
         last_name=request.last_name,
         user_type=request.user_type,
     )
 
-    # Create the user
-    user = await user_repo.create(user_data=user_data, password_hash=password_hash)
+    # Create the user without a password
+    user = await user_repo.create_passwordless(user_data=user_data)
+
+    # Send welcome email asynchronously
+    send_welcome_email.delay(
+        to_email=user.email,
+        name=user.first_name,
+    )
 
     return UserResponse.model_validate(user)
 
 
-# Generic invalid credentials error - intentionally vague to prevent user enumeration
-INVALID_CREDENTIALS_ERROR = HTTPException(
+@router.post(
+    "/request-magic-link",
+    response_model=MagicLinkResponse,
+    summary="Request a magic link login code",
+    description="Request a 6-digit login code to be sent to the provided email. "
+    "The code expires after 15 minutes.",
+)
+async def request_magic_link(
+    request: MagicLinkRequest,
+    db: DbSession,
+) -> MagicLinkResponse:
+    """Request a magic link login code.
+
+    Generates a 6-digit code and sends it to the user's email.
+    For security, the response is always the same whether the email
+    exists or not (prevents user enumeration).
+
+    Args:
+        request: The magic link request with email.
+        db: The database session (injected).
+
+    Returns:
+        MagicLinkResponse with a generic success message.
+    """
+    user_repo = UserRepository(db)
+
+    # Look up user by email
+    user = await user_repo.get_by_email(request.email)
+
+    if user is not None and user.is_active:
+        # Generate and store magic link code
+        code = await magic_link_service.create_code(request.email)
+
+        # Send magic link email asynchronously
+        send_magic_link_email.delay(
+            to_email=user.email,
+            name=user.first_name,
+            code=code,
+            expires_minutes=magic_link_service.DEFAULT_EXPIRY_MINUTES,
+        )
+
+    # Always return success to prevent user enumeration
+    return MagicLinkResponse(
+        message="If this email is registered, a login code has been sent.",
+        expires_in_minutes=magic_link_service.DEFAULT_EXPIRY_MINUTES,
+    )
+
+
+# Invalid code error - intentionally vague to prevent user enumeration
+INVALID_CODE_ERROR = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Invalid email or password",
+    detail="Invalid or expired code",
     headers={"WWW-Authenticate": "Bearer"},
 )
 
 
 @router.post(
-    "/login",
+    "/verify-magic-link",
     response_model=TokenResponse,
-    summary="Authenticate user",
-    description="Authenticate with email and password to receive access and refresh tokens.",
+    summary="Verify magic link code and get tokens",
+    description="Verify the 6-digit code sent to email and receive JWT tokens.",
 )
-async def login(
-    request: LoginRequest,
+async def verify_magic_link(
+    request: VerifyMagicLinkRequest,
     db: DbSession,
 ) -> TokenResponse:
-    """Authenticate user and return JWT tokens.
+    """Verify magic link code and return JWT tokens.
 
-    Validates credentials and returns access/refresh tokens on success.
-    Uses the same error message for both invalid email and invalid password
-    to prevent user enumeration attacks.
+    Validates the code and returns access/refresh tokens on success.
+    The code is single-use and deleted after successful verification.
 
     Args:
-        request: The login request with email and password.
+        request: The verification request with email and code.
         db: The database session (injected).
 
     Returns:
         TokenResponse with access_token, refresh_token, and expiration info.
 
     Raises:
-        HTTPException 401: If credentials are invalid.
+        HTTPException 401: If code is invalid or expired.
     """
     user_repo = UserRepository(db)
 
-    # Look up user by email (case-insensitive)
+    # Verify the code first
+    is_valid = await magic_link_service.verify_code(request.email, request.code)
+
+    if not is_valid:
+        raise INVALID_CODE_ERROR
+
+    # Look up user by email
     user = await user_repo.get_by_email(request.email)
-    if user is None:
-        # User not found - return same error as wrong password
-        raise INVALID_CREDENTIALS_ERROR
 
-    # Check if user is active
-    if not user.is_active:
-        raise INVALID_CREDENTIALS_ERROR
+    if user is None or not user.is_active:
+        raise INVALID_CODE_ERROR
 
-    # Verify password
-    if not password_service.verify_password(request.password, user.password_hash):
-        raise INVALID_CREDENTIALS_ERROR
+    # Mark email as verified (first successful magic link login verifies email)
+    if not user.email_verified:
+        await user_repo.mark_email_verified(user.id)
 
     # Create tokens
     access_token = token_service.create_access_token(user.id)

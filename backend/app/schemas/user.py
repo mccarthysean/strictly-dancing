@@ -26,18 +26,12 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    """Schema for creating a new user.
+    """Schema for creating a new user (passwordless).
 
-    Used for user registration. Includes password for account creation.
-    Password is NOT stored - it's hashed before storage.
+    Used for user registration. No password required - authentication
+    is via magic link codes.
     """
 
-    password: str = Field(
-        ...,
-        min_length=8,
-        max_length=128,
-        description="User password (8-128 characters)",
-    )
     user_type: UserType = Field(
         default=UserType.CLIENT,
         description="Type of user account",

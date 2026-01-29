@@ -8,9 +8,67 @@ from app.models.user import UserType
 
 
 class RegisterRequest(BaseModel):
-    """Schema for user registration request.
+    """Schema for user registration request (passwordless).
 
-    Validates email format and enforces password strength requirements.
+    Only requires email and name. Authentication is via magic link.
+    """
+
+    email: EmailStr = Field(..., description="User's email address")
+    first_name: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="User's first name",
+    )
+    last_name: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="User's last name",
+    )
+    user_type: UserType = Field(
+        default=UserType.CLIENT,
+        description="Type of user account",
+    )
+
+
+class MagicLinkRequest(BaseModel):
+    """Schema for requesting a magic link login code."""
+
+    email: EmailStr = Field(..., description="User's email address")
+
+
+class MagicLinkResponse(BaseModel):
+    """Schema for magic link request response."""
+
+    message: str = Field(
+        default="If this email is registered, a login code has been sent.",
+        description="Status message (intentionally vague for security)",
+    )
+    expires_in_minutes: int = Field(
+        default=15,
+        description="Code expiry time in minutes",
+    )
+
+
+class VerifyMagicLinkRequest(BaseModel):
+    """Schema for verifying a magic link code."""
+
+    email: EmailStr = Field(..., description="User's email address")
+    code: str = Field(
+        ...,
+        min_length=6,
+        max_length=6,
+        pattern=r"^\d{6}$",
+        description="6-digit verification code",
+    )
+
+
+# Legacy schemas - kept for backwards compatibility during transition
+class LegacyRegisterRequest(BaseModel):
+    """Legacy schema for user registration with password.
+
+    DEPRECATED: Use RegisterRequest for passwordless registration.
     """
 
     email: EmailStr = Field(..., description="User's email address")
@@ -40,14 +98,7 @@ class RegisterRequest(BaseModel):
     @field_validator("password")
     @classmethod
     def validate_password_strength(cls, v: str) -> str:
-        """Validate password meets strength requirements.
-
-        Requirements:
-        - At least 8 characters (enforced by Field min_length)
-        - At least one uppercase letter
-        - At least one lowercase letter
-        - At least one digit
-        """
+        """Validate password meets strength requirements."""
         if not re.search(r"[A-Z]", v):
             raise ValueError("Password must contain at least one uppercase letter")
         if not re.search(r"[a-z]", v):
@@ -58,7 +109,10 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    """Schema for user login request."""
+    """Legacy schema for user login with password.
+
+    DEPRECATED: Use MagicLinkRequest and VerifyMagicLinkRequest for passwordless auth.
+    """
 
     email: EmailStr = Field(..., description="User's email address")
     password: str = Field(

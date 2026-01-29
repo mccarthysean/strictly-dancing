@@ -36,7 +36,9 @@ class UserRepository:
         self._session = session
 
     async def create(self, user_data: UserCreate, password_hash: str) -> User:
-        """Create a new user in the database.
+        """Create a new user in the database (legacy, with password).
+
+        DEPRECATED: Use create_passwordless() for new users.
 
         Args:
             user_data: The user creation data (email, names, user_type).
@@ -52,6 +54,28 @@ class UserRepository:
         user = User(
             email=user_data.email.lower(),  # Store email in lowercase
             password_hash=password_hash,
+            first_name=user_data.first_name,
+            last_name=user_data.last_name,
+            user_type=user_data.user_type,
+            email_verified=False,
+            is_active=True,
+        )
+        self._session.add(user)
+        await self._session.flush()  # Flush to get the generated ID
+        return user
+
+    async def create_passwordless(self, user_data: UserCreate) -> User:
+        """Create a new user without a password (passwordless auth).
+
+        Args:
+            user_data: The user creation data (email, names, user_type).
+
+        Returns:
+            The newly created User instance.
+        """
+        user = User(
+            email=user_data.email.lower(),  # Store email in lowercase
+            password_hash=None,  # No password for passwordless auth
             first_name=user_data.first_name,
             last_name=user_data.last_name,
             user_type=user_data.user_type,
@@ -169,5 +193,24 @@ class UserRepository:
             return None
 
         user.user_type = user_type
+        await self._session.flush()
+        return user
+
+    async def mark_email_verified(self, user_id: UUID) -> User | None:
+        """Mark a user's email as verified.
+
+        Called after successful magic link verification.
+
+        Args:
+            user_id: The user's unique identifier.
+
+        Returns:
+            The updated User if found, None if user doesn't exist.
+        """
+        user = await self.get_by_id(user_id)
+        if user is None:
+            return None
+
+        user.email_verified = True
         await self._session.flush()
         return user

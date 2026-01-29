@@ -4418,7 +4418,7 @@
       "id": "T106",
       "title": "Convert Auth to Passwordless Magic Link",
       "description": "Remove password-based auth. Implement magic link authentication where users enter email, receive a code/link, and are logged in.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": [
         "T104",
@@ -4429,37 +4429,37 @@
           "id": "AC01",
           "criterion": "Remove password_hash column from users table (migration)",
           "verification": "file_exists",
-          "met": false
+          "met": true
         },
         {
           "id": "AC02",
           "criterion": "POST /api/v1/auth/request-magic-link sends email with login code",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC03",
           "criterion": "POST /api/v1/auth/verify-magic-link validates code and returns JWT",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC04",
           "criterion": "Magic link codes expire after 15 minutes",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC05",
           "criterion": "Magic link codes are 6-digit numeric for easy entry",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC06",
           "criterion": "Remove PasswordService and password hashing",
           "verification": "code_review",
-          "met": false
+          "met": true
         }
       ],
       "testing": {

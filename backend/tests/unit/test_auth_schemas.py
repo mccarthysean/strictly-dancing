@@ -1,32 +1,32 @@
-"""Unit tests for authentication Pydantic schemas."""
+"""Unit tests for authentication Pydantic schemas (passwordless)."""
 
 import pytest
 from pydantic import ValidationError
 
 from app.models.user import UserType
 from app.schemas.auth import (
-    LoginRequest,
+    MagicLinkRequest,
+    MagicLinkResponse,
     RefreshRequest,
     RegisterRequest,
     TokenResponse,
+    VerifyMagicLinkRequest,
 )
 
 
 class TestRegisterRequestSchema:
-    """Tests for RegisterRequest schema."""
+    """Tests for RegisterRequest schema (passwordless)."""
 
     def test_register_request_valid(self) -> None:
         """Test RegisterRequest with valid data."""
         data = {
             "email": "test@example.com",
-            "password": "SecurePass123",
             "first_name": "John",
             "last_name": "Doe",
         }
         req = RegisterRequest(**data)
 
         assert req.email == "test@example.com"
-        assert req.password == "SecurePass123"
         assert req.first_name == "John"
         assert req.last_name == "Doe"
         assert req.user_type == UserType.CLIENT  # Default value
@@ -35,7 +35,6 @@ class TestRegisterRequestSchema:
         """Test RegisterRequest with explicit user_type."""
         data = {
             "email": "host@example.com",
-            "password": "SecurePass123",
             "first_name": "Jane",
             "last_name": "Host",
             "user_type": UserType.HOST,
@@ -49,7 +48,6 @@ class TestRegisterRequestSchema:
         with pytest.raises(ValidationError) as exc_info:
             RegisterRequest(
                 email="invalid-email",
-                password="SecurePass123",
                 first_name="John",
                 last_name="Doe",
             )
@@ -62,74 +60,17 @@ class TestRegisterRequestSchema:
         """Test that email domain is normalized by EmailStr."""
         req = RegisterRequest(
             email="Test@Example.COM",
-            password="SecurePass123",
             first_name="John",
             last_name="Doe",
         )
         # EmailStr normalizes domain to lowercase
         assert "@example.com" in req.email.lower()
 
-    def test_auth_schema_password_strength_min_length(self) -> None:
-        """Test that password requires minimum 8 characters."""
-        with pytest.raises(ValidationError) as exc_info:
-            RegisterRequest(
-                email="test@example.com",
-                password="Short1",  # Too short
-                first_name="John",
-                last_name="Doe",
-            )
-
-        errors = exc_info.value.errors()
-        assert any(e["loc"] == ("password",) for e in errors)
-
-    def test_auth_schema_password_strength_requires_uppercase(self) -> None:
-        """Test that password requires at least one uppercase letter."""
-        with pytest.raises(ValidationError) as exc_info:
-            RegisterRequest(
-                email="test@example.com",
-                password="lowercase123",  # No uppercase
-                first_name="John",
-                last_name="Doe",
-            )
-
-        errors = exc_info.value.errors()
-        assert any(e["loc"] == ("password",) for e in errors)
-        assert any("uppercase" in str(e["msg"]).lower() for e in errors)
-
-    def test_auth_schema_password_strength_requires_lowercase(self) -> None:
-        """Test that password requires at least one lowercase letter."""
-        with pytest.raises(ValidationError) as exc_info:
-            RegisterRequest(
-                email="test@example.com",
-                password="UPPERCASE123",  # No lowercase
-                first_name="John",
-                last_name="Doe",
-            )
-
-        errors = exc_info.value.errors()
-        assert any(e["loc"] == ("password",) for e in errors)
-        assert any("lowercase" in str(e["msg"]).lower() for e in errors)
-
-    def test_auth_schema_password_strength_requires_digit(self) -> None:
-        """Test that password requires at least one digit."""
-        with pytest.raises(ValidationError) as exc_info:
-            RegisterRequest(
-                email="test@example.com",
-                password="NoDigitsHere",  # No digit
-                first_name="John",
-                last_name="Doe",
-            )
-
-        errors = exc_info.value.errors()
-        assert any(e["loc"] == ("password",) for e in errors)
-        assert any("digit" in str(e["msg"]).lower() for e in errors)
-
     def test_register_request_requires_first_name(self) -> None:
         """Test that first_name is required."""
         with pytest.raises(ValidationError) as exc_info:
             RegisterRequest(
                 email="test@example.com",
-                password="SecurePass123",
                 last_name="Doe",
             )
 
@@ -141,7 +82,6 @@ class TestRegisterRequestSchema:
         with pytest.raises(ValidationError) as exc_info:
             RegisterRequest(
                 email="test@example.com",
-                password="SecurePass123",
                 first_name="John",
             )
 
@@ -153,7 +93,6 @@ class TestRegisterRequestSchema:
         with pytest.raises(ValidationError) as exc_info:
             RegisterRequest(
                 email="test@example.com",
-                password="SecurePass123",
                 first_name="",
                 last_name="Doe",
             )
@@ -166,7 +105,6 @@ class TestRegisterRequestSchema:
         with pytest.raises(ValidationError) as exc_info:
             RegisterRequest(
                 email="test@example.com",
-                password="SecurePass123",
                 first_name="John",
                 last_name="",
             )
@@ -174,51 +112,121 @@ class TestRegisterRequestSchema:
         errors = exc_info.value.errors()
         assert any(e["loc"] == ("last_name",) for e in errors)
 
-
-class TestLoginRequestSchema:
-    """Tests for LoginRequest schema."""
-
-    def test_login_request_valid(self) -> None:
-        """Test LoginRequest with valid data."""
-        req = LoginRequest(
+    def test_register_request_no_password_required(self) -> None:
+        """Test that RegisterRequest does NOT require password (passwordless)."""
+        # Should work without password
+        req = RegisterRequest(
             email="test@example.com",
-            password="anypassword",
+            first_name="John",
+            last_name="Doe",
         )
-
         assert req.email == "test@example.com"
-        assert req.password == "anypassword"
+        # Verify password is not a field
+        assert "password" not in RegisterRequest.model_fields
 
-    def test_login_request_validates_email(self) -> None:
-        """Test that LoginRequest validates email format."""
+
+class TestMagicLinkRequestSchema:
+    """Tests for MagicLinkRequest schema."""
+
+    def test_magic_link_request_valid(self) -> None:
+        """Test MagicLinkRequest with valid data."""
+        req = MagicLinkRequest(email="test@example.com")
+        assert req.email == "test@example.com"
+
+    def test_magic_link_request_validates_email(self) -> None:
+        """Test that MagicLinkRequest validates email format."""
         with pytest.raises(ValidationError) as exc_info:
-            LoginRequest(
+            MagicLinkRequest(email="invalid-email")
+
+        errors = exc_info.value.errors()
+        assert any(e["loc"] == ("email",) for e in errors)
+
+    def test_magic_link_request_requires_email(self) -> None:
+        """Test that email is required."""
+        with pytest.raises(ValidationError) as exc_info:
+            MagicLinkRequest()
+
+        errors = exc_info.value.errors()
+        assert any(e["loc"] == ("email",) for e in errors)
+
+
+class TestMagicLinkResponseSchema:
+    """Tests for MagicLinkResponse schema."""
+
+    def test_magic_link_response_default_values(self) -> None:
+        """Test MagicLinkResponse has correct default values."""
+        response = MagicLinkResponse()
+        assert (
+            "login code" in response.message.lower()
+            or "email" in response.message.lower()
+        )
+        assert response.expires_in_minutes == 15
+
+    def test_magic_link_response_custom_values(self) -> None:
+        """Test MagicLinkResponse with custom values."""
+        response = MagicLinkResponse(
+            message="Custom message",
+            expires_in_minutes=30,
+        )
+        assert response.message == "Custom message"
+        assert response.expires_in_minutes == 30
+
+
+class TestVerifyMagicLinkRequestSchema:
+    """Tests for VerifyMagicLinkRequest schema."""
+
+    def test_verify_magic_link_request_valid(self) -> None:
+        """Test VerifyMagicLinkRequest with valid data."""
+        req = VerifyMagicLinkRequest(
+            email="test@example.com",
+            code="123456",
+        )
+        assert req.email == "test@example.com"
+        assert req.code == "123456"
+
+    def test_verify_magic_link_request_validates_email(self) -> None:
+        """Test that email is validated."""
+        with pytest.raises(ValidationError) as exc_info:
+            VerifyMagicLinkRequest(
                 email="invalid-email",
-                password="password123",
+                code="123456",
             )
 
         errors = exc_info.value.errors()
         assert any(e["loc"] == ("email",) for e in errors)
 
-    def test_login_request_requires_password(self) -> None:
-        """Test that password is required."""
+    def test_verify_magic_link_request_code_must_be_6_digits(self) -> None:
+        """Test that code must be exactly 6 digits."""
         with pytest.raises(ValidationError) as exc_info:
-            LoginRequest(
+            VerifyMagicLinkRequest(
                 email="test@example.com",
+                code="12345",  # Too short
             )
 
         errors = exc_info.value.errors()
-        assert any(e["loc"] == ("password",) for e in errors)
+        assert any(e["loc"] == ("code",) for e in errors)
 
-    def test_login_request_password_cannot_be_empty(self) -> None:
-        """Test that password cannot be empty."""
+    def test_verify_magic_link_request_code_must_be_numeric(self) -> None:
+        """Test that code must be numeric."""
         with pytest.raises(ValidationError) as exc_info:
-            LoginRequest(
+            VerifyMagicLinkRequest(
                 email="test@example.com",
-                password="",
+                code="abcdef",  # Not numeric
             )
 
         errors = exc_info.value.errors()
-        assert any(e["loc"] == ("password",) for e in errors)
+        assert any(e["loc"] == ("code",) for e in errors)
+
+    def test_verify_magic_link_request_code_cannot_be_too_long(self) -> None:
+        """Test that code cannot be longer than 6 digits."""
+        with pytest.raises(ValidationError) as exc_info:
+            VerifyMagicLinkRequest(
+                email="test@example.com",
+                code="1234567",  # Too long
+            )
+
+        errors = exc_info.value.errors()
+        assert any(e["loc"] == ("code",) for e in errors)
 
 
 class TestTokenResponseSchema:
@@ -304,14 +312,15 @@ class TestAuthSchemaIntegration:
     """Integration tests for auth schema relationships."""
 
     def test_register_request_field_types(self) -> None:
-        """Test that RegisterRequest has expected field types."""
+        """Test that RegisterRequest has expected field types (passwordless)."""
         fields = RegisterRequest.model_fields
 
         assert "email" in fields
-        assert "password" in fields
         assert "first_name" in fields
         assert "last_name" in fields
         assert "user_type" in fields
+        # Password is NOT a field in passwordless auth
+        assert "password" not in fields
 
     def test_token_response_serialization(self) -> None:
         """Test that TokenResponse serializes correctly for API responses."""

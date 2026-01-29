@@ -101,10 +101,11 @@ class TestUserModelConstraints:
         email_column = User.__table__.columns["email"]
         assert email_column.nullable is False
 
-    def test_password_hash_column_is_not_nullable(self) -> None:
-        """Test that password_hash column is not nullable."""
+    def test_password_hash_column_is_nullable(self) -> None:
+        """Test that password_hash column is nullable (passwordless auth)."""
         password_hash_column = User.__table__.columns["password_hash"]
-        assert password_hash_column.nullable is False
+        # Password hash is nullable for passwordless authentication
+        assert password_hash_column.nullable is True
 
     def test_id_is_primary_key(self) -> None:
         """Test that id column is primary key."""

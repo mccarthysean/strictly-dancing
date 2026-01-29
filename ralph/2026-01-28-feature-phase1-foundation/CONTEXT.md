@@ -3486,3 +3486,65 @@ All 94 tasks have been completed:
 **Next**: T106 - Convert Auth to Passwordless Magic Link
 
 ---
+
+### Entry [E-014] 2026-01-29T16:45:00Z
+
+**Task**: T106 - Convert Auth to Passwordless Magic Link
+**Status**: DONE
+**Progress**: 99/121 tasks | Blockers: 0
+
+**Accomplished**:
+- Created `app/services/magic_link.py` with MagicLinkService:
+  - Redis-backed storage for magic link codes with automatic expiry
+  - 6-digit numeric codes for easy entry on mobile devices
+  - `create_code()` generates and stores code with 15-minute expiry
+  - `verify_code()` validates and deletes code (single-use)
+  - `invalidate_code()` manually removes existing codes
+  - `get_remaining_ttl()` checks time until code expires
+  - Cryptographically secure code generation using `secrets.randbelow`
+  - Case-insensitive email handling for consistent key generation
+- Created migration `20260129_120000_make_password_hash_nullable.py`:
+  - Alters password_hash column to nullable for passwordless auth
+  - Supports backward compatibility with existing password users
+- Updated `app/routers/auth.py` with new endpoints:
+  - `POST /api/v1/auth/request-magic-link`: Requests 6-digit login code
+  - `POST /api/v1/auth/verify-magic-link`: Verifies code and returns JWT tokens
+  - Updated `POST /api/v1/auth/register` to use passwordless flow (no password required)
+  - Generic responses to prevent user enumeration attacks
+- Updated schemas:
+  - `app/schemas/auth.py`: Added MagicLinkRequest, MagicLinkResponse, VerifyMagicLinkRequest
+  - `app/schemas/user.py`: UserCreate no longer requires password
+  - RegisterRequest no longer requires password field
+- Updated `app/models/user.py`:
+  - Made password_hash column nullable (Mapped[str | None])
+  - Updated docstring to reflect passwordless auth
+- Updated `app/repositories/user.py`:
+  - Added `create_passwordless()` method for creating users without password
+  - Added `mark_email_verified()` method for first magic link login
+- Created comprehensive unit tests:
+  - `tests/unit/test_magic_link_service.py` (29 tests)
+  - Updated `tests/unit/test_auth_router.py` (44 tests) for passwordless flow
+  - Updated `tests/unit/test_auth_schemas.py` (26 tests) for new schemas
+  - Updated `tests/unit/test_user_schemas.py` (16 tests) for passwordless
+  - Updated `tests/unit/test_user_model.py` for nullable password_hash
+  - Updated `tests/integration/test_auth_flow.py` (22 tests) for magic link flow
+- All 1474 backend tests pass with 84.19% coverage
+- Linting passes (ruff check + format)
+
+**Evidence**:
+- Files: app/services/magic_link.py, app/routers/auth.py, app/schemas/auth.py, app/schemas/user.py, app/models/user.py, app/repositories/user.py
+- Migration: backend/alembic/versions/20260129_120000_make_password_hash_nullable.py
+- Tests: 29 in test_magic_link_service.py, 44 in test_auth_router.py, 26 in test_auth_schemas.py, 22 in test_auth_flow.py
+- Total backend tests: 1474 passing
+- Coverage: 84.19% (above 80% threshold)
+- Linting: All checks passed
+- AC01: Migration makes password_hash nullable ✓
+- AC02: POST /api/v1/auth/request-magic-link sends email with code ✓
+- AC03: POST /api/v1/auth/verify-magic-link validates code and returns JWT ✓
+- AC04: Magic link codes expire after 15 minutes (DEFAULT_EXPIRY_MINUTES = 15) ✓
+- AC05: Magic link codes are 6-digit numeric (CODE_LENGTH = 6) ✓
+- AC06: Registration uses passwordless flow, password service not used for new users ✓
+
+**Next**: T107 - Update Registration for Passwordless Flow
+
+---

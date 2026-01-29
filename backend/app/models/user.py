@@ -23,10 +23,12 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     Represents a user in the Strictly Dancing platform.
     Users can be clients, hosts, or both.
 
+    Uses passwordless authentication via magic link codes.
+
     Attributes:
         id: UUID primary key
         email: Unique email address (case-insensitive)
-        password_hash: Hashed password
+        password_hash: Deprecated - nullable for backward compatibility
         first_name: User's first name
         last_name: User's last name
         user_type: Type of user (client, host, or both)
@@ -44,9 +46,9 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         index=True,
         nullable=False,
     )
-    password_hash: Mapped[str] = mapped_column(
+    password_hash: Mapped[str | None] = mapped_column(
         String(255),
-        nullable=False,
+        nullable=True,  # Nullable for passwordless auth
     )
     first_name: Mapped[str] = mapped_column(
         String(100),

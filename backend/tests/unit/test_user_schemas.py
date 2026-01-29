@@ -1,4 +1,4 @@
-"""Unit tests for user Pydantic schemas."""
+"""Unit tests for user Pydantic schemas (passwordless)."""
 
 from datetime import UTC, datetime
 
@@ -10,20 +10,18 @@ from app.schemas.user import UserCreate, UserResponse, UserUpdate
 
 
 class TestUserCreateSchema:
-    """Tests for UserCreate schema."""
+    """Tests for UserCreate schema (passwordless)."""
 
     def test_user_create_valid(self) -> None:
-        """Test UserCreate with valid data."""
+        """Test UserCreate with valid data (passwordless)."""
         data = {
             "email": "test@example.com",
-            "password": "securepassword123",
             "first_name": "John",
             "last_name": "Doe",
         }
         user = UserCreate(**data)
 
         assert user.email == "test@example.com"
-        assert user.password == "securepassword123"
         assert user.first_name == "John"
         assert user.last_name == "Doe"
         assert user.user_type == UserType.CLIENT  # Default value
@@ -32,7 +30,6 @@ class TestUserCreateSchema:
         """Test UserCreate with explicit user_type."""
         data = {
             "email": "host@example.com",
-            "password": "securepassword123",
             "first_name": "Jane",
             "last_name": "Host",
             "user_type": UserType.HOST,
@@ -46,7 +43,6 @@ class TestUserCreateSchema:
         with pytest.raises(ValidationError) as exc_info:
             UserCreate(
                 email="invalid-email",
-                password="securepassword123",
                 first_name="John",
                 last_name="Doe",
             )
@@ -62,32 +58,30 @@ class TestUserCreateSchema:
         """Test that email is stored as provided (validation only checks format)."""
         user = UserCreate(
             email="Test@Example.COM",
-            password="securepassword123",
             first_name="John",
             last_name="Doe",
         )
         # EmailStr normalizes domain to lowercase but preserves local part
         assert "@example.com" in user.email.lower()
 
-    def test_user_create_password_min_length(self) -> None:
-        """Test that password requires minimum 8 characters."""
-        with pytest.raises(ValidationError) as exc_info:
-            UserCreate(
-                email="test@example.com",
-                password="short",  # Only 5 characters
-                first_name="John",
-                last_name="Doe",
-            )
+    def test_user_create_no_password_field(self) -> None:
+        """Test that UserCreate does NOT have password field (passwordless auth)."""
+        # Verify password is not a field in the schema
+        assert "password" not in UserCreate.model_fields
 
-        errors = exc_info.value.errors()
-        assert any(e["loc"] == ("password",) for e in errors)
+        # Should work without password
+        user = UserCreate(
+            email="test@example.com",
+            first_name="John",
+            last_name="Doe",
+        )
+        assert user.email == "test@example.com"
 
     def test_user_create_requires_first_name(self) -> None:
         """Test that first_name is required."""
         with pytest.raises(ValidationError) as exc_info:
             UserCreate(
                 email="test@example.com",
-                password="securepassword123",
                 last_name="Doe",
             )
 
@@ -99,7 +93,6 @@ class TestUserCreateSchema:
         with pytest.raises(ValidationError) as exc_info:
             UserCreate(
                 email="test@example.com",
-                password="securepassword123",
                 first_name="John",
             )
 
@@ -233,13 +226,13 @@ class TestSchemaIntegration:
 
     def test_create_to_response_field_mapping(self) -> None:
         """Test that UserCreate fields map correctly to UserResponse fields."""
-        # UserCreate fields (excluding password)
-        create_fields = set(UserCreate.model_fields.keys()) - {"password"}
+        # UserCreate fields (no password in passwordless auth)
+        create_fields = set(UserCreate.model_fields.keys())
 
         # UserResponse fields (excluding timestamps and other server-side fields)
         response_fields = set(UserResponse.model_fields.keys())
 
-        # All UserCreate fields (except password) should be in UserResponse
+        # All UserCreate fields should be in UserResponse
         for field in create_fields:
             assert field in response_fields, (
                 f"Field '{field}' missing from UserResponse"

@@ -1,8 +1,9 @@
-"""Integration tests for authentication flow.
+"""Integration tests for authentication flow (passwordless).
 
 Tests the complete authentication lifecycle:
-- User registration
-- User login
+- User registration (passwordless)
+- Magic link request
+- Magic link verification
 - Token refresh
 - Get current user
 - Logout
@@ -11,7 +12,7 @@ These tests use mocked repositories to simulate database interactions
 while testing the full API endpoint behavior.
 """
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import status
@@ -25,7 +26,7 @@ from .conftest import create_authenticated_client, make_mock_user
 
 
 class TestAuthenticationFlowE2E:
-    """End-to-end tests for complete authentication flow."""
+    """End-to-end tests for complete authentication flow (passwordless)."""
 
     @pytest.fixture
     def app(self):
@@ -37,12 +38,17 @@ class TestAuthenticationFlowE2E:
         """Create a test client."""
         return TestClient(app)
 
-    def test_complete_registration_login_flow(self, app, client: TestClient) -> None:
-        """Test complete flow: register -> login -> get me -> logout."""
+    def test_complete_registration_magic_link_flow(
+        self, app, client: TestClient
+    ) -> None:
+        """Test complete flow: register -> request magic link -> verify -> get me -> logout."""
         user_id = "550e8400-e29b-41d4-a716-446655440000"
 
-        # Step 1: Register a new user
-        with patch("app.routers.auth.UserRepository") as mock_repo_class:
+        # Step 1: Register a new user (passwordless)
+        with (
+            patch("app.routers.auth.UserRepository") as mock_repo_class,
+            patch("app.routers.auth.send_welcome_email") as mock_welcome_email,
+        ):
             mock_repo = AsyncMock()
             mock_repo_class.return_value = mock_repo
             mock_repo.exists_by_email.return_value = False
@@ -53,13 +59,13 @@ class TestAuthenticationFlowE2E:
                 first_name="New",
                 last_name="User",
             )
-            mock_repo.create.return_value = mock_user
+            mock_repo.create_passwordless.return_value = mock_user
+            mock_welcome_email.delay = MagicMock()
 
             register_response = client.post(
                 "/api/v1/auth/register",
                 json={
                     "email": "newuser@example.com",
-                    "password": "SecurePass123",
                     "first_name": "New",
                     "last_name": "User",
                 },
@@ -70,10 +76,11 @@ class TestAuthenticationFlowE2E:
             assert register_data["email"] == "newuser@example.com"
             assert "password_hash" not in register_data
 
-        # Step 2: Login with the registered user
+        # Step 2: Request magic link
         with (
             patch("app.routers.auth.UserRepository") as mock_repo_class,
-            patch("app.routers.auth.password_service") as mock_pw_service,
+            patch("app.routers.auth.magic_link_service") as mock_magic_link,
+            patch("app.routers.auth.send_magic_link_email") as mock_email,
         ):
             mock_repo = AsyncMock()
             mock_repo_class.return_value = mock_repo
@@ -85,30 +92,54 @@ class TestAuthenticationFlowE2E:
                 last_name="User",
             )
             mock_repo.get_by_email.return_value = mock_user
-            mock_pw_service.verify_password.return_value = True
+            mock_magic_link.create_code = AsyncMock(return_value="123456")
+            mock_magic_link.DEFAULT_EXPIRY_MINUTES = 15
+            mock_email.delay = MagicMock()
 
-            login_response = client.post(
-                "/api/v1/auth/login",
+            magic_link_response = client.post(
+                "/api/v1/auth/request-magic-link",
+                json={"email": "newuser@example.com"},
+            )
+
+            assert magic_link_response.status_code == status.HTTP_200_OK
+
+        # Step 3: Verify magic link and get tokens
+        with (
+            patch("app.routers.auth.UserRepository") as mock_repo_class,
+            patch("app.routers.auth.magic_link_service") as mock_magic_link,
+        ):
+            mock_repo = AsyncMock()
+            mock_repo_class.return_value = mock_repo
+
+            mock_user = make_mock_user(
+                user_id=user_id,
+                email="newuser@example.com",
+                first_name="New",
+                last_name="User",
+                email_verified=False,
+            )
+            mock_repo.get_by_email.return_value = mock_user
+            mock_repo.mark_email_verified = AsyncMock()
+            mock_magic_link.verify_code = AsyncMock(return_value=True)
+
+            verify_response = client.post(
+                "/api/v1/auth/verify-magic-link",
                 json={
                     "email": "newuser@example.com",
-                    "password": "SecurePass123",
+                    "code": "123456",
                 },
             )
 
-            assert login_response.status_code == status.HTTP_200_OK
-            login_data = login_response.json()
-            assert "access_token" in login_data
-            assert "refresh_token" in login_data
-            assert login_data["token_type"] == "bearer"
-            access_token = login_data["access_token"]
-            refresh_token = login_data["refresh_token"]
+            assert verify_response.status_code == status.HTTP_200_OK
+            verify_data = verify_response.json()
+            assert "access_token" in verify_data
+            assert "refresh_token" in verify_data
+            assert verify_data["token_type"] == "bearer"
+            refresh_token = verify_data["refresh_token"]
 
-        # Step 3: Access protected endpoint (/me) with access token
+        # Step 4: Access protected endpoint (/me) with access token
         auth_client = create_authenticated_client(app, mock_user)
-        me_response = auth_client.get(
-            "/api/v1/auth/me",
-            headers={"Authorization": f"Bearer {access_token}"},
-        )
+        me_response = auth_client.get("/api/v1/auth/me")
 
         assert me_response.status_code == status.HTTP_200_OK
         me_data = me_response.json()
@@ -116,8 +147,7 @@ class TestAuthenticationFlowE2E:
         assert me_data["first_name"] == "New"
         assert me_data["last_name"] == "User"
 
-        # Step 4: Refresh access token
-        # Verify refresh token is valid and get new access token
+        # Step 5: Refresh access token
         refresh_payload = token_service.verify_token(refresh_token)
         assert refresh_payload.sub == user_id
         assert refresh_payload.token_type == "refresh"
@@ -130,20 +160,14 @@ class TestAuthenticationFlowE2E:
         assert refresh_response.status_code == status.HTTP_200_OK
         refresh_data = refresh_response.json()
         assert "access_token" in refresh_data
-        new_access_token = refresh_data["access_token"]
-        assert new_access_token != access_token  # New token generated
 
-        # Step 5: Logout
-        logout_response = auth_client.post(
-            "/api/v1/auth/logout",
-            headers={"Authorization": f"Bearer {new_access_token}"},
-        )
-
+        # Step 6: Logout
+        logout_response = auth_client.post("/api/v1/auth/logout")
         assert logout_response.status_code == status.HTTP_204_NO_CONTENT
 
 
 class TestRegistrationEndpointIntegration:
-    """Integration tests for user registration endpoint."""
+    """Integration tests for user registration endpoint (passwordless)."""
 
     @pytest.fixture
     def app(self):
@@ -157,7 +181,10 @@ class TestRegistrationEndpointIntegration:
 
     def test_register_with_valid_data_creates_user(self, client: TestClient) -> None:
         """Test that valid registration data creates a user successfully."""
-        with patch("app.routers.auth.UserRepository") as mock_repo_class:
+        with (
+            patch("app.routers.auth.UserRepository") as mock_repo_class,
+            patch("app.routers.auth.send_welcome_email") as mock_welcome_email,
+        ):
             mock_repo = AsyncMock()
             mock_repo_class.return_value = mock_repo
             mock_repo.exists_by_email.return_value = False
@@ -167,13 +194,13 @@ class TestRegistrationEndpointIntegration:
                 first_name="Valid",
                 last_name="User",
             )
-            mock_repo.create.return_value = mock_user
+            mock_repo.create_passwordless.return_value = mock_user
+            mock_welcome_email.delay = MagicMock()
 
             response = client.post(
                 "/api/v1/auth/register",
                 json={
                     "email": "valid@example.com",
-                    "password": "ValidPass123",
                     "first_name": "Valid",
                     "last_name": "User",
                 },
@@ -189,7 +216,10 @@ class TestRegistrationEndpointIntegration:
 
     def test_register_with_host_user_type(self, client: TestClient) -> None:
         """Test registration with host user type."""
-        with patch("app.routers.auth.UserRepository") as mock_repo_class:
+        with (
+            patch("app.routers.auth.UserRepository") as mock_repo_class,
+            patch("app.routers.auth.send_welcome_email") as mock_welcome_email,
+        ):
             mock_repo = AsyncMock()
             mock_repo_class.return_value = mock_repo
             mock_repo.exists_by_email.return_value = False
@@ -200,13 +230,13 @@ class TestRegistrationEndpointIntegration:
                 last_name="User",
                 user_type=UserType.HOST,
             )
-            mock_repo.create.return_value = mock_user
+            mock_repo.create_passwordless.return_value = mock_user
+            mock_welcome_email.delay = MagicMock()
 
             response = client.post(
                 "/api/v1/auth/register",
                 json={
                     "email": "host@example.com",
-                    "password": "HostPass123",
                     "first_name": "Host",
                     "last_name": "User",
                     "user_type": "host",
@@ -228,7 +258,6 @@ class TestRegistrationEndpointIntegration:
                 "/api/v1/auth/register",
                 json={
                     "email": "existing@example.com",
-                    "password": "ExistingPass123",
                     "first_name": "Existing",
                     "last_name": "User",
                 },
@@ -243,54 +272,11 @@ class TestRegistrationEndpointIntegration:
             "/api/v1/auth/register",
             json={
                 "email": "not-an-email",
-                "password": "ValidPass123",
                 "first_name": "Test",
                 "last_name": "User",
             },
         )
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-    def test_register_weak_password_rejected(self, client: TestClient) -> None:
-        """Test that weak passwords are rejected."""
-        # Missing uppercase
-        response = client.post(
-            "/api/v1/auth/register",
-            json={
-                "email": "test@example.com",
-                "password": "weakpass123",
-                "first_name": "Test",
-                "last_name": "User",
-            },
-        )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-    def test_register_short_password_rejected(self, client: TestClient) -> None:
-        """Test that short passwords are rejected."""
-        response = client.post(
-            "/api/v1/auth/register",
-            json={
-                "email": "test@example.com",
-                "password": "Short1",
-                "first_name": "Test",
-                "last_name": "User",
-            },
-        )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-    def test_register_password_without_number_rejected(
-        self, client: TestClient
-    ) -> None:
-        """Test that passwords without numbers are rejected."""
-        response = client.post(
-            "/api/v1/auth/register",
-            json={
-                "email": "test@example.com",
-                "password": "NoNumberPass",
-                "first_name": "Test",
-                "last_name": "User",
-            },
-        )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     def test_register_missing_fields_rejected(self, client: TestClient) -> None:
@@ -304,8 +290,8 @@ class TestRegistrationEndpointIntegration:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-class TestLoginEndpointIntegration:
-    """Integration tests for user login endpoint."""
+class TestMagicLinkEndpointIntegration:
+    """Integration tests for magic link endpoints."""
 
     @pytest.fixture
     def app(self):
@@ -317,28 +303,83 @@ class TestLoginEndpointIntegration:
         """Create a test client."""
         return TestClient(app)
 
-    def test_login_with_valid_credentials_returns_tokens(
-        self, client: TestClient
-    ) -> None:
-        """Test that valid login returns access and refresh tokens."""
-        user_id = "550e8400-e29b-41d4-a716-446655440000"
-
+    def test_request_magic_link_for_existing_user(self, client: TestClient) -> None:
+        """Test that magic link request works for existing user."""
         with (
             patch("app.routers.auth.UserRepository") as mock_repo_class,
-            patch("app.routers.auth.password_service") as mock_pw_service,
+            patch("app.routers.auth.magic_link_service") as mock_magic_link,
+            patch("app.routers.auth.send_magic_link_email") as mock_email,
         ):
             mock_repo = AsyncMock()
             mock_repo_class.return_value = mock_repo
 
-            mock_user = make_mock_user(user_id=user_id, email="login@example.com")
+            mock_user = make_mock_user(email="user@example.com", first_name="Test")
             mock_repo.get_by_email.return_value = mock_user
-            mock_pw_service.verify_password.return_value = True
+            mock_magic_link.create_code = AsyncMock(return_value="123456")
+            mock_magic_link.DEFAULT_EXPIRY_MINUTES = 15
+            mock_email.delay = MagicMock()
 
             response = client.post(
-                "/api/v1/auth/login",
+                "/api/v1/auth/request-magic-link",
+                json={"email": "user@example.com"},
+            )
+
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            assert "message" in data
+            assert data["expires_in_minutes"] == 15
+            mock_email.delay.assert_called_once()
+
+    def test_request_magic_link_for_nonexistent_user_no_leak(
+        self, client: TestClient
+    ) -> None:
+        """Test that magic link request doesn't reveal non-existent users."""
+        with (
+            patch("app.routers.auth.UserRepository") as mock_repo_class,
+            patch("app.routers.auth.magic_link_service") as mock_magic_link,
+            patch("app.routers.auth.send_magic_link_email") as mock_email,
+        ):
+            mock_repo = AsyncMock()
+            mock_repo_class.return_value = mock_repo
+            mock_repo.get_by_email.return_value = None
+            mock_magic_link.DEFAULT_EXPIRY_MINUTES = 15
+            mock_email.delay = MagicMock()
+
+            response = client.post(
+                "/api/v1/auth/request-magic-link",
+                json={"email": "nonexistent@example.com"},
+            )
+
+            # Should still return 200 to not reveal user existence
+            assert response.status_code == status.HTTP_200_OK
+            # No email should be sent
+            mock_email.delay.assert_not_called()
+
+    def test_verify_magic_link_returns_tokens(self, client: TestClient) -> None:
+        """Test that valid magic link verification returns tokens."""
+        user_id = "550e8400-e29b-41d4-a716-446655440000"
+
+        with (
+            patch("app.routers.auth.UserRepository") as mock_repo_class,
+            patch("app.routers.auth.magic_link_service") as mock_magic_link,
+        ):
+            mock_repo = AsyncMock()
+            mock_repo_class.return_value = mock_repo
+
+            mock_user = make_mock_user(
+                user_id=user_id,
+                email="user@example.com",
+                email_verified=False,
+            )
+            mock_repo.get_by_email.return_value = mock_user
+            mock_repo.mark_email_verified = AsyncMock()
+            mock_magic_link.verify_code = AsyncMock(return_value=True)
+
+            response = client.post(
+                "/api/v1/auth/verify-magic-link",
                 json={
-                    "email": "login@example.com",
-                    "password": "ValidPass123",
+                    "email": "user@example.com",
+                    "code": "123456",
                 },
             )
 
@@ -354,112 +395,52 @@ class TestLoginEndpointIntegration:
             assert access_payload.sub == user_id
             assert access_payload.token_type == "access"
 
-            refresh_payload = token_service.verify_token(data["refresh_token"])
-            assert refresh_payload.sub == user_id
-            assert refresh_payload.token_type == "refresh"
-
-    def test_login_with_invalid_email_returns_401(self, client: TestClient) -> None:
-        """Test that non-existent email returns 401."""
-        with patch("app.routers.auth.UserRepository") as mock_repo_class:
-            mock_repo = AsyncMock()
-            mock_repo_class.return_value = mock_repo
-            mock_repo.get_by_email.return_value = None
-
-            response = client.post(
-                "/api/v1/auth/login",
-                json={
-                    "email": "nonexistent@example.com",
-                    "password": "AnyPass123",
-                },
-            )
-
-            assert response.status_code == status.HTTP_401_UNAUTHORIZED
-            assert "Invalid email or password" in response.json()["detail"]
-
-    def test_login_with_wrong_password_returns_401(self, client: TestClient) -> None:
-        """Test that wrong password returns 401."""
+    def test_verify_magic_link_invalid_code_returns_401(
+        self, client: TestClient
+    ) -> None:
+        """Test that invalid magic link code returns 401."""
         with (
             patch("app.routers.auth.UserRepository") as mock_repo_class,
-            patch("app.routers.auth.password_service") as mock_pw_service,
+            patch("app.routers.auth.magic_link_service") as mock_magic_link,
         ):
             mock_repo = AsyncMock()
             mock_repo_class.return_value = mock_repo
-
-            mock_user = make_mock_user(email="user@example.com")
-            mock_repo.get_by_email.return_value = mock_user
-            mock_pw_service.verify_password.return_value = False
+            mock_magic_link.verify_code = AsyncMock(return_value=False)
 
             response = client.post(
-                "/api/v1/auth/login",
+                "/api/v1/auth/verify-magic-link",
                 json={
                     "email": "user@example.com",
-                    "password": "WrongPass123",
+                    "code": "000000",
                 },
             )
 
             assert response.status_code == status.HTTP_401_UNAUTHORIZED
-            assert "Invalid email or password" in response.json()["detail"]
 
-    def test_login_inactive_user_returns_401(self, client: TestClient) -> None:
-        """Test that inactive user cannot login."""
-        with patch("app.routers.auth.UserRepository") as mock_repo_class:
+    def test_verify_magic_link_inactive_user_returns_401(
+        self, client: TestClient
+    ) -> None:
+        """Test that inactive user cannot verify magic link."""
+        with (
+            patch("app.routers.auth.UserRepository") as mock_repo_class,
+            patch("app.routers.auth.magic_link_service") as mock_magic_link,
+        ):
             mock_repo = AsyncMock()
             mock_repo_class.return_value = mock_repo
 
             mock_user = make_mock_user(email="inactive@example.com", is_active=False)
             mock_repo.get_by_email.return_value = mock_user
+            mock_magic_link.verify_code = AsyncMock(return_value=True)
 
             response = client.post(
-                "/api/v1/auth/login",
+                "/api/v1/auth/verify-magic-link",
                 json={
                     "email": "inactive@example.com",
-                    "password": "AnyPass123",
+                    "code": "123456",
                 },
             )
 
             assert response.status_code == status.HTTP_401_UNAUTHORIZED
-
-    def test_login_error_messages_dont_leak_user_existence(
-        self, client: TestClient
-    ) -> None:
-        """Test that error messages don't reveal whether email exists."""
-        # Test with non-existent user
-        with patch("app.routers.auth.UserRepository") as mock_repo_class:
-            mock_repo = AsyncMock()
-            mock_repo_class.return_value = mock_repo
-            mock_repo.get_by_email.return_value = None
-
-            response_no_user = client.post(
-                "/api/v1/auth/login",
-                json={
-                    "email": "nobody@example.com",
-                    "password": "AnyPass123",
-                },
-            )
-
-        # Test with existing user, wrong password
-        with (
-            patch("app.routers.auth.UserRepository") as mock_repo_class,
-            patch("app.routers.auth.password_service") as mock_pw_service,
-        ):
-            mock_repo = AsyncMock()
-            mock_repo_class.return_value = mock_repo
-
-            mock_user = make_mock_user(email="exists@example.com")
-            mock_repo.get_by_email.return_value = mock_user
-            mock_pw_service.verify_password.return_value = False
-
-            response_wrong_pw = client.post(
-                "/api/v1/auth/login",
-                json={
-                    "email": "exists@example.com",
-                    "password": "WrongPass123",
-                },
-            )
-
-        # Both should return same error to prevent user enumeration
-        assert response_no_user.status_code == response_wrong_pw.status_code
-        assert response_no_user.json()["detail"] == response_wrong_pw.json()["detail"]
 
 
 class TestRefreshEndpointIntegration:
