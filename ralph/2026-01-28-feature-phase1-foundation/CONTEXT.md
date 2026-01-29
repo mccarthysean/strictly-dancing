@@ -1372,3 +1372,36 @@ strictly-dancing/
 
 **Next**: T047 - Frontend Bookings List Page
 
+---
+
+### Entry [E-048] 2026-01-29T08:30:00Z
+
+**Task**: T047 - Frontend Bookings List Page
+**Status**: DONE
+**Progress**: 47/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created frontend/src/routes/bookings/index.tsx with full bookings management page
+- Implemented 3 tabs: Upcoming (pending/confirmed/in_progress), Past (completed), Cancelled (cancelled/disputed)
+- Created booking cards displaying:
+  - Status badge with color-coded labels (pending=yellow, confirmed=green, in_progress=blue, completed=gray, cancelled=red, disputed=yellow)
+  - Avatar with initials of the other party (client or host)
+  - Session date and time range
+  - Dance style tag
+  - Total amount
+  - Location (if provided)
+- Added click handler to navigate to booking detail page (/bookings/$bookingId)
+- Created placeholder frontend/src/routes/bookings/$bookingId.tsx for booking detail view (T067)
+- Authentication-aware with login redirect for unauthenticated users
+- Empty states for each tab with contextual messages and "Find a Host" button
+- TypeScript compiles successfully with no errors
+- Build completes successfully (333.00 KB bundle)
+
+**Evidence**:
+- Files: frontend/src/routes/bookings/index.tsx, frontend/src/routes/bookings/$bookingId.tsx
+- TypeScript: tsc --noEmit passes with no errors
+- Build: vite build completes successfully (333.00 KB bundle)
+- Key features: tab navigation, booking cards, status badges, click to details
+
+**Next**: T048 - Create Message and Conversation Models
+
