@@ -21,6 +21,7 @@ import { Route as HostsHostIdRouteImport } from './routes/hosts/$hostId'
 import { Route as HostDashboardRouteImport } from './routes/host/dashboard'
 import { Route as BookingsBookingIdRouteImport } from './routes/bookings/$bookingId'
 import { Route as HostsHostIdBookRouteImport } from './routes/hosts/$hostId/book'
+import { Route as HostProfileEditRouteImport } from './routes/host/profile/edit'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -82,6 +83,11 @@ const HostsHostIdBookRoute = HostsHostIdBookRouteImport.update({
   path: '/book',
   getParentRoute: () => HostsHostIdRoute,
 } as any)
+const HostProfileEditRoute = HostProfileEditRouteImport.update({
+  id: '/host/profile/edit',
+  path: '/host/profile/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/bookings/': typeof BookingsIndexRoute
   '/hosts/': typeof HostsIndexRoute
   '/messages/': typeof MessagesIndexRoute
+  '/host/profile/edit': typeof HostProfileEditRoute
   '/hosts/$hostId/book': typeof HostsHostIdBookRoute
 }
 export interface FileRoutesByTo {
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/bookings': typeof BookingsIndexRoute
   '/hosts': typeof HostsIndexRoute
   '/messages': typeof MessagesIndexRoute
+  '/host/profile/edit': typeof HostProfileEditRoute
   '/hosts/$hostId/book': typeof HostsHostIdBookRoute
 }
 export interface FileRoutesById {
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/bookings/': typeof BookingsIndexRoute
   '/hosts/': typeof HostsIndexRoute
   '/messages/': typeof MessagesIndexRoute
+  '/host/profile/edit': typeof HostProfileEditRoute
   '/hosts/$hostId/book': typeof HostsHostIdBookRoute
 }
 export interface FileRouteTypes {
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/bookings/'
     | '/hosts/'
     | '/messages/'
+    | '/host/profile/edit'
     | '/hosts/$hostId/book'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/bookings'
     | '/hosts'
     | '/messages'
+    | '/host/profile/edit'
     | '/hosts/$hostId/book'
   id:
     | '__root__'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/bookings/'
     | '/hosts/'
     | '/messages/'
+    | '/host/profile/edit'
     | '/hosts/$hostId/book'
   fileRoutesById: FileRoutesById
 }
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   BookingsIndexRoute: typeof BookingsIndexRoute
   HostsIndexRoute: typeof HostsIndexRoute
   MessagesIndexRoute: typeof MessagesIndexRoute
+  HostProfileEditRoute: typeof HostProfileEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -271,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HostsHostIdBookRouteImport
       parentRoute: typeof HostsHostIdRoute
     }
+    '/host/profile/edit': {
+      id: '/host/profile/edit'
+      path: '/host/profile/edit'
+      fullPath: '/host/profile/edit'
+      preLoaderRoute: typeof HostProfileEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -298,6 +318,7 @@ const rootRouteChildren: RootRouteChildren = {
   BookingsIndexRoute: BookingsIndexRoute,
   HostsIndexRoute: HostsIndexRoute,
   MessagesIndexRoute: MessagesIndexRoute,
+  HostProfileEditRoute: HostProfileEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

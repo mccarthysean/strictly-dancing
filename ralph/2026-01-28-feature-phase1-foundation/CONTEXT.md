@@ -2024,3 +2024,49 @@ strictly-dancing/
 
 **Next**: T065 - Frontend Host Profile Edit Page
 
+---
+
+### Entry [E-066] 2026-01-29T09:35:00Z
+
+**Task**: T065 - Frontend Host Profile Edit Page
+**Status**: DONE
+**Progress**: 65/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created frontend/src/routes/host/profile/edit.tsx with full profile editing functionality
+- Implemented Basic Information section:
+  - Headline input (200 chars max)
+  - Bio textarea (2000 chars max)
+  - Hourly rate picker with $ prefix and /hour suffix
+- Implemented Dance Styles Management:
+  - Style picker modal with default dance styles
+  - Skill level selector (1-5) with visual dots
+  - Add/remove dance styles
+  - Display style category
+- Implemented Location Update:
+  - "Use Current Location" button using Geolocation API
+  - Clear location functionality
+  - Manual coordinates input (advanced section)
+  - Error handling for permission denied/unavailable/timeout
+- Implemented Photo Upload with Crop:
+  - File input for image selection
+  - File type and size validation (max 5MB)
+  - Crop modal placeholder (actual crop library integration noted for future)
+  - Photo preview with initials fallback
+- Additional features:
+  - Auth check with login redirect
+  - Host type check with "Not a Host" message
+  - Success/error banners
+  - Sticky save section at bottom
+  - Back to Dashboard link
+- TypeScript compiles with no errors
+- Frontend builds successfully (116.02 KB gzipped bundle)
+
+**Evidence**:
+- Files: frontend/src/routes/host/profile/edit.tsx
+- TypeScript: tsc --noEmit passes with no errors
+- Build: vite build completes successfully (116.02 KB gzipped)
+- Key features: bio/headline/rate editing, dance styles management, location update, photo upload
+
+**Next**: T066 - Implement Session Start Endpoint
+

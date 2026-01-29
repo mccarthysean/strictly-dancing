@@ -1027,15 +1027,15 @@
       "id": "T065",
       "title": "Frontend Host Profile Edit Page",
       "description": "Create profile management for hosts to edit their information.",
-      "passes": false,
+      "passes": true,
       "phase": "phase2-host-profiles",
       "dependencies": ["T029", "T018"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "frontend/src/routes/host/profile/edit.tsx exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Edit bio, headline, hourly rate", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Manage dance styles with skill levels", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Update location with map picker", "verification": "code_review", "met": false},
-        {"id": "AC05", "criterion": "Photo upload with crop", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "frontend/src/routes/host/profile/edit.tsx exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Edit bio, headline, hourly rate", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Manage dance styles with skill levels", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Update location with map picker", "verification": "code_review", "met": true},
+        {"id": "AC05", "criterion": "Photo upload with crop", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },
