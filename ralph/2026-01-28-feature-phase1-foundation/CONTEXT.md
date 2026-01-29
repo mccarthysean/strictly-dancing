@@ -3041,3 +3041,45 @@ strictly-dancing/
 - Workspace verification: `bun pm ls` shows strictly-dancing-frontend and strictly-dancing-mobile
 
 **Next**: T090 - Configure Background Job Processing
+
+---
+
+### Entry [E-091] 2026-01-29T11:30:00Z
+
+**Task**: T090 - Configure Background Job Processing
+**Status**: DONE
+**Progress**: 90/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Added celery[redis]>=5.3.0 dependency to pyproject.toml
+- Created backend/app/workers/__init__.py module:
+  - Exports celery_app and send_email_task
+- Created backend/app/workers/celery.py with Celery app configuration:
+  - Redis as broker and result backend from settings.redis_url
+  - JSON serialization, UTC timezone
+  - Task acks late, reject on worker lost
+  - Beat scheduler for periodic tasks
+  - Scheduled task: send-session-reminders every 5 minutes
+- Created backend/app/workers/tasks.py with example tasks:
+  - send_email_task: Generic email sending with retries (max 3)
+  - send_booking_notification_email: Booking notifications (created, confirmed, etc.)
+  - send_message_notification_email: New message notifications
+  - send_session_reminders_task: Periodic session reminder task
+- Created 23 comprehensive unit tests (all passing):
+  - TestCeleryAppConfiguration (7 tests)
+  - TestSendEmailTask (4 tests)
+  - TestBookingNotificationEmailTask (3 tests)
+  - TestMessageNotificationEmailTask (3 tests)
+  - TestSessionRemindersTask (3 tests)
+  - TestWorkersModuleExports (2 tests)
+  - TestCeleryTaskExecution (1 test)
+- Worker starts with: celery -A app.workers.celery:celery_app worker
+- Linting passes
+
+**Evidence**:
+- Files: pyproject.toml, app/workers/__init__.py, app/workers/celery.py, app/workers/tasks.py
+- Tests: tests/unit/test_celery_tasks.py (23 tests all passing)
+- Linting: All checks passed
+- Key configuration: Redis broker, JSON serialization, Celery Beat scheduler
+
+**Next**: T091 - Configure CI/CD Pipeline
