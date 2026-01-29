@@ -472,14 +472,14 @@
       "id": "T028",
       "title": "Implement Become Host Endpoint",
       "description": "Create POST /api/v1/users/me/become-host.",
-      "passes": false,
+      "passes": true,
       "phase": "phase2-host-profiles",
       "dependencies": ["T026", "T027", "T014"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "POST /api/v1/users/me/become-host endpoint exists", "verification": "test", "met": false},
-        {"id": "AC02", "criterion": "Creates HostProfile linked to current user", "verification": "test", "met": false},
-        {"id": "AC03", "criterion": "Updates user.user_type to include host", "verification": "test", "met": false},
-        {"id": "AC04", "criterion": "Returns 409 if already a host", "verification": "test", "met": false}
+        {"id": "AC01", "criterion": "POST /api/v1/users/me/become-host endpoint exists", "verification": "test", "met": true},
+        {"id": "AC02", "criterion": "Creates HostProfile linked to current user", "verification": "test", "met": true},
+        {"id": "AC03", "criterion": "Updates user.user_type to include host", "verification": "test", "met": true},
+        {"id": "AC04", "criterion": "Returns 409 if already a host", "verification": "test", "met": true}
       ],
       "testing": {"unit_tests": ["test_become_host_creates_profile", "test_become_host_already_host_409"]}
     },

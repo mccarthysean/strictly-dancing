@@ -809,3 +809,33 @@ strictly-dancing/
 
 **Next**: T028 - Implement Become Host Endpoint
 
+---
+
+### Entry [E-029] 2026-01-29T06:55:00Z
+
+**Task**: T028 - Implement Become Host Endpoint
+**Status**: DONE
+**Progress**: 28/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/routers/users.py with users router
+- Implemented POST /api/v1/users/me/become-host endpoint
+- Endpoint requires authentication via CurrentUser dependency
+- Creates HostProfile linked to current user via HostProfileRepository
+- Updates user.user_type to BOTH if user was CLIENT, or HOST if otherwise
+- Returns 409 Conflict if user already has a host profile
+- Accepts optional profile data: bio, headline, hourly_rate_cents, location
+- Returns HostProfileResponse with created profile data
+- Added update_user_type() method to UserRepository
+- Updated routers/__init__.py to export users_router
+- Updated main.py to include users_router
+- Created 10 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (360/360 total - 10 new tests added)
+- Files: app/routers/users.py, app/repositories/user.py, tests/unit/test_users_router.py
+- Linting: All checks passed
+- Key tests: test_become_host_creates_profile_returns_201, test_become_host_already_host_returns_409, test_become_host_updates_user_type_to_host
+
+**Next**: T029 - Implement Host Profile CRUD Endpoints
+

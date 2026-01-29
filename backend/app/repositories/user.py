@@ -1,5 +1,8 @@
 """User repository for data access operations."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -7,6 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
+
+if TYPE_CHECKING:
+    from app.models.user import UserType
 
 
 class UserRepository:
@@ -145,3 +151,23 @@ class UserRepository:
         user.is_active = False
         await self._session.flush()
         return True
+
+    async def update_user_type(self, user_id: UUID, user_type: UserType) -> User | None:
+        """Update a user's user_type field.
+
+        Used when a user becomes a host (changes from CLIENT to BOTH).
+
+        Args:
+            user_id: The user's unique identifier.
+            user_type: The new user type to set.
+
+        Returns:
+            The updated User if found, None if user doesn't exist.
+        """
+        user = await self.get_by_id(user_id)
+        if user is None:
+            return None
+
+        user.user_type = user_type
+        await self._session.flush()
+        return user
