@@ -288,6 +288,114 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List conversations for current user
+         * @description Get all conversations for the authenticated user, sorted by last message time.
+         */
+        get: operations["list_conversations_api_v1_conversations_get"];
+        put?: never;
+        /**
+         * Start or get a conversation
+         * @description Start a new conversation with another user, or return existing one.
+         */
+        post: operations["start_conversation_api_v1_conversations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/conversations/unread": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get total unread message count
+         * @description Get the total number of unread messages across all conversations.
+         */
+        get: operations["get_unread_count_api_v1_conversations_unread_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/conversations/{conversation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get conversation with messages
+         * @description Get a conversation and its messages.
+         */
+        get: operations["get_conversation_api_v1_conversations__conversation_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/conversations/{conversation_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get messages in a conversation
+         * @description Get messages with cursor-based pagination for infinite scroll.
+         */
+        get: operations["get_messages_api_v1_conversations__conversation_id__messages_get"];
+        put?: never;
+        /**
+         * Send a message
+         * @description Send a new message in a conversation.
+         */
+        post: operations["send_message_api_v1_conversations__conversation_id__messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/conversations/{conversation_id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark conversation as read
+         * @description Mark all messages in a conversation as read.
+         */
+        post: operations["mark_conversation_read_api_v1_conversations__conversation_id__read_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/me/become-host": {
         parameters: {
             query?: never;
@@ -819,6 +927,187 @@ export interface components {
             reason?: string | null;
         };
         /**
+         * ConversationListResponse
+         * @description Cursor-based paginated response for conversation list.
+         */
+        ConversationListResponse: {
+            /**
+             * Items
+             * @description List of conversations
+             */
+            items: components["schemas"]["ConversationSummaryResponse"][];
+            /**
+             * Next Cursor
+             * @description Cursor for next page (conversation ID)
+             */
+            next_cursor?: string | null;
+            /**
+             * Has More
+             * @description Whether there are more results after this page
+             */
+            has_more: boolean;
+            /**
+             * Limit
+             * @description Maximum number of results per page
+             */
+            limit: number;
+        };
+        /**
+         * ConversationSummaryResponse
+         * @description Summary response for conversation list views.
+         *
+         *     Includes the other participant and unread count for the current user.
+         */
+        ConversationSummaryResponse: {
+            /**
+             * Id
+             * @description Conversation UUID
+             */
+            id: string;
+            /** @description The other participant in the conversation */
+            other_participant: components["schemas"]["MessageUserSummary"];
+            /**
+             * Last Message At
+             * @description When the last message was sent
+             */
+            last_message_at?: string | null;
+            /**
+             * Last Message Preview
+             * @description Preview of the last message
+             */
+            last_message_preview?: string | null;
+            /**
+             * Unread Count
+             * @description Number of unread messages
+             */
+            unread_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             * @description When conversation was created
+             */
+            created_at: string;
+        };
+        /**
+         * ConversationWithMessagesResponse
+         * @description Conversation response with messages included.
+         */
+        ConversationWithMessagesResponse: {
+            /**
+             * Id
+             * @description Conversation UUID
+             */
+            id: string;
+            /**
+             * Participant 1 Id
+             * @description First participant UUID
+             */
+            participant_1_id: string;
+            /**
+             * Participant 2 Id
+             * @description Second participant UUID
+             */
+            participant_2_id: string;
+            /**
+             * Last Message At
+             * @description When the last message was sent
+             */
+            last_message_at?: string | null;
+            /**
+             * Last Message Preview
+             * @description Preview of the last message
+             */
+            last_message_preview?: string | null;
+            /**
+             * Participant 1 Unread Count
+             * @description Unread count for participant 1
+             */
+            participant_1_unread_count: number;
+            /**
+             * Participant 2 Unread Count
+             * @description Unread count for participant 2
+             */
+            participant_2_unread_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             * @description When conversation was created
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description Last update timestamp
+             */
+            updated_at: string;
+            /** @description First participant details */
+            participant_1?: components["schemas"]["MessageUserSummary"] | null;
+            /** @description Second participant details */
+            participant_2?: components["schemas"]["MessageUserSummary"] | null;
+            /**
+             * Messages
+             * @description Messages in the conversation
+             */
+            messages?: components["schemas"]["MessageWithSenderResponse"][];
+        };
+        /**
+         * ConversationWithParticipantsResponse
+         * @description Conversation response with participant details.
+         */
+        ConversationWithParticipantsResponse: {
+            /**
+             * Id
+             * @description Conversation UUID
+             */
+            id: string;
+            /**
+             * Participant 1 Id
+             * @description First participant UUID
+             */
+            participant_1_id: string;
+            /**
+             * Participant 2 Id
+             * @description Second participant UUID
+             */
+            participant_2_id: string;
+            /**
+             * Last Message At
+             * @description When the last message was sent
+             */
+            last_message_at?: string | null;
+            /**
+             * Last Message Preview
+             * @description Preview of the last message
+             */
+            last_message_preview?: string | null;
+            /**
+             * Participant 1 Unread Count
+             * @description Unread count for participant 1
+             */
+            participant_1_unread_count: number;
+            /**
+             * Participant 2 Unread Count
+             * @description Unread count for participant 2
+             */
+            participant_2_unread_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             * @description When conversation was created
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description Last update timestamp
+             */
+            updated_at: string;
+            /** @description First participant details */
+            participant_1?: components["schemas"]["MessageUserSummary"] | null;
+            /** @description Second participant details */
+            participant_2?: components["schemas"]["MessageUserSummary"] | null;
+        };
+        /**
          * CreateBookingRequest
          * @description Schema for creating a new booking.
          *
@@ -880,6 +1169,22 @@ export interface components {
             hourly_rate_cents: number;
             /** @description Host's location (latitude/longitude) */
             location?: components["schemas"]["LocationRequest"] | null;
+        };
+        /**
+         * CreateMessageRequest
+         * @description Schema for creating a new message in a conversation.
+         */
+        CreateMessageRequest: {
+            /**
+             * Content
+             * @description Message content
+             */
+            content: string;
+            /**
+             * @description Type of message (default: text)
+             * @default text
+             */
+            message_type: components["schemas"]["MessageType"];
         };
         /**
          * DanceStyleCategory
@@ -1287,6 +1592,106 @@ export interface components {
             password: string;
         };
         /**
+         * MessageListResponse
+         * @description Cursor-based paginated response for message list.
+         */
+        MessageListResponse: {
+            /**
+             * Items
+             * @description List of messages
+             */
+            items: components["schemas"]["MessageWithSenderResponse"][];
+            /**
+             * Next Cursor
+             * @description Cursor for next page (message ID)
+             */
+            next_cursor?: string | null;
+            /**
+             * Has More
+             * @description Whether there are more results after this page
+             */
+            has_more: boolean;
+            /**
+             * Limit
+             * @description Maximum number of results per page
+             */
+            limit: number;
+        };
+        /**
+         * MessageType
+         * @description Message type enumeration.
+         * @enum {string}
+         */
+        MessageType: "text" | "system" | "booking_request" | "booking_confirmed" | "booking_cancelled";
+        /**
+         * MessageUserSummary
+         * @description Condensed user info for messaging responses.
+         */
+        MessageUserSummary: {
+            /**
+             * Id
+             * @description User UUID
+             */
+            id: string;
+            /**
+             * First Name
+             * @description First name
+             */
+            first_name: string;
+            /**
+             * Last Name
+             * @description Last name
+             */
+            last_name: string;
+        };
+        /**
+         * MessageWithSenderResponse
+         * @description Message response with sender details.
+         */
+        MessageWithSenderResponse: {
+            /**
+             * Id
+             * @description Message UUID
+             */
+            id: string;
+            /**
+             * Conversation Id
+             * @description Conversation UUID
+             */
+            conversation_id: string;
+            /**
+             * Sender Id
+             * @description Sender user UUID
+             */
+            sender_id: string;
+            /**
+             * Content
+             * @description Message content
+             */
+            content: string;
+            /** @description Type of message */
+            message_type: components["schemas"]["MessageType"];
+            /**
+             * Read At
+             * @description When the message was read
+             */
+            read_at?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             * @description When the message was sent
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description Last update timestamp
+             */
+            updated_at: string;
+            /** @description Sender details */
+            sender?: components["schemas"]["MessageUserSummary"] | null;
+        };
+        /**
          * RecurringAvailabilityRequest
          * @description Schema for setting recurring availability.
          */
@@ -1419,6 +1824,24 @@ export interface components {
             recurring?: components["schemas"]["RecurringAvailabilityRequest"][];
         };
         /**
+         * StartConversationRequest
+         * @description Schema for starting a new conversation with a user.
+         *
+         *     Creates a conversation if one doesn't exist, or returns existing one.
+         */
+        StartConversationRequest: {
+            /**
+             * Participant Id
+             * @description UUID of the user to start conversation with
+             */
+            participant_id: string;
+            /**
+             * Initial Message
+             * @description Optional initial message to send
+             */
+            initial_message?: string | null;
+        };
+        /**
          * StripeAccountStatusResponse
          * @description Response with Stripe account status details.
          */
@@ -1516,6 +1939,17 @@ export interface components {
              * @description Access token expiration time in seconds
              */
             expires_in: number;
+        };
+        /**
+         * UnreadCountResponse
+         * @description Response for unread message count.
+         */
+        UnreadCountResponse: {
+            /**
+             * Total Unread
+             * @description Total unread messages across all conversations
+             */
+            total_unread: number;
         };
         /**
          * UpdateHostProfileRequest
@@ -2122,6 +2556,227 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StripeAccountStatusResponse"];
+                };
+            };
+        };
+    };
+    list_conversations_api_v1_conversations_get: {
+        parameters: {
+            query?: {
+                /** @description Cursor for pagination (conversation ID) */
+                cursor?: string | null;
+                /** @description Maximum conversations to return (1-50) */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_conversation_api_v1_conversations_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartConversationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationWithParticipantsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_unread_count_api_v1_conversations_unread_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnreadCountResponse"];
+                };
+            };
+        };
+    };
+    get_conversation_api_v1_conversations__conversation_id__get: {
+        parameters: {
+            query?: {
+                /** @description Maximum messages to include (1-100) */
+                message_limit?: number;
+            };
+            header?: never;
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationWithMessagesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_messages_api_v1_conversations__conversation_id__messages_get: {
+        parameters: {
+            query?: {
+                /** @description Cursor for pagination (message ID) */
+                cursor?: string | null;
+                /** @description Maximum messages to return (1-100) */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_message_api_v1_conversations__conversation_id__messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMessageRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageWithSenderResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_conversation_read_api_v1_conversations__conversation_id__read_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

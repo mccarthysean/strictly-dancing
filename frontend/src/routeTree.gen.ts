@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MessagesIndexRouteImport } from './routes/messages/index'
 import { Route as HostsIndexRouteImport } from './routes/hosts/index'
 import { Route as BookingsIndexRouteImport } from './routes/bookings/index'
+import { Route as MessagesConversationIdRouteImport } from './routes/messages/$conversationId'
 import { Route as HostsHostIdRouteImport } from './routes/hosts/$hostId'
 import { Route as BookingsBookingIdRouteImport } from './routes/bookings/$bookingId'
 import { Route as HostsHostIdBookRouteImport } from './routes/hosts/$hostId/book'
@@ -33,6 +35,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MessagesIndexRoute = MessagesIndexRouteImport.update({
+  id: '/messages/',
+  path: '/messages/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HostsIndexRoute = HostsIndexRouteImport.update({
   id: '/hosts/',
   path: '/hosts/',
@@ -41,6 +48,11 @@ const HostsIndexRoute = HostsIndexRouteImport.update({
 const BookingsIndexRoute = BookingsIndexRouteImport.update({
   id: '/bookings/',
   path: '/bookings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesConversationIdRoute = MessagesConversationIdRouteImport.update({
+  id: '/messages/$conversationId',
+  path: '/messages/$conversationId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HostsHostIdRoute = HostsHostIdRouteImport.update({
@@ -65,8 +77,10 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
   '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/bookings/': typeof BookingsIndexRoute
   '/hosts/': typeof HostsIndexRoute
+  '/messages/': typeof MessagesIndexRoute
   '/hosts/$hostId/book': typeof HostsHostIdBookRoute
 }
 export interface FileRoutesByTo {
@@ -75,8 +89,10 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
   '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/bookings': typeof BookingsIndexRoute
   '/hosts': typeof HostsIndexRoute
+  '/messages': typeof MessagesIndexRoute
   '/hosts/$hostId/book': typeof HostsHostIdBookRoute
 }
 export interface FileRoutesById {
@@ -86,8 +102,10 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/bookings/$bookingId': typeof BookingsBookingIdRoute
   '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/bookings/': typeof BookingsIndexRoute
   '/hosts/': typeof HostsIndexRoute
+  '/messages/': typeof MessagesIndexRoute
   '/hosts/$hostId/book': typeof HostsHostIdBookRoute
 }
 export interface FileRouteTypes {
@@ -98,8 +116,10 @@ export interface FileRouteTypes {
     | '/register'
     | '/bookings/$bookingId'
     | '/hosts/$hostId'
+    | '/messages/$conversationId'
     | '/bookings/'
     | '/hosts/'
+    | '/messages/'
     | '/hosts/$hostId/book'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -108,8 +128,10 @@ export interface FileRouteTypes {
     | '/register'
     | '/bookings/$bookingId'
     | '/hosts/$hostId'
+    | '/messages/$conversationId'
     | '/bookings'
     | '/hosts'
+    | '/messages'
     | '/hosts/$hostId/book'
   id:
     | '__root__'
@@ -118,8 +140,10 @@ export interface FileRouteTypes {
     | '/register'
     | '/bookings/$bookingId'
     | '/hosts/$hostId'
+    | '/messages/$conversationId'
     | '/bookings/'
     | '/hosts/'
+    | '/messages/'
     | '/hosts/$hostId/book'
   fileRoutesById: FileRoutesById
 }
@@ -129,8 +153,10 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   BookingsBookingIdRoute: typeof BookingsBookingIdRoute
   HostsHostIdRoute: typeof HostsHostIdRouteWithChildren
+  MessagesConversationIdRoute: typeof MessagesConversationIdRoute
   BookingsIndexRoute: typeof BookingsIndexRoute
   HostsIndexRoute: typeof HostsIndexRoute
+  MessagesIndexRoute: typeof MessagesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -156,6 +182,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/messages/': {
+      id: '/messages/'
+      path: '/messages'
+      fullPath: '/messages/'
+      preLoaderRoute: typeof MessagesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/hosts/': {
       id: '/hosts/'
       path: '/hosts'
@@ -168,6 +201,13 @@ declare module '@tanstack/react-router' {
       path: '/bookings'
       fullPath: '/bookings/'
       preLoaderRoute: typeof BookingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages/$conversationId': {
+      id: '/messages/$conversationId'
+      path: '/messages/$conversationId'
+      fullPath: '/messages/$conversationId'
+      preLoaderRoute: typeof MessagesConversationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hosts/$hostId': {
@@ -212,8 +252,10 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   BookingsBookingIdRoute: BookingsBookingIdRoute,
   HostsHostIdRoute: HostsHostIdRouteWithChildren,
+  MessagesConversationIdRoute: MessagesConversationIdRoute,
   BookingsIndexRoute: BookingsIndexRoute,
   HostsIndexRoute: HostsIndexRoute,
+  MessagesIndexRoute: MessagesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
