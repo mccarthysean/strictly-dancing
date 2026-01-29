@@ -776,3 +776,36 @@ strictly-dancing/
 
 **Next**: T027 - Create Host Profile Schemas
 
+---
+
+### Entry [E-028] 2026-01-29T06:50:00Z
+
+**Task**: T027 - Create Host Profile Schemas
+**Status**: DONE
+**Progress**: 27/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/schemas/host_profile.py with comprehensive Pydantic schemas
+- Implemented CoordinatesBase with latitude/longitude validation (-90 to 90, -180 to 180)
+- Created LocationRequest for location input in requests
+- Created DanceStyleRequest with skill_level validation (1-5)
+- Created DanceStyleResponse and HostDanceStyleResponse for API responses
+- Created CreateHostProfileRequest with bio, headline, hourly_rate_cents, location fields
+- Created UpdateHostProfileRequest with all optional fields for partial updates
+- Created HostProfileResponse with all profile fields including dance_styles list
+- Created HostProfileWithUserResponse extending HostProfileResponse with user details
+- Created HostProfileSummaryResponse for list views with distance_km field
+- Created HostSearchRequest with location, filters (style_ids, min_rating, max_price_cents, verified_only), sorting, and pagination
+- Created HostSearchResponse for paginated search results
+- Added field validators for sort_by and sort_order fields
+- Updated app/schemas/__init__.py with all new exports
+- Created 51 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (350/350 total - 51 new tests added)
+- Files: app/schemas/host_profile.py, app/schemas/__init__.py, tests/unit/test_host_profile_schemas.py
+- Linting: All checks passed
+- Key tests: TestLocationRequest (7 tests), TestHostSearchRequest (18 tests), TestCreateHostProfileRequest (11 tests)
+
+**Next**: T028 - Implement Become Host Endpoint
+
