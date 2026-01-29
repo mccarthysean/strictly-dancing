@@ -1175,3 +1175,35 @@ strictly-dancing/
 
 **Next**: T040 - Implement Booking Creation with Payment Hold
 
+---
+
+### Entry [E-041] 2026-01-29T07:45:00Z
+
+**Task**: T040 - Implement Booking Creation with Payment Hold
+**Status**: DONE
+**Progress**: 40/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/routers/bookings.py with booking management router
+- Implemented POST /api/v1/bookings endpoint for creating bookings with:
+  - Host validation (exists, has Stripe, has hourly rate)
+  - User validation (cannot book self)
+  - Availability validation (time slot must be available)
+  - Amount calculation (hourly rate * duration / 60)
+  - Platform fee calculation (15% of total)
+  - Stripe PaymentIntent creation with manual capture
+  - Pending booking record creation
+- Added _calculate_platform_fee() helper function
+- Added _build_booking_response() helper function for consistent responses
+- Updated app/routers/__init__.py to export bookings_router
+- Updated app/main.py to include bookings_router
+- Created 15 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (703/703 total - 15 new tests added)
+- Files: app/routers/bookings.py, app/routers/__init__.py, app/main.py, tests/unit/test_bookings_router.py
+- Linting: All checks passed
+- Key tests: test_create_booking_endpoint_exists, test_create_booking_unavailable_slot_returns_409, test_create_booking_calculates_amount_correctly, test_create_booking_creates_pending_booking_record
+
+**Next**: T041 - Implement Booking Confirmation
+
