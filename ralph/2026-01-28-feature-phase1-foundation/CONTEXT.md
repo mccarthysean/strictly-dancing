@@ -2726,3 +2726,38 @@ strictly-dancing/
 - Key features: GPS location, filter modal, view toggle, host cards
 
 **Next**: T082 - Mobile Host Profile Screen
+
+---
+
+### Entry [E-083] 2026-01-29T11:45:00Z
+
+**Task**: T082 - Mobile Host Profile Screen
+**Status**: DONE
+**Progress**: 82/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Implemented full host profile screen at apps/mobile/app/hosts/[id].tsx:
+  - Photo (avatar with initials), name, and verification badge
+  - Rating display with star icon and review count
+  - Statistics row: rating, sessions, hourly rate
+  - Dance styles section with skill level indicators (1-5 dots)
+- Book Now and Message buttons:
+  - Both buttons styled with proper icons
+  - Display "Coming Soon" alerts (booking/messaging implemented in T083/T085)
+- Reviews section:
+  - Fetches reviews with pagination (cursor-based)
+  - Displays reviewer avatar, name, date, rating badge
+  - Shows review comments and host responses
+  - "Load More" button for additional reviews
+  - Empty state when no reviews exist
+- Additional features:
+  - Pull-to-refresh functionality
+  - Loading and error states with retry button
+  - Proper ScrollView for all content
+
+**Evidence**:
+- File: apps/mobile/app/hosts/[id].tsx
+- TypeScript: tsc --noEmit passes with no errors
+- Key features: avatar, stats, dance styles, reviews, action buttons
+
+**Next**: T083 - Mobile Booking Flow Screen

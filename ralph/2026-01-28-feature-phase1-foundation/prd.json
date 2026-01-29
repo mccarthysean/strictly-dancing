@@ -1286,14 +1286,14 @@
       "id": "T082",
       "title": "Mobile Host Profile Screen",
       "description": "Create host profile view for mobile.",
-      "passes": false,
+      "passes": true,
       "phase": "phase2-host-profiles",
       "dependencies": ["T031", "T077"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "apps/mobile/app/hosts/[id].tsx exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Photo, name, rating, dance styles", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Book Now and Message buttons", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Reviews section", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "apps/mobile/app/hosts/[id].tsx exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Photo, name, rating, dance styles", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Book Now and Message buttons", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Reviews section", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },
