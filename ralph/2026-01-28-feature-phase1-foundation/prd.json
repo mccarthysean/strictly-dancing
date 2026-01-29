@@ -20,42 +20,42 @@
         "description": "All backend unit tests pass",
         "verification": "test",
         "verification_command": "cd /workspaces/strictly-dancing/backend && uv run pytest -v",
-        "passes": false
+        "passes": true
       },
       {
         "id": "CC02",
         "description": "Backend health endpoint returns 200",
         "verification": "api",
         "verification_command": "curl -s http://localhost:8001/health | jq",
-        "passes": false
+        "passes": true
       },
       {
         "id": "CC03",
         "description": "TypeScript build succeeds",
         "verification": "build",
         "verification_command": "cd /workspaces/strictly-dancing/frontend && bun run tsc",
-        "passes": false
+        "passes": true
       },
       {
         "id": "CC04",
         "description": "Python linting passes",
         "verification": "lint",
         "verification_command": "cd /workspaces/strictly-dancing/backend && ruff check .",
-        "passes": false
+        "passes": true
       },
       {
         "id": "CC05",
         "description": "All Phase 1 auth endpoints functional",
         "verification": "api",
         "verification_command": "curl -s http://localhost:8001/api/v1/auth/me -H 'Authorization: Bearer test' | jq",
-        "passes": false
+        "passes": true
       },
       {
         "id": "CC06",
         "description": "Host search endpoint returns results",
         "verification": "api",
         "verification_command": "curl -s 'http://localhost:8001/api/v1/hosts?lat=40.7&lng=-74.0' | jq",
-        "passes": false
+        "passes": true
       }
     ]
   },
@@ -4786,7 +4786,7 @@
       "id": "T114",
       "title": "Update Completion Criteria to Passing",
       "description": "Verify all completion criteria (CC01-CC06) pass and mark them true.",
-      "passes": false,
+      "passes": true,
       "phase": "phase5-reviews",
       "dependencies": [
         "T113"
@@ -4796,31 +4796,31 @@
           "id": "AC01",
           "criterion": "CC01: All backend unit tests pass",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC02",
           "criterion": "CC02: Health endpoint returns 200",
           "verification": "api",
-          "met": false
+          "met": true
         },
         {
           "id": "AC03",
           "criterion": "CC03: TypeScript build succeeds",
           "verification": "build",
-          "met": false
+          "met": true
         },
         {
           "id": "AC04",
           "criterion": "CC04: Python linting passes",
           "verification": "lint",
-          "met": false
+          "met": true
         },
         {
           "id": "AC05",
           "criterion": "prd.json completion criteria all marked passes: true",
           "verification": "file_exists",
-          "met": false
+          "met": true
         }
       ],
       "testing": {
@@ -5098,7 +5098,7 @@
       "id": "T115",
       "title": "Final Quality Review and Documentation",
       "description": "Complete final review, ensure all documentation is updated, and verify production readiness.",
-      "passes": false,
+      "passes": true,
       "phase": "phase5-reviews",
       "dependencies": [
         "T114"
@@ -5108,31 +5108,31 @@
           "id": "AC01",
           "criterion": "CONTEXT.md has complete progress log",
           "verification": "file_exists",
-          "met": false
+          "met": true
         },
         {
           "id": "AC02",
           "criterion": "All TODOs in codebase addressed or documented",
           "verification": "code_review",
-          "met": false
+          "met": true
         },
         {
           "id": "AC03",
           "criterion": "README.md updated with setup instructions",
           "verification": "file_exists",
-          "met": false
+          "met": true
         },
         {
           "id": "AC04",
           "criterion": "API documentation complete at /docs",
           "verification": "api",
-          "met": false
+          "met": true
         },
         {
           "id": "AC05",
           "criterion": "No security vulnerabilities (ruff security rules pass)",
           "verification": "lint",
-          "met": false
+          "met": true
         }
       ],
       "testing": {
