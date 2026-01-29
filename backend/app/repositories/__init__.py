@@ -3,11 +3,13 @@
 from app.repositories.availability import AvailabilityRepository
 from app.repositories.booking import BookingRepository
 from app.repositories.host_profile import HostProfileRepository
+from app.repositories.messaging import MessagingRepository
 from app.repositories.user import UserRepository
 
 __all__ = [
     "AvailabilityRepository",
     "BookingRepository",
     "HostProfileRepository",
+    "MessagingRepository",
     "UserRepository",
 ]

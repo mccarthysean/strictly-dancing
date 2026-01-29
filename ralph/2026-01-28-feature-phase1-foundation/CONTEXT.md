@@ -1438,3 +1438,38 @@ strictly-dancing/
 
 **Next**: T049 - Implement Messaging Repository
 
+---
+
+### Entry [E-050] 2026-01-29T08:45:00Z
+
+**Task**: T049 - Implement Messaging Repository
+**Status**: DONE
+**Progress**: 49/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/repositories/messaging.py with MessagingRepository class
+- Implemented get_or_create_conversation() method with participant ordering (smaller UUID first)
+- Implemented get_conversation_by_id() with optional message loading
+- Implemented get_conversations_for_user() with cursor-based pagination and ordering by last_message_at
+- Implemented get_messages() with cursor-based pagination (newest first)
+- Implemented create_message() that:
+  - Validates conversation exists and sender is a participant
+  - Updates conversation metadata (last_message_at, last_message_preview)
+  - Increments recipient's unread count
+  - Truncates long preview to 255 characters
+- Implemented mark_as_read() that marks all unread messages from other user and resets unread count
+- Implemented get_unread_count() returning total unread across all conversations
+- Implemented get_unread_count_for_conversation() for specific conversation count
+- Implemented get_conversation_between_users() to find existing conversation
+- Implemented delete_message() allowing only sender to delete
+- Updated app/repositories/__init__.py with new export
+- Created 46 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (867/867 total - 46 new tests added)
+- Files: app/repositories/messaging.py, app/repositories/__init__.py, tests/unit/test_messaging_repository.py
+- Linting: All checks passed
+- Key tests: TestGetOrCreateConversation (5 tests), TestCreateMessage (7 tests), TestMarkAsRead (2 tests), TestGetUnreadCount (4 tests)
+
+**Next**: T050 - Create Messaging Schemas
+
