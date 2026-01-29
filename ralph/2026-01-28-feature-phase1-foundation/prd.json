@@ -1470,15 +1470,15 @@
       "id": "T094",
       "title": "Frontend E2E Testing with Playwright",
       "description": "Create end-to-end browser tests for PWA frontend.",
-      "passes": false,
+      "passes": true,
       "phase": "phase5-reviews",
       "dependencies": ["T022"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "e2e/playwright.config.ts configured", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Auth flow E2E test (login, register)", "verification": "test", "met": false},
-        {"id": "AC03", "criterion": "Host discovery E2E test", "verification": "test", "met": false},
-        {"id": "AC04", "criterion": "Booking flow E2E test", "verification": "test", "met": false},
-        {"id": "AC05", "criterion": "E2E tests run in CI pipeline", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "e2e/playwright.config.ts configured", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Auth flow E2E test (login, register)", "verification": "test", "met": true},
+        {"id": "AC03", "criterion": "Host discovery E2E test", "verification": "test", "met": true},
+        {"id": "AC04", "criterion": "Booking flow E2E test", "verification": "test", "met": true},
+        {"id": "AC05", "criterion": "E2E tests run in CI pipeline", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     }
