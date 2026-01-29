@@ -41,6 +41,20 @@ from app.schemas.host_profile import (
     LocationRequest,
     UpdateHostProfileRequest,
 )
+from app.schemas.messaging import (
+    ConversationListResponse,
+    ConversationResponse,
+    ConversationSummaryResponse,
+    ConversationWithMessagesResponse,
+    ConversationWithParticipantsResponse,
+    CreateMessageRequest,
+    MessageListResponse,
+    MessageResponse,
+    MessageUserSummary,
+    MessageWithSenderResponse,
+    StartConversationRequest,
+    UnreadCountResponse,
+)
 from app.schemas.stripe import (
     StripeAccountStatusResponse,
     StripeDashboardLinkResponse,
@@ -98,4 +112,17 @@ __all__ = [
     "StripeOnboardResponse",
     "StripeAccountStatusResponse",
     "StripeDashboardLinkResponse",
+    # Messaging schemas
+    "StartConversationRequest",
+    "CreateMessageRequest",
+    "MessageResponse",
+    "MessageWithSenderResponse",
+    "MessageUserSummary",
+    "ConversationResponse",
+    "ConversationWithParticipantsResponse",
+    "ConversationSummaryResponse",
+    "ConversationWithMessagesResponse",
+    "ConversationListResponse",
+    "MessageListResponse",
+    "UnreadCountResponse",
 ]

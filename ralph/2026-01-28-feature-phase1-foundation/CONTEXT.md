@@ -1473,3 +1473,34 @@ strictly-dancing/
 
 **Next**: T050 - Create Messaging Schemas
 
+---
+
+### Entry [E-051] 2026-01-29T08:50:00Z
+
+**Task**: T050 - Create Messaging Schemas
+**Status**: DONE
+**Progress**: 50/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/schemas/messaging.py with comprehensive Pydantic schemas
+- Implemented MessageUserSummary for condensed user info in messaging contexts
+- Created StartConversationRequest with participant_id and optional initial_message
+- Created CreateMessageRequest with content validation (not blank, max 5000 chars) and message_type
+- Implemented MessageResponse and MessageWithSenderResponse for API responses
+- Implemented ConversationResponse with unread counts for both participants
+- Created ConversationWithParticipantsResponse extending base with participant details
+- Created ConversationSummaryResponse for list views with other_participant and unread_count
+- Created ConversationWithMessagesResponse including messages list
+- Implemented ConversationListResponse and MessageListResponse for cursor-based pagination
+- Created UnreadCountResponse for total unread messages
+- Updated app/schemas/__init__.py with 12 new schema exports
+- Created 29 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (896/896 total - 29 new tests added)
+- Files: app/schemas/messaging.py, app/schemas/__init__.py, tests/unit/test_messaging_schemas.py
+- Linting: All checks passed
+- Key tests: TestStartConversationRequest (6 tests), TestCreateMessageRequest (7 tests), TestConversationResponse (2 tests), TestMessageResponse (2 tests)
+
+**Next**: T051 - Implement Messaging Endpoints
+
