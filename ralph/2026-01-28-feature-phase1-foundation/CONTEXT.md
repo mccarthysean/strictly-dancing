@@ -717,3 +717,30 @@ strictly-dancing/
 - Alembic heads: 000000000004 recognized
 
 **Next**: T025 - Create Host Dance Styles Junction
+
+---
+
+### Entry [E-026] 2026-01-29T06:40:00Z
+
+**Task**: T025 - Create Host Dance Styles Junction
+**Status**: DONE
+**Progress**: 25/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/models/host_dance_style.py with HostDanceStyle junction model
+- Fields: id (UUID PK), host_profile_id (FK), dance_style_id (FK), skill_level (1-5), created_at, updated_at
+- Added unique constraint on (host_profile_id, dance_style_id) pair
+- Added check constraint for skill_level range (1-5)
+- Configured CASCADE delete on both foreign keys to host_profiles and dance_styles
+- Created relationships with backref for bidirectional access
+- Created Alembic migration (000000000005) for host_dance_styles table
+- Updated app/models/__init__.py with new exports
+- Created 22 unit tests for HostDanceStyle model (all passing)
+
+**Evidence**:
+- Tests: All passing (256/256 total - 22 new tests added)
+- Files: app/models/host_dance_style.py, alembic/versions/20260129_040000_create_host_dance_styles_table.py, tests/unit/test_host_dance_style_model.py
+- Linting: All checks passed
+- Alembic heads: 000000000005 recognized
+
+**Next**: T026 - Implement Host Profile Repository
