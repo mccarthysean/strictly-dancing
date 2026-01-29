@@ -1148,15 +1148,15 @@
       "id": "T073",
       "title": "Frontend Active Session Screen",
       "description": "Create active session view with location and controls.",
-      "passes": false,
+      "passes": true,
       "phase": "phase4-realtime",
       "dependencies": ["T072", "T067"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "frontend/src/routes/bookings/$bookingId/active.tsx exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Map showing both users' locations", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Session timer showing elapsed time", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "Complete Session button", "verification": "code_review", "met": false},
-        {"id": "AC05", "criterion": "Emergency contact button", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "frontend/src/routes/bookings/$bookingId/active.tsx exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Map showing both users' locations", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Session timer showing elapsed time", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "Complete Session button", "verification": "code_review", "met": true},
+        {"id": "AC05", "criterion": "Emergency contact button", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },

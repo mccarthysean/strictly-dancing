@@ -2380,3 +2380,47 @@ strictly-dancing/
 
 **Next**: T073 - Frontend Active Session Screen
 
+---
+
+### Entry [E-074] 2026-01-29T10:40:00Z
+
+**Task**: T073 - Frontend Active Session Screen
+**Status**: DONE
+**Progress**: 73/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created frontend/src/routes/bookings/$bookingId/active.tsx with full active session UI:
+  - Session timer showing elapsed time since actual_start (hours:minutes:seconds format)
+  - "Session In Progress" status badge with pulsing indicator
+  - Dance style and partner name display
+- Integrated LocationMap component showing both users' locations:
+  - Uses useLocationTracking hook with autoStart when status is in_progress
+  - Connection status indicator (Connected/Connecting/Disconnected)
+  - Location permission prompt if not granted
+  - Location error display
+- Complete Session button (for hosts only):
+  - Opens confirmation modal before completing
+  - Shows session duration and payout amount in modal
+  - Calls POST /api/v1/bookings/{id}/complete endpoint
+  - Redirects to booking detail page on success
+- Emergency contact button:
+  - Red styling for visual emphasis
+  - Confirmation dialog before calling 911
+  - Opens tel:911 on confirmation
+- Additional features:
+  - Message partner button to start/continue conversation
+  - Session details section (scheduled duration, start time, location)
+  - Auto-redirect if booking is not in_progress
+  - Handles session_ended WebSocket message for cleanup
+  - Auth guards (requires login)
+- TypeScript compiles with no errors
+- Frontend builds successfully (128.48 KB gzipped bundle)
+
+**Evidence**:
+- Files: frontend/src/routes/bookings/$bookingId/active.tsx
+- TypeScript: tsc --noEmit passes with no errors
+- Build: vite build completes successfully (128.48 KB gzipped)
+- Key features: session timer, location map, complete session button, emergency button
+
+**Next**: T074 - Implement Host Verification Backend
+

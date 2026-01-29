@@ -23,6 +23,7 @@ import { Route as HostAvailabilityRouteImport } from './routes/host/availability
 import { Route as BookingsBookingIdRouteImport } from './routes/bookings/$bookingId'
 import { Route as HostsHostIdBookRouteImport } from './routes/hosts/$hostId/book'
 import { Route as HostProfileEditRouteImport } from './routes/host/profile/edit'
+import { Route as BookingsBookingIdActiveRouteImport } from './routes/bookings/$bookingId/active'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -94,13 +95,18 @@ const HostProfileEditRoute = HostProfileEditRouteImport.update({
   path: '/host/profile/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BookingsBookingIdActiveRoute = BookingsBookingIdActiveRouteImport.update({
+  id: '/active',
+  path: '/active',
+  getParentRoute: () => BookingsBookingIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
-  '/bookings/$bookingId': typeof BookingsBookingIdRoute
+  '/bookings/$bookingId': typeof BookingsBookingIdRouteWithChildren
   '/host/availability': typeof HostAvailabilityRoute
   '/host/dashboard': typeof HostDashboardRoute
   '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/bookings/': typeof BookingsIndexRoute
   '/hosts/': typeof HostsIndexRoute
   '/messages/': typeof MessagesIndexRoute
+  '/bookings/$bookingId/active': typeof BookingsBookingIdActiveRoute
   '/host/profile/edit': typeof HostProfileEditRoute
   '/hosts/$hostId/book': typeof HostsHostIdBookRoute
 }
@@ -116,7 +123,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
-  '/bookings/$bookingId': typeof BookingsBookingIdRoute
+  '/bookings/$bookingId': typeof BookingsBookingIdRouteWithChildren
   '/host/availability': typeof HostAvailabilityRoute
   '/host/dashboard': typeof HostDashboardRoute
   '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/bookings': typeof BookingsIndexRoute
   '/hosts': typeof HostsIndexRoute
   '/messages': typeof MessagesIndexRoute
+  '/bookings/$bookingId/active': typeof BookingsBookingIdActiveRoute
   '/host/profile/edit': typeof HostProfileEditRoute
   '/hosts/$hostId/book': typeof HostsHostIdBookRoute
 }
@@ -133,7 +141,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
-  '/bookings/$bookingId': typeof BookingsBookingIdRoute
+  '/bookings/$bookingId': typeof BookingsBookingIdRouteWithChildren
   '/host/availability': typeof HostAvailabilityRoute
   '/host/dashboard': typeof HostDashboardRoute
   '/hosts/$hostId': typeof HostsHostIdRouteWithChildren
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/bookings/': typeof BookingsIndexRoute
   '/hosts/': typeof HostsIndexRoute
   '/messages/': typeof MessagesIndexRoute
+  '/bookings/$bookingId/active': typeof BookingsBookingIdActiveRoute
   '/host/profile/edit': typeof HostProfileEditRoute
   '/hosts/$hostId/book': typeof HostsHostIdBookRoute
 }
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/bookings/'
     | '/hosts/'
     | '/messages/'
+    | '/bookings/$bookingId/active'
     | '/host/profile/edit'
     | '/hosts/$hostId/book'
   fileRoutesByTo: FileRoutesByTo
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
     | '/bookings'
     | '/hosts'
     | '/messages'
+    | '/bookings/$bookingId/active'
     | '/host/profile/edit'
     | '/hosts/$hostId/book'
   id:
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/bookings/'
     | '/hosts/'
     | '/messages/'
+    | '/bookings/$bookingId/active'
     | '/host/profile/edit'
     | '/hosts/$hostId/book'
   fileRoutesById: FileRoutesById
@@ -200,7 +212,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
-  BookingsBookingIdRoute: typeof BookingsBookingIdRoute
+  BookingsBookingIdRoute: typeof BookingsBookingIdRouteWithChildren
   HostAvailabilityRoute: typeof HostAvailabilityRoute
   HostDashboardRoute: typeof HostDashboardRoute
   HostsHostIdRoute: typeof HostsHostIdRouteWithChildren
@@ -311,8 +323,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HostProfileEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bookings/$bookingId/active': {
+      id: '/bookings/$bookingId/active'
+      path: '/active'
+      fullPath: '/bookings/$bookingId/active'
+      preLoaderRoute: typeof BookingsBookingIdActiveRouteImport
+      parentRoute: typeof BookingsBookingIdRoute
+    }
   }
 }
+
+interface BookingsBookingIdRouteChildren {
+  BookingsBookingIdActiveRoute: typeof BookingsBookingIdActiveRoute
+}
+
+const BookingsBookingIdRouteChildren: BookingsBookingIdRouteChildren = {
+  BookingsBookingIdActiveRoute: BookingsBookingIdActiveRoute,
+}
+
+const BookingsBookingIdRouteWithChildren =
+  BookingsBookingIdRoute._addFileChildren(BookingsBookingIdRouteChildren)
 
 interface HostsHostIdRouteChildren {
   HostsHostIdBookRoute: typeof HostsHostIdBookRoute
@@ -331,7 +361,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
-  BookingsBookingIdRoute: BookingsBookingIdRoute,
+  BookingsBookingIdRoute: BookingsBookingIdRouteWithChildren,
   HostAvailabilityRoute: HostAvailabilityRoute,
   HostDashboardRoute: HostDashboardRoute,
   HostsHostIdRoute: HostsHostIdRouteWithChildren,
