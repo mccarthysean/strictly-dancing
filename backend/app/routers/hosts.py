@@ -1,6 +1,7 @@
 """Hosts router for public host profile search and viewing."""
 
 import math
+from datetime import date, timedelta
 from typing import Annotated
 from uuid import UUID
 
@@ -11,7 +12,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.deps import CurrentUser
 from app.models.host_profile import VerificationStatus
+from app.repositories.availability import AvailabilityRepository
 from app.repositories.host_profile import HostProfileRepository
+from app.schemas.booking import (
+    AvailabilityForDateRangeResponse,
+    AvailabilityForDateResponse,
+    AvailabilitySlot,
+)
 from app.schemas.host_profile import (
     DanceStyleResponse,
     HostDanceStyleResponse,
@@ -255,6 +262,116 @@ def _calculate_distance_km(lat: float, lng: float, profile) -> float | None:
     # method handles this properly.
     # In a full implementation, we'd extract lat/lng from profile.location
     return None
+
+
+@router.get(
+    "/{host_id}/availability",
+    response_model=AvailabilityForDateRangeResponse,
+    summary="Get host availability",
+    description="Get available time slots for a host over a date range.",
+)
+async def get_host_availability(
+    db: DbSession,
+    host_id: UUID,
+    start_date: Annotated[
+        date | None,
+        Query(description="Start date (default: today)"),
+    ] = None,
+    end_date: Annotated[
+        date | None,
+        Query(description="End date (default: 14 days from start)"),
+    ] = None,
+) -> AvailabilityForDateRangeResponse:
+    """Get available time slots for a host over a date range.
+
+    Returns available slots for each day, accounting for:
+    - Recurring weekly availability
+    - One-time availability additions
+    - Blocked time periods
+    - Existing bookings (excluded from available slots)
+
+    Args:
+        db: The database session (injected).
+        host_id: The host profile UUID.
+        start_date: Start date for availability (default: today).
+        end_date: End date for availability (default: 14 days from start).
+
+    Returns:
+        AvailabilityForDateRangeResponse with available slots by date.
+
+    Raises:
+        HTTPException: 404 if host profile not found.
+    """
+    host_repo = HostProfileRepository(db)
+    avail_repo = AvailabilityRepository(db)
+
+    # Verify host exists
+    profile = await host_repo.get_by_id(host_id)
+    if profile is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Host profile not found",
+        )
+
+    # Set default date range if not provided
+    if start_date is None:
+        start_date = date.today()
+    if end_date is None:
+        end_date = start_date + timedelta(days=14)
+
+    # Ensure end_date is after start_date
+    if end_date < start_date:
+        end_date = start_date
+
+    # Get bookings for the date range to exclude booked slots
+    bookings = await avail_repo.get_bookings_for_date_range(
+        host_id,
+        start_date,
+        end_date,
+    )
+
+    # Build a dict of booked time ranges by date
+    booked_by_date: dict[date, list[tuple]] = {}
+    for booking in bookings:
+        booking_date = booking.scheduled_start.date()
+        if booking_date not in booked_by_date:
+            booked_by_date[booking_date] = []
+        booked_by_date[booking_date].append(
+            (booking.scheduled_start.time(), booking.scheduled_end.time())
+        )
+
+    # Get availability for each date
+    availability_list: list[AvailabilityForDateResponse] = []
+    current_date = start_date
+    while current_date <= end_date:
+        # Get base availability for the date
+        slots = await avail_repo.get_availability_for_date(host_id, current_date)
+
+        # Subtract booked slots
+        if current_date in booked_by_date:
+            for booked_start, booked_end in booked_by_date[current_date]:
+                slots = avail_repo._subtract_time_range(slots, booked_start, booked_end)
+
+        # Convert to response format
+        slot_responses = [
+            AvailabilitySlot(start_time=slot[0], end_time=slot[1]) for slot in slots
+        ]
+
+        availability_list.append(
+            AvailabilityForDateResponse(
+                availability_date=current_date,
+                slots=slot_responses,
+            )
+        )
+
+        current_date += timedelta(days=1)
+
+    return AvailabilityForDateRangeResponse(
+        host_profile_id=str(host_id),
+        start_date=start_date,
+        end_date=end_date,
+        availability=availability_list,
+    )
 
 
 @router.get(

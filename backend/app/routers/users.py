@@ -1,16 +1,26 @@
 """Users router for user profile management operations."""
 
+from datetime import date, timedelta
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import CurrentUser
+from app.models.availability import DayOfWeek
 from app.models.user import UserType
+from app.repositories.availability import AvailabilityRepository
 from app.repositories.host_profile import HostProfileRepository
 from app.repositories.user import UserRepository
+from app.schemas.booking import (
+    AvailabilityOverrideRequest,
+    AvailabilityOverrideResponse,
+    HostAvailabilityResponse,
+    RecurringAvailabilityResponse,
+    SetAvailabilityRequest,
+)
 from app.schemas.host_profile import (
     CreateHostProfileRequest,
     DanceStyleRequest,
@@ -339,4 +349,311 @@ async def remove_dance_style_from_profile(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Dance style not found on host profile",
+        )
+
+
+@router.get(
+    "/me/host-profile/availability",
+    response_model=HostAvailabilityResponse,
+    summary="Get host availability",
+    description="Get the current user's host availability schedule including recurring and overrides.",
+)
+async def get_my_host_availability(
+    current_user: CurrentUser,
+    db: DbSession,
+    start_date: Annotated[
+        date | None,
+        Query(description="Start date for overrides (default: today)"),
+    ] = None,
+    end_date: Annotated[
+        date | None,
+        Query(description="End date for overrides (default: 30 days from start)"),
+    ] = None,
+) -> HostAvailabilityResponse:
+    """Get the current user's host availability schedule.
+
+    Returns recurring weekly availability and any overrides for the date range.
+
+    Args:
+        current_user: The authenticated user (injected via auth middleware).
+        db: The database session (injected).
+        start_date: Start date for overrides (default: today).
+        end_date: End date for overrides (default: 30 days from start).
+
+    Returns:
+        HostAvailabilityResponse with recurring schedules and overrides.
+
+    Raises:
+        HTTPException 404: If the user doesn't have a host profile.
+    """
+    host_repo = HostProfileRepository(db)
+    avail_repo = AvailabilityRepository(db)
+
+    profile = await host_repo.get_by_user_id(UUID(str(current_user.id)))
+    if profile is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User does not have a host profile",
+        )
+
+    # Set default date range if not provided
+    if start_date is None:
+        start_date = date.today()
+    if end_date is None:
+        end_date = start_date + timedelta(days=30)
+
+    # Get recurring availability
+    recurring = await avail_repo.get_recurring_availability(
+        UUID(str(profile.id)),
+        active_only=False,  # Show all schedules including inactive
+    )
+
+    # Get overrides for the date range
+    overrides = await avail_repo.get_overrides_for_date_range(
+        UUID(str(profile.id)),
+        start_date,
+        end_date,
+    )
+
+    # Build response
+    recurring_response = [
+        RecurringAvailabilityResponse(
+            id=str(rec.id),
+            day_of_week=DayOfWeek(rec.day_of_week),
+            start_time=rec.start_time,
+            end_time=rec.end_time,
+            is_active=rec.is_active,
+        )
+        for rec in recurring
+    ]
+
+    overrides_response = [
+        AvailabilityOverrideResponse(
+            id=str(ovr.id),
+            override_date=ovr.override_date,
+            override_type=ovr.override_type,
+            start_time=ovr.start_time,
+            end_time=ovr.end_time,
+            all_day=ovr.all_day,
+            reason=ovr.reason,
+        )
+        for ovr in overrides
+    ]
+
+    return HostAvailabilityResponse(
+        host_profile_id=str(profile.id),
+        recurring=recurring_response,
+        overrides=overrides_response,
+    )
+
+
+@router.put(
+    "/me/host-profile/availability",
+    response_model=HostAvailabilityResponse,
+    summary="Set host availability",
+    description="Replace the host's weekly recurring availability schedule.",
+)
+async def set_my_host_availability(
+    request: SetAvailabilityRequest,
+    current_user: CurrentUser,
+    db: DbSession,
+) -> HostAvailabilityResponse:
+    """Set the current user's host availability schedule.
+
+    This replaces all existing recurring availability with the new schedule.
+    Overrides are not affected.
+
+    Args:
+        request: The new availability schedule.
+        current_user: The authenticated user (injected via auth middleware).
+        db: The database session (injected).
+
+    Returns:
+        HostAvailabilityResponse with the updated schedule.
+
+    Raises:
+        HTTPException 404: If the user doesn't have a host profile.
+    """
+    host_repo = HostProfileRepository(db)
+    avail_repo = AvailabilityRepository(db)
+
+    profile = await host_repo.get_by_user_id(UUID(str(current_user.id)))
+    if profile is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User does not have a host profile",
+        )
+
+    profile_id = UUID(str(profile.id))
+
+    # Clear existing recurring availability
+    await avail_repo.clear_recurring_availability(profile_id)
+
+    # Set new recurring availability
+    for rec in request.recurring:
+        await avail_repo.set_recurring_availability(
+            host_profile_id=profile_id,
+            day_of_week=rec.day_of_week,
+            start_time=rec.start_time,
+            end_time=rec.end_time,
+            is_active=True,
+        )
+
+    # Get updated availability
+    recurring = await avail_repo.get_recurring_availability(
+        profile_id,
+        active_only=False,
+    )
+
+    # Get overrides for next 30 days
+    start_date = date.today()
+    end_date = start_date + timedelta(days=30)
+    overrides = await avail_repo.get_overrides_for_date_range(
+        profile_id,
+        start_date,
+        end_date,
+    )
+
+    # Build response
+    recurring_response = [
+        RecurringAvailabilityResponse(
+            id=str(rec.id),
+            day_of_week=DayOfWeek(rec.day_of_week),
+            start_time=rec.start_time,
+            end_time=rec.end_time,
+            is_active=rec.is_active,
+        )
+        for rec in recurring
+    ]
+
+    overrides_response = [
+        AvailabilityOverrideResponse(
+            id=str(ovr.id),
+            override_date=ovr.override_date,
+            override_type=ovr.override_type,
+            start_time=ovr.start_time,
+            end_time=ovr.end_time,
+            all_day=ovr.all_day,
+            reason=ovr.reason,
+        )
+        for ovr in overrides
+    ]
+
+    return HostAvailabilityResponse(
+        host_profile_id=str(profile.id),
+        recurring=recurring_response,
+        overrides=overrides_response,
+    )
+
+
+@router.post(
+    "/me/host-profile/availability/overrides",
+    response_model=AvailabilityOverrideResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Add availability override",
+    description="Add a one-time availability override (available or blocked).",
+)
+async def add_availability_override(
+    request: AvailabilityOverrideRequest,
+    current_user: CurrentUser,
+    db: DbSession,
+) -> AvailabilityOverrideResponse:
+    """Add an availability override for the current user's host profile.
+
+    Use this to add one-time available slots or block time periods.
+
+    Args:
+        request: The override details.
+        current_user: The authenticated user (injected via auth middleware).
+        db: The database session (injected).
+
+    Returns:
+        AvailabilityOverrideResponse with the created override.
+
+    Raises:
+        HTTPException 404: If the user doesn't have a host profile.
+    """
+    from app.models.availability import AvailabilityOverrideType
+
+    host_repo = HostProfileRepository(db)
+    avail_repo = AvailabilityRepository(db)
+
+    profile = await host_repo.get_by_user_id(UUID(str(current_user.id)))
+    if profile is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User does not have a host profile",
+        )
+
+    profile_id = UUID(str(profile.id))
+
+    # Create the override based on type
+    if request.override_type == AvailabilityOverrideType.BLOCKED:
+        override = await avail_repo.block_time_slot(
+            host_profile_id=profile_id,
+            override_date=request.override_date,
+            start_time=request.start_time,
+            end_time=request.end_time,
+            all_day=request.all_day,
+            reason=request.reason,
+        )
+    else:
+        override = await avail_repo.add_one_time(
+            host_profile_id=profile_id,
+            override_date=request.override_date,
+            start_time=request.start_time,
+            end_time=request.end_time,
+            all_day=request.all_day,
+            reason=request.reason,
+        )
+
+    return AvailabilityOverrideResponse(
+        id=str(override.id),
+        override_date=override.override_date,
+        override_type=override.override_type,
+        start_time=override.start_time,
+        end_time=override.end_time,
+        all_day=override.all_day,
+        reason=override.reason,
+    )
+
+
+@router.delete(
+    "/me/host-profile/availability/overrides/{override_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete availability override",
+    description="Delete an availability override.",
+)
+async def delete_availability_override(
+    override_id: UUID,
+    current_user: CurrentUser,
+    db: DbSession,
+) -> None:
+    """Delete an availability override from the current user's host profile.
+
+    Args:
+        override_id: The override UUID to delete.
+        current_user: The authenticated user (injected via auth middleware).
+        db: The database session (injected).
+
+    Raises:
+        HTTPException 404: If the user doesn't have a host profile or override not found.
+    """
+    host_repo = HostProfileRepository(db)
+    avail_repo = AvailabilityRepository(db)
+
+    profile = await host_repo.get_by_user_id(UUID(str(current_user.id)))
+    if profile is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User does not have a host profile",
+        )
+
+    # Try to delete the override
+    deleted = await avail_repo.delete_override(override_id)
+
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Override not found",
         )

@@ -25,6 +25,7 @@ from app.schemas.booking import (
     HostAvailabilityResponse,
     RecurringAvailabilityRequest,
     RecurringAvailabilityResponse,
+    SetAvailabilityRequest,
     UserSummaryResponse,
 )
 from app.schemas.host_profile import (
@@ -91,6 +92,7 @@ __all__ = [
     "HostAvailabilityResponse",
     "AvailabilityForDateResponse",
     "AvailabilityForDateRangeResponse",
+    "SetAvailabilityRequest",
     # Stripe schemas
     "StripeOnboardRequest",
     "StripeOnboardResponse",

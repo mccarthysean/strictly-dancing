@@ -315,3 +315,15 @@ class AvailabilityForDateRangeResponse(BaseModel):
     availability: list[AvailabilityForDateResponse] = Field(
         default_factory=list, description="Available slots by date"
     )
+
+
+class SetAvailabilityRequest(BaseModel):
+    """Schema for setting host's complete weekly availability.
+
+    Replaces all existing recurring availability with the provided schedule.
+    """
+
+    recurring: list[RecurringAvailabilityRequest] = Field(
+        default_factory=list,
+        description="Weekly recurring schedules (replaces existing)",
+    )

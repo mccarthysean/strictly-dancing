@@ -1315,3 +1315,30 @@ strictly-dancing/
 
 **Next**: T045 - Implement Availability Endpoints
 
+---
+
+### Entry [E-046] 2026-01-29T08:15:00Z
+
+**Task**: T045 - Implement Availability Endpoints
+**Status**: DONE
+**Progress**: 45/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created GET /api/v1/users/me/host-profile/availability endpoint for hosts to view their schedule
+- Created PUT /api/v1/users/me/host-profile/availability endpoint to replace recurring availability
+- Created POST /api/v1/users/me/host-profile/availability/overrides endpoint to add overrides
+- Created DELETE /api/v1/users/me/host-profile/availability/overrides/{id} endpoint
+- Created GET /api/v1/hosts/{id}/availability public endpoint for clients to view host availability
+- Public endpoint returns available slots for a date range
+- Public endpoint excludes already-booked slots from availability
+- Added SetAvailabilityRequest schema for PUT endpoint
+- Created 17 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (768/768 total - 17 new tests added)
+- Files: app/routers/users.py (updated), app/routers/hosts.py (updated), app/schemas/booking.py (updated), tests/unit/test_availability_endpoints.py
+- Linting: All checks passed
+- Key tests: test_get_host_availability_returns_recurring_and_overrides, test_set_host_availability_updates_schedule, test_get_public_availability_returns_slots_for_date_range, test_get_public_availability_excludes_booked_slots
+
+**Next**: T046 - Frontend Booking Flow Page
+
