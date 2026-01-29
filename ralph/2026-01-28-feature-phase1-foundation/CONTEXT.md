@@ -435,3 +435,28 @@ strictly-dancing/
 - Key tests: test_refresh_valid_token_returns_new_access_token, test_refresh_invalid_token_returns_401, test_refresh_expired_token_returns_401, test_refresh_with_access_token_returns_401
 
 **Next**: T014 - Implement Authentication Middleware
+
+---
+
+### Entry [E-015] 2026-01-29T06:45:00Z
+
+**Task**: T014 - Implement Authentication Middleware
+**Status**: DONE
+**Progress**: 14/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/core/deps.py with get_current_user FastAPI dependency
+- Implements HTTPBearer security scheme to extract Bearer token from Authorization header
+- Validates token using token_service.verify_token() and checks for access token type
+- Loads user from database via UserRepository.get_by_id()
+- Returns 401 for missing token, invalid token, expired token, wrong token type, user not found, or inactive user
+- Created CurrentUser type alias for convenient route dependency injection
+- Created 14 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (176/176 total)
+- Files: app/core/deps.py, tests/unit/test_auth_middleware.py
+- Linting: All checks passed
+- Key tests: test_auth_middleware_valid_token_returns_user, test_auth_middleware_missing_token_returns_401, test_auth_middleware_expired_token_returns_401
+
+**Next**: T015 - Implement Logout Endpoint

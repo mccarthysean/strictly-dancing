@@ -261,14 +261,14 @@
       "id": "T014",
       "title": "Implement Authentication Middleware",
       "description": "Create FastAPI dependency for JWT auth extracting current user.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T007", "T009"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "backend/app/core/deps.py exists with get_current_user dependency", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "Extracts Bearer token from Authorization header", "verification": "test", "met": false},
-        {"id": "AC03", "criterion": "Validates token and loads user from database", "verification": "test", "met": false},
-        {"id": "AC04", "criterion": "Returns 401 for missing/invalid token", "verification": "test", "met": false}
+        {"id": "AC01", "criterion": "backend/app/core/deps.py exists with get_current_user dependency", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "Extracts Bearer token from Authorization header", "verification": "test", "met": true},
+        {"id": "AC03", "criterion": "Validates token and loads user from database", "verification": "test", "met": true},
+        {"id": "AC04", "criterion": "Returns 401 for missing/invalid token", "verification": "test", "met": true}
       ],
       "testing": {"unit_tests": ["test_auth_middleware_valid_token_returns_user", "test_auth_middleware_missing_token_returns_401"]}
     },
