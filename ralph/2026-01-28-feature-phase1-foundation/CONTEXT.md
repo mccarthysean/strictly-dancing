@@ -1073,3 +1073,36 @@ strictly-dancing/
 
 **Next**: T037 - Implement Booking Repository
 
+---
+
+### Entry [E-038] 2026-01-29T07:45:00Z
+
+**Task**: T037 - Implement Booking Repository
+**Status**: DONE
+**Progress**: 37/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/repositories/booking.py with BookingRepository class
+- Implemented create() method for creating new bookings with PENDING status
+- Implemented get_by_id() with optional relationship loading (joinedload)
+- Implemented get_for_client() and get_for_host() with status filtering and pagination
+- Implemented get_for_user() returning bookings where user is either client or host
+- Implemented update_status() with support for:
+  - CANCELLED: sets cancelled_at, cancelled_by_id, cancellation_reason
+  - IN_PROGRESS: sets actual_start timestamp
+  - COMPLETED: sets actual_end, stripe_transfer_id
+- Implemented get_overlapping() using time range overlap logic with exclude option
+- Implemented get_upcoming() returning future confirmed/pending bookings
+- Implemented count_for_client() and count_for_host() for pagination counts
+- Implemented update_stripe_payment_intent() and add_host_notes() helpers
+- Updated app/repositories/__init__.py with new export
+- Created 57 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (604/604 total - 57 new tests added)
+- Files: app/repositories/booking.py, app/repositories/__init__.py, tests/unit/test_booking_repository.py
+- Linting: All checks passed
+- Key tests: test_create_booking_success, test_get_for_client_returns_bookings, test_update_status_to_cancelled_with_reason, test_get_overlapping_finds_conflicts, test_get_upcoming_returns_future_bookings
+
+**Next**: T038 - Create Booking Schemas
+
