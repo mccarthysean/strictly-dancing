@@ -744,3 +744,35 @@ strictly-dancing/
 - Alembic heads: 000000000005 recognized
 
 **Next**: T026 - Implement Host Profile Repository
+
+---
+
+### Entry [E-027] 2026-01-29T06:45:00Z
+
+**Task**: T026 - Implement Host Profile Repository
+**Status**: DONE
+**Progress**: 26/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created backend/app/repositories/host_profile.py with HostProfileRepository class
+- Implemented create() method with optional location (PostGIS POINT)
+- Implemented get_by_id() and get_by_user_id() methods with joined user loading
+- Implemented update() method with partial field updates and location handling
+- Implemented add_dance_style() with skill level validation (1-5) and upsert behavior
+- Implemented remove_dance_style() to remove dance style from profile
+- Implemented get_dance_styles() to get all dance styles for a profile
+- Implemented get_nearby() using PostGIS ST_DWithin for geospatial radius queries
+- Implemented search() with filters: style_ids, min_rating, max_price_cents, location/radius
+- Implemented get_all_dance_styles() and get_dance_style_by_id() helper methods
+- All queries use async patterns and proper joinedload for relationships
+- Updated app/repositories/__init__.py with new exports
+- Created 43 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (299/299 total - 43 new tests added)
+- Files: app/repositories/host_profile.py, tests/unit/test_host_profile_repository.py
+- Linting: All checks passed
+- Key tests: test_host_profile_repository_create, test_get_nearby_returns_profiles_with_distance, test_search_returns_profiles_and_count
+
+**Next**: T027 - Create Host Profile Schemas
+

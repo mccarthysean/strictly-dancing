@@ -441,15 +441,15 @@
       "id": "T026",
       "title": "Implement Host Profile Repository",
       "description": "Create repository with CRUD and geospatial queries.",
-      "passes": false,
+      "passes": true,
       "phase": "phase2-host-profiles",
       "dependencies": ["T025"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "backend/app/repositories/host_profile.py exists", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "create(), get_by_user_id(), update() methods", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "add_dance_style(), remove_dance_style() methods", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "get_nearby() using PostGIS ST_DWithin", "verification": "code_review", "met": false},
-        {"id": "AC05", "criterion": "search() with filters: styles, rating, price", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "backend/app/repositories/host_profile.py exists", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "create(), get_by_user_id(), update() methods", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "add_dance_style(), remove_dance_style() methods", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "get_nearby() using PostGIS ST_DWithin", "verification": "code_review", "met": true},
+        {"id": "AC05", "criterion": "search() with filters: styles, rating, price", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": ["test_host_profile_repository_create", "test_host_profile_repository_nearby"]}
     },
