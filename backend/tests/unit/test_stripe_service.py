@@ -493,6 +493,100 @@ class TestStripeAccountStatusEnum:
         assert isinstance(StripeAccountStatus.ACTIVE.value, str)
 
 
+class TestCreateTransfer:
+    """Tests for create_transfer method."""
+
+    @pytest.mark.asyncio
+    async def test_create_transfer_success(self):
+        """Should create transfer and return transfer ID."""
+        service = StripeService(secret_key="sk_test_123")
+
+        mock_transfer = MagicMock()
+        mock_transfer.id = "tr_test123"
+
+        with patch.object(stripe.Transfer, "create", return_value=mock_transfer):
+            transfer_id = await service.create_transfer(
+                amount_cents=8500,
+                destination_account_id="acct_host123",
+            )
+
+            assert transfer_id == "tr_test123"
+
+    @pytest.mark.asyncio
+    async def test_create_transfer_with_source_transaction(self):
+        """Should create transfer with source transaction."""
+        service = StripeService(secret_key="sk_test_123")
+
+        mock_transfer = MagicMock()
+        mock_transfer.id = "tr_test456"
+
+        with patch.object(
+            stripe.Transfer, "create", return_value=mock_transfer
+        ) as mock:
+            await service.create_transfer(
+                amount_cents=5000,
+                destination_account_id="acct_host123",
+                source_transaction="ch_charge123",
+            )
+
+            mock.assert_called_once()
+            call_kwargs = mock.call_args[1]
+            assert call_kwargs["source_transaction"] == "ch_charge123"
+
+    @pytest.mark.asyncio
+    async def test_create_transfer_with_metadata(self):
+        """Should create transfer with metadata."""
+        service = StripeService(secret_key="sk_test_123")
+
+        mock_transfer = MagicMock()
+        mock_transfer.id = "tr_test789"
+
+        with patch.object(
+            stripe.Transfer, "create", return_value=mock_transfer
+        ) as mock:
+            await service.create_transfer(
+                amount_cents=10000,
+                destination_account_id="acct_host123",
+                metadata={"booking_id": "abc123", "host_id": "host456"},
+            )
+
+            mock.assert_called_once()
+            call_kwargs = mock.call_args[1]
+            assert call_kwargs["metadata"]["booking_id"] == "abc123"
+            assert call_kwargs["metadata"]["host_id"] == "host456"
+
+    @pytest.mark.asyncio
+    async def test_create_transfer_uses_usd_currency(self):
+        """Should use USD as default currency."""
+        service = StripeService(secret_key="sk_test_123")
+
+        mock_transfer = MagicMock()
+        mock_transfer.id = "tr_test"
+
+        with patch.object(
+            stripe.Transfer, "create", return_value=mock_transfer
+        ) as mock:
+            await service.create_transfer(
+                amount_cents=5000,
+                destination_account_id="acct_host123",
+            )
+
+            mock.assert_called_once()
+            call_kwargs = mock.call_args[1]
+            assert call_kwargs["currency"] == "usd"
+
+    @pytest.mark.asyncio
+    async def test_create_transfer_without_api_key(self):
+        """Should raise ValueError if no API key."""
+        service = StripeService(secret_key="")
+
+        with pytest.raises(ValueError, match="not configured"):
+            await service.create_transfer(
+                amount_cents=5000,
+                destination_account_id="acct_host123",
+            )
+
+
 class TestSingletonInstance:
     """Tests for singleton stripe_service instance."""
 

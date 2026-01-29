@@ -274,6 +274,46 @@ class StripeService:
         payment_intent = stripe.PaymentIntent.cancel(payment_intent_id)
         return payment_intent.status == "canceled"
 
+    async def create_transfer(
+        self,
+        amount_cents: int,
+        destination_account_id: str,
+        source_transaction: str | None = None,
+        metadata: dict[str, str] | None = None,
+    ) -> str:
+        """Create a transfer to a connected account.
+
+        Transfers funds from the platform to a connected account
+        after a booking session is completed.
+
+        Args:
+            amount_cents: Amount to transfer in cents.
+            destination_account_id: Stripe Connect account ID to receive funds.
+            source_transaction: Optional source transaction (charge/payment_intent).
+            metadata: Optional metadata for the transfer.
+
+        Returns:
+            The Stripe Transfer ID.
+
+        Raises:
+            ValueError: If Stripe API key is not configured.
+            stripe.StripeError: If transfer creation fails.
+        """
+        self._ensure_api_key()
+
+        create_params: dict = {
+            "amount": amount_cents,
+            "currency": "usd",
+            "destination": destination_account_id,
+            "metadata": metadata or {},
+        }
+
+        if source_transaction:
+            create_params["source_transaction"] = source_transaction
+
+        transfer = stripe.Transfer.create(**create_params)
+        return transfer.id
+
 
 # Singleton instance
 stripe_service = StripeService()

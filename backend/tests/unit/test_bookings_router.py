@@ -2118,3 +2118,558 @@ class TestCancelBookingEndpoint:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["status"] == BookingStatus.CANCELLED.value
+
+
+class TestCompleteBookingEndpoint:
+    """Tests for POST /api/v1/bookings/{id}/complete endpoint."""
+
+    @pytest.fixture
+    def in_progress_booking(self, sample_booking):
+        """Create an in_progress version of the sample booking."""
+        in_progress = MagicMock()
+        in_progress.id = sample_booking.id
+        in_progress.client_id = sample_booking.client_id
+        in_progress.host_id = sample_booking.host_id
+        in_progress.host_profile_id = sample_booking.host_profile_id
+        in_progress.dance_style_id = sample_booking.dance_style_id
+        in_progress.status = BookingStatus.IN_PROGRESS
+        in_progress.scheduled_start = sample_booking.scheduled_start
+        in_progress.scheduled_end = sample_booking.scheduled_end
+        in_progress.actual_start = datetime.now(UTC) - timedelta(hours=1)
+        in_progress.actual_end = None
+        in_progress.duration_minutes = sample_booking.duration_minutes
+        in_progress.hourly_rate_cents = sample_booking.hourly_rate_cents
+        in_progress.amount_cents = sample_booking.amount_cents
+        in_progress.platform_fee_cents = sample_booking.platform_fee_cents
+        in_progress.host_payout_cents = sample_booking.host_payout_cents
+        in_progress.location = None
+        in_progress.location_name = sample_booking.location_name
+        in_progress.location_notes = sample_booking.location_notes
+        in_progress.client_notes = sample_booking.client_notes
+        in_progress.host_notes = None
+        in_progress.cancellation_reason = None
+        in_progress.cancelled_by_id = None
+        in_progress.cancelled_at = None
+        in_progress.stripe_payment_intent_id = sample_booking.stripe_payment_intent_id
+        in_progress.stripe_transfer_id = None
+        in_progress.created_at = sample_booking.created_at
+        in_progress.updated_at = datetime.now(UTC)
+        in_progress.client = sample_booking.client
+        in_progress.host = sample_booking.host
+        in_progress.host_profile = sample_booking.host_profile
+        in_progress.dance_style = sample_booking.dance_style
+        return in_progress
+
+    @pytest.fixture
+    def completed_booking(self, sample_booking):
+        """Create a completed version of the sample booking."""
+        completed = MagicMock()
+        completed.id = sample_booking.id
+        completed.client_id = sample_booking.client_id
+        completed.host_id = sample_booking.host_id
+        completed.host_profile_id = sample_booking.host_profile_id
+        completed.dance_style_id = sample_booking.dance_style_id
+        completed.status = BookingStatus.COMPLETED
+        completed.scheduled_start = sample_booking.scheduled_start
+        completed.scheduled_end = sample_booking.scheduled_end
+        completed.actual_start = datetime.now(UTC) - timedelta(hours=1)
+        completed.actual_end = datetime.now(UTC)
+        completed.duration_minutes = sample_booking.duration_minutes
+        completed.hourly_rate_cents = sample_booking.hourly_rate_cents
+        completed.amount_cents = sample_booking.amount_cents
+        completed.platform_fee_cents = sample_booking.platform_fee_cents
+        completed.host_payout_cents = sample_booking.host_payout_cents
+        completed.location = None
+        completed.location_name = sample_booking.location_name
+        completed.location_notes = sample_booking.location_notes
+        completed.client_notes = sample_booking.client_notes
+        completed.host_notes = None
+        completed.cancellation_reason = None
+        completed.cancelled_by_id = None
+        completed.cancelled_at = None
+        completed.stripe_payment_intent_id = sample_booking.stripe_payment_intent_id
+        completed.stripe_transfer_id = "tr_test123"
+        completed.created_at = sample_booking.created_at
+        completed.updated_at = datetime.now(UTC)
+        completed.client = sample_booking.client
+        completed.host = sample_booking.host
+        completed.host_profile = sample_booking.host_profile
+        completed.dance_style = sample_booking.dance_style
+        return completed
+
+    @pytest.mark.asyncio
+    async def test_complete_booking_endpoint_exists(
+        self,
+        mock_db,
+        sample_host_user,
+        in_progress_booking,
+        completed_booking,
+    ):
+        """Test that the complete booking endpoint exists and returns 200."""
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.HostProfileRepository") as mock_host_repo_cls,
+            patch("app.routers.bookings.stripe_service") as mock_stripe,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_host_repo = AsyncMock()
+                mock_host_profile = MagicMock()
+                mock_host_profile.stripe_account_id = "acct_test123"
+                mock_host_repo.get_by_id.return_value = mock_host_profile
+                mock_host_repo_cls.return_value = mock_host_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.side_effect = [
+                    in_progress_booking,
+                    completed_booking,
+                ]
+                mock_booking_repo.update_status.return_value = completed_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                mock_stripe.capture_payment_intent = AsyncMock(return_value=True)
+                mock_stripe.create_transfer = AsyncMock(return_value="tr_test123")
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{in_progress_booking.id}/complete",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.asyncio
+    async def test_complete_booking_validates_in_progress_status(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that completing requires IN_PROGRESS status."""
+        sample_booking.status = BookingStatus.CONFIRMED  # Not in_progress
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/complete",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "in_progress" in response.json()["detail"].lower()
+
+    @pytest.mark.asyncio
+    async def test_complete_booking_captures_payment_intent(
+        self,
+        mock_db,
+        sample_host_user,
+        in_progress_booking,
+        completed_booking,
+    ):
+        """Test that completing captures the Stripe PaymentIntent."""
+        capture_calls = []
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.HostProfileRepository") as mock_host_repo_cls,
+            patch("app.routers.bookings.stripe_service") as mock_stripe,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_host_repo = AsyncMock()
+                mock_host_profile = MagicMock()
+                mock_host_profile.stripe_account_id = "acct_test123"
+                mock_host_repo.get_by_id.return_value = mock_host_profile
+                mock_host_repo_cls.return_value = mock_host_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.side_effect = [
+                    in_progress_booking,
+                    completed_booking,
+                ]
+                mock_booking_repo.update_status.return_value = completed_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async def capture_payment(*args, **kwargs):
+                    capture_calls.append((args, kwargs))
+                    return True
+
+                mock_stripe.capture_payment_intent = capture_payment
+                mock_stripe.create_transfer = AsyncMock(return_value="tr_test123")
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{in_progress_booking.id}/complete",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        # Verify capture_payment_intent was called
+        assert len(capture_calls) == 1
+        assert in_progress_booking.stripe_payment_intent_id in capture_calls[0][0]
+
+    @pytest.mark.asyncio
+    async def test_complete_booking_creates_transfer(
+        self,
+        mock_db,
+        sample_host_user,
+        in_progress_booking,
+        completed_booking,
+    ):
+        """Test that completing creates a transfer to host's connected account."""
+        transfer_calls = []
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.HostProfileRepository") as mock_host_repo_cls,
+            patch("app.routers.bookings.stripe_service") as mock_stripe,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_host_repo = AsyncMock()
+                mock_host_profile = MagicMock()
+                mock_host_profile.stripe_account_id = "acct_test123"
+                mock_host_repo.get_by_id.return_value = mock_host_profile
+                mock_host_repo_cls.return_value = mock_host_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.side_effect = [
+                    in_progress_booking,
+                    completed_booking,
+                ]
+                mock_booking_repo.update_status.return_value = completed_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                mock_stripe.capture_payment_intent = AsyncMock(return_value=True)
+
+                async def create_transfer(*args, **kwargs):
+                    transfer_calls.append((args, kwargs))
+                    return "tr_test123"
+
+                mock_stripe.create_transfer = create_transfer
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{in_progress_booking.id}/complete",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        # Verify create_transfer was called with correct host payout
+        assert len(transfer_calls) == 1
+        args, kwargs = transfer_calls[0]
+        assert kwargs.get("amount_cents") == in_progress_booking.host_payout_cents
+        assert kwargs.get("destination_account_id") == "acct_test123"
+
+    @pytest.mark.asyncio
+    async def test_complete_booking_only_host_can_complete(
+        self,
+        mock_db,
+        sample_user,  # Client, not host
+        in_progress_booking,
+    ):
+        """Test that only the host can complete the booking."""
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = in_progress_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{in_progress_booking.id}/complete",
+                        headers=get_auth_header(sample_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert "Only the host can complete" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_complete_booking_not_found_returns_404(
+        self,
+        mock_db,
+        sample_host_user,
+    ):
+        """Test that completing a non-existent booking returns 404."""
+        non_existent_id = uuid4()
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = None
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{non_existent_id}/complete",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.asyncio
+    async def test_complete_booking_requires_authentication(self):
+        """Test that completing a booking requires authentication."""
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.post(
+                f"/api/v1/bookings/{uuid4()}/complete",
+                # No auth header
+            )
+
+        assert response.status_code in [
+            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_403_FORBIDDEN,
+        ]
+
+    @pytest.mark.asyncio
+    async def test_complete_booking_updates_status_to_completed(
+        self,
+        mock_db,
+        sample_host_user,
+        in_progress_booking,
+        completed_booking,
+    ):
+        """Test that completing updates booking status to COMPLETED."""
+        update_calls = []
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+            patch("app.routers.bookings.HostProfileRepository") as mock_host_repo_cls,
+            patch("app.routers.bookings.stripe_service") as mock_stripe,
+            patch("app.routers.bookings.get_settings") as mock_settings,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_settings_obj = MagicMock()
+                mock_settings_obj.stripe_secret_key = "sk_test_123"
+                mock_settings.return_value = mock_settings_obj
+
+                mock_host_repo = AsyncMock()
+                mock_host_profile = MagicMock()
+                mock_host_profile.stripe_account_id = "acct_test123"
+                mock_host_repo.get_by_id.return_value = mock_host_profile
+                mock_host_repo_cls.return_value = mock_host_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.side_effect = [
+                    in_progress_booking,
+                    completed_booking,
+                ]
+
+                async def mock_update_status(booking_id, new_status, **kwargs):
+                    update_calls.append((booking_id, new_status, kwargs))
+                    return completed_booking
+
+                mock_booking_repo.update_status = mock_update_status
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                mock_stripe.capture_payment_intent = AsyncMock(return_value=True)
+                mock_stripe.create_transfer = AsyncMock(return_value="tr_test123")
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{in_progress_booking.id}/complete",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["status"] == BookingStatus.COMPLETED.value
+
+        # Verify update_status was called with COMPLETED status
+        assert len(update_calls) == 1
+        _, new_status, _ = update_calls[0]
+        assert new_status == BookingStatus.COMPLETED
+
+    @pytest.mark.asyncio
+    async def test_complete_booking_pending_status_returns_400(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that completing a PENDING booking returns 400."""
+        sample_booking.status = BookingStatus.PENDING
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/complete",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.asyncio
+    async def test_complete_booking_cancelled_status_returns_400(
+        self,
+        mock_db,
+        sample_host_user,
+        sample_booking,
+    ):
+        """Test that completing a CANCELLED booking returns 400."""
+        sample_booking.status = BookingStatus.CANCELLED
+
+        with (
+            patch("app.routers.bookings.get_db", return_value=mock_db),
+            patch("app.core.deps.get_db", return_value=mock_db),
+            patch("app.core.deps.token_service") as mock_token_service,
+            patch("app.routers.bookings.BookingRepository") as mock_booking_repo_cls,
+        ):
+            mock_token_service.verify_token.return_value = MagicMock(
+                sub=str(sample_host_user.id), token_type="access"
+            )
+
+            with patch("app.core.deps.UserRepository") as mock_user_repo_cls:
+                mock_user_repo = AsyncMock()
+                mock_user_repo.get_by_id.return_value = sample_host_user
+                mock_user_repo_cls.return_value = mock_user_repo
+
+                mock_booking_repo = AsyncMock()
+                mock_booking_repo.get_by_id.return_value = sample_booking
+                mock_booking_repo_cls.return_value = mock_booking_repo
+
+                async with AsyncClient(
+                    transport=ASGITransport(app=app), base_url="http://test"
+                ) as client:
+                    response = await client.post(
+                        f"/api/v1/bookings/{sample_booking.id}/complete",
+                        headers=get_auth_header(sample_host_user.id),
+                    )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST

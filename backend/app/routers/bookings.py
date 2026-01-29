@@ -440,3 +440,112 @@ async def cancel_booking(
     booking = await booking_repo.get_by_id(booking_id, load_relationships=True)
 
     return _build_booking_response(booking, include_details=True)
+
+
+@router.post(
+    "/{booking_id}/complete",
+    response_model=BookingWithDetailsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Complete a booking session",
+    description="Host completes an in-progress session, capturing payment and transferring funds.",
+)
+async def complete_booking(
+    booking_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> BookingWithDetailsResponse:
+    """Complete a booking session and process payment.
+
+    This endpoint:
+    1. Validates the booking is in IN_PROGRESS status
+    2. Captures the Stripe PaymentIntent (charges the client)
+    3. Creates a Transfer to the host's connected account
+    4. Updates the booking status to COMPLETED
+
+    Args:
+        booking_id: The booking's unique identifier.
+        db: The database session (injected).
+        current_user: The authenticated user (injected).
+
+    Returns:
+        BookingWithDetailsResponse with the completed booking.
+
+    Raises:
+        HTTPException: 400 if booking is not in IN_PROGRESS status.
+        HTTPException: 403 if user is not the host of the booking.
+        HTTPException: 404 if booking not found.
+        HTTPException: 500 if Stripe payment capture fails.
+    """
+    settings = get_settings()
+    booking_repo = BookingRepository(db)
+    host_repo = HostProfileRepository(db)
+
+    # Get the booking
+    booking = await booking_repo.get_by_id(booking_id, load_relationships=True)
+    if booking is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Booking not found",
+        )
+
+    # Verify that the current user is the host
+    if booking.host_id != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the host can complete this booking",
+        )
+
+    # Verify the booking is in IN_PROGRESS status
+    if booking.status != BookingStatus.IN_PROGRESS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only in_progress bookings can be completed",
+        )
+
+    # Get the host profile for Stripe account
+    host_profile = await host_repo.get_by_id(UUID(booking.host_profile_id))
+    stripe_transfer_id = None
+
+    # Capture the payment and create transfer if Stripe is configured
+    if booking.stripe_payment_intent_id and settings.stripe_secret_key:
+        try:
+            # Capture the PaymentIntent (charges the client)
+            capture_success = await stripe_service.capture_payment_intent(
+                booking.stripe_payment_intent_id
+            )
+
+            if not capture_success:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to capture payment",
+                )
+
+            # Create transfer to host's connected account
+            if host_profile and host_profile.stripe_account_id:
+                stripe_transfer_id = await stripe_service.create_transfer(
+                    amount_cents=booking.host_payout_cents,
+                    destination_account_id=host_profile.stripe_account_id,
+                    metadata={
+                        "booking_id": str(booking_id),
+                        "client_id": booking.client_id,
+                        "host_id": booking.host_id,
+                    },
+                )
+
+        except stripe.StripeError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Payment processing error: {e.user_message if hasattr(e, 'user_message') else e!s}",
+            ) from e
+
+    # Update the booking status to COMPLETED
+    booking = await booking_repo.update_status(
+        booking_id,
+        BookingStatus.COMPLETED,
+        stripe_transfer_id=stripe_transfer_id,
+    )
+
+    # Reload with relationships for response
+    booking = await booking_repo.get_by_id(booking_id, load_relationships=True)
+
+    return _build_booking_response(booking, include_details=True)

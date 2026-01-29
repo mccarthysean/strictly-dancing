@@ -1259,3 +1259,30 @@ strictly-dancing/
 
 **Next**: T043 - Implement Session Completion with Capture
 
+---
+
+### Entry [E-044] 2026-01-29T07:55:00Z
+
+**Task**: T043 - Implement Session Completion with Capture
+**Status**: DONE
+**Progress**: 43/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Implemented POST /api/v1/bookings/{id}/complete endpoint in app/routers/bookings.py
+- Validates booking is in IN_PROGRESS status (returns 400 otherwise)
+- Only host can complete the booking (returns 403 for client or other users)
+- Captures Stripe PaymentIntent using stripe_service.capture_payment_intent()
+- Creates Transfer to host's connected account using stripe_service.create_transfer()
+- Updates booking status to COMPLETED with stripe_transfer_id
+- Added create_transfer() method to StripeService for transferring funds to connected accounts
+- Created 10 comprehensive unit tests for complete endpoint (all passing)
+- Created 5 unit tests for create_transfer method (all passing)
+
+**Evidence**:
+- Tests: All passing (739/739 total - 15 new tests added)
+- Files: app/routers/bookings.py, app/services/stripe.py, tests/unit/test_bookings_router.py, tests/unit/test_stripe_service.py
+- Linting: All checks passed
+- Key tests: test_complete_booking_endpoint_exists, test_complete_booking_validates_in_progress_status, test_complete_booking_captures_payment_intent, test_complete_booking_creates_transfer
+
+**Next**: T044 - Implement Booking List Endpoint
+
