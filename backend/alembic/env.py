@@ -4,13 +4,16 @@ import asyncio
 from logging.config import fileConfig
 
 from sqlalchemy.engine import Connection
-from sqlalchemy.orm import declarative_base
 
 from alembic import context
 
 # Import our application's SQLAlchemy configuration
 from app.core.config import get_settings
 from app.core.database import async_engine
+
+# Import models for autogenerate support
+# All models should be imported via the models package
+from app.models import Base  # noqa: E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -28,17 +31,8 @@ config.set_main_option("sqlalchemy.url", settings.database_url)
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Import all models here so they are registered with SQLAlchemy's metadata
-# This is critical for autogenerate to detect model changes
-# For now, we don't have models yet, so we'll use a placeholder Base
-# When models are added, import them here, e.g.:
-# from app.models.user import User
-Base = declarative_base()
-
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
+# Use the Base.metadata for autogenerate support
+# Models are imported via the models package above
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

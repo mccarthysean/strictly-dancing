@@ -197,3 +197,29 @@ strictly-dancing/
 - Alembic heads: 000000000001 recognized
 
 **Next**: T005 - Create User Database Model
+
+---
+
+### Entry [E-006] 2026-01-29T06:00:00Z
+
+**Task**: T005 - Create User Database Model
+**Status**: DONE
+**Progress**: 5/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created app/models/base.py with Base class, TimestampMixin, and UUIDPrimaryKeyMixin
+- Created app/models/user.py with User model and UserType enum
+- User has all required fields: id (UUID), email, password_hash, first_name, last_name, user_type, email_verified, is_active, created_at, updated_at
+- Email has unique constraint and index
+- user_type is ENUM (client, host, both)
+- Created migration 000000000002 for users table
+- Updated alembic/env.py to import models for autogenerate support
+- Created 13 unit tests for User model (all passing)
+
+**Evidence**:
+- Tests: All passing (29/29 total)
+- Files: app/models/base.py, app/models/user.py, app/models/__init__.py, alembic/versions/20260129_010000_create_users_table.py, tests/unit/test_user_model.py
+- Linting: All checks passed
+- Alembic heads: 000000000002 recognized
+
+**Next**: T006 - Create User Pydantic Schemas

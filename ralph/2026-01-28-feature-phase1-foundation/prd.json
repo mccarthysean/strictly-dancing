@@ -123,15 +123,15 @@
       "id": "T005",
       "title": "Create User Database Model",
       "description": "Implement User SQLAlchemy model with all required fields and create migration.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T004"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "backend/app/models/user.py exists with User model", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "User has fields: id (UUID), email, password_hash, first_name, last_name, user_type, email_verified, is_active, created_at, updated_at", "verification": "code_review", "met": false},
-        {"id": "AC03", "criterion": "Email has unique constraint", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "user_type is ENUM (client, host, both)", "verification": "code_review", "met": false},
-        {"id": "AC05", "criterion": "Alembic migration for users table exists", "verification": "file_exists", "met": false}
+        {"id": "AC01", "criterion": "backend/app/models/user.py exists with User model", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "User has fields: id (UUID), email, password_hash, first_name, last_name, user_type, email_verified, is_active, created_at, updated_at", "verification": "code_review", "met": true},
+        {"id": "AC03", "criterion": "Email has unique constraint", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "user_type is ENUM (client, host, both)", "verification": "code_review", "met": true},
+        {"id": "AC05", "criterion": "Alembic migration for users table exists", "verification": "file_exists", "met": true}
       ],
       "testing": {"unit_tests": ["test_user_model_instantiation", "test_user_model_has_required_fields"]}
     },
