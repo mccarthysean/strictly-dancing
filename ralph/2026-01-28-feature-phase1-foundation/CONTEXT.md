@@ -2197,3 +2197,54 @@ strictly-dancing/
 - Key features: weekly schedule editor, one-time overrides, blocked dates calendar
 
 **Next**: T069 - Configure Push Notifications Backend
+
+---
+
+### Entry [E-070] 2026-01-29T10:05:00Z
+
+**Task**: T069 - Configure Push Notifications Backend
+**Status**: DONE
+**Progress**: 69/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created push_tokens database table and model (app/models/push_token.py):
+  - Stores Expo push tokens per user/device
+  - DevicePlatform enum (ios, android, web)
+  - Indexes for efficient user token lookups
+  - Unique constraint on token value
+- Created Alembic migration (20260129_100000_create_push_tokens_table.py)
+- Created PushNotificationService (app/services/push_notifications.py):
+  - register_token() - Register/update Expo push token for user
+  - unregister_token() - Deactivate a push token
+  - get_user_tokens() - Get all tokens for a user
+  - send_notification() - Send to single device
+  - send_notifications() - Batch send to multiple devices
+  - send_to_user() - Send to all user's devices
+  - send_to_users() - Send to multiple users
+  - Automatic token deactivation on DeviceNotRegistered error
+- Created push notification schemas (app/schemas/push.py):
+  - RegisterPushTokenRequest with token format validation
+  - UnregisterPushTokenRequest
+  - PushTokenResponse, PushTokenListResponse
+- Created push notification router (app/routers/push.py):
+  - POST /api/v1/push/register - Register push token
+  - POST /api/v1/push/unregister - Unregister token
+  - GET /api/v1/push/tokens - Get user's tokens
+  - DELETE /api/v1/push/tokens/{token_id} - Delete specific token
+- Added 35 unit tests covering:
+  - Token validation (valid/invalid formats)
+  - Token registration (new, existing, invalid)
+  - Token unregistration
+  - Sending notifications (success, errors, batch)
+  - All API endpoints
+- All 1137 backend tests pass (35 new tests added)
+- Linting passes
+
+**Evidence**:
+- Tests: All passing (1137/1137 total - 35 new tests added)
+- Files: app/models/push_token.py, app/services/push_notifications.py, app/schemas/push.py, app/routers/push.py
+- Migration: alembic/versions/20260129_100000_create_push_tokens_table.py
+- Test files: tests/unit/test_push_notification_service.py, tests/unit/test_push_router.py
+- Linting: All checks passed
+
+**Next**: T070 - Implement Push Notification Triggers

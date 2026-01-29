@@ -55,6 +55,12 @@ from app.schemas.messaging import (
     StartConversationRequest,
     UnreadCountResponse,
 )
+from app.schemas.push import (
+    PushTokenListResponse,
+    PushTokenResponse,
+    RegisterPushTokenRequest,
+    UnregisterPushTokenRequest,
+)
 from app.schemas.review import (
     AddResponseRequest,
     CreateReviewRequest,
@@ -140,4 +146,9 @@ __all__ = [
     "ReviewListResponse",
     "ReviewUserSummary",
     "AddResponseRequest",
+    # Push notification schemas
+    "RegisterPushTokenRequest",
+    "UnregisterPushTokenRequest",
+    "PushTokenResponse",
+    "PushTokenListResponse",
 ]
