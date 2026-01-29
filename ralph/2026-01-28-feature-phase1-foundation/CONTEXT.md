@@ -57,3 +57,21 @@ T001 (FastAPI init)
 ## Progress Log
 
 <!-- Append entries below as tasks are completed -->
+
+### Entry [E-001] 2026-01-28T21:35:00Z
+
+**Task**: T001 - Initialize Backend FastAPI Project
+**Status**: DONE
+**Progress**: 1/10 tasks | Blockers: 0
+
+**Accomplished**:
+- Created pyproject.toml with FastAPI, SQLAlchemy, Pydantic, pytest dependencies
+- Created backend/app/main.py with FastAPI app factory and health endpoint
+- Created test suite with conftest.py and unit tests
+- All 2 tests passing (test_health_endpoint_returns_200, test_health_endpoint_returns_json)
+
+**Evidence**:
+- Tests: All passing (2/2)
+- Files: pyproject.toml, app/main.py, tests/unit/test_health.py
+
+**Next**: T002 - Configure Backend Core Settings

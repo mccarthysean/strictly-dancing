@@ -19,7 +19,7 @@
         "id": "CC01",
         "description": "All backend unit tests pass",
         "verification": "test",
-        "verification_command": "cd /home/sean/git_wsl/strictly-dancing/backend && uv run pytest -v",
+        "verification_command": "cd /workspaces/strictly-dancing/backend && uv run pytest -v",
         "passes": false
       },
       {
@@ -33,14 +33,14 @@
         "id": "CC03",
         "description": "TypeScript build succeeds",
         "verification": "build",
-        "verification_command": "cd /home/sean/git_wsl/strictly-dancing/frontend && bun run tsc",
+        "verification_command": "cd /workspaces/strictly-dancing/frontend && bun run tsc",
         "passes": false
       },
       {
         "id": "CC04",
         "description": "Python linting passes",
         "verification": "lint",
-        "verification_command": "cd /home/sean/git_wsl/strictly-dancing/backend && ruff check .",
+        "verification_command": "cd /workspaces/strictly-dancing/backend && ruff check .",
         "passes": false
       }
     ]
@@ -50,7 +50,7 @@
       "id": "T001",
       "title": "Initialize Backend FastAPI Project",
       "description": "Set up Python backend with FastAPI, UV for dependencies, pyproject.toml, and basic application structure.",
-      "passes": false,
+      "passes": true,
       "phase": "implementation",
       "dependencies": [],
       "acceptance_criteria": [
@@ -58,25 +58,25 @@
           "id": "AC01",
           "criterion": "pyproject.toml exists with FastAPI, SQLAlchemy, Pydantic dependencies",
           "verification": "file_exists",
-          "met": false
+          "met": true
         },
         {
           "id": "AC02",
           "criterion": "backend/app/main.py exists with FastAPI app factory",
           "verification": "file_exists",
-          "met": false
+          "met": true
         },
         {
           "id": "AC03",
           "criterion": "Health endpoint GET /health returns 200 with JSON response",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC04",
           "criterion": "Unit test for health endpoint exists and passes",
           "verification": "test",
-          "met": false
+          "met": true
         }
       ],
       "testing": {
@@ -443,7 +443,7 @@
     }
   ],
   "global_context": {
-    "project_root": "/home/sean/git_wsl/strictly-dancing",
+    "project_root": "/workspaces/strictly-dancing",
     "playwright_verification_required": false,
     "tdd_methodology": "Write tests alongside implementation, run tests AFTER both are complete"
   }
