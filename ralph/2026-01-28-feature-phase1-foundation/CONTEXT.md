@@ -534,3 +534,27 @@ strictly-dancing/
 - PWA: manifest configured with Strictly Dancing branding
 
 **Next**: T018 - Configure Frontend API Client
+
+---
+
+### Entry [E-019] 2026-01-29T07:00:00Z
+
+**Task**: T018 - Configure Frontend API Client
+**Status**: DONE
+**Progress**: 18/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Created frontend/src/lib/api/client.ts with openapi-fetch setup
+- Created frontend/src/lib/api/$api.ts with TanStack Query hooks via openapi-react-query
+- API base URL configurable via VITE_API_BASE_URL environment variable
+- Auth token interceptor automatically adds Bearer token to requests
+- Token storage helpers (getAccessToken, getRefreshToken, setTokens, clearTokens)
+- Generated TypeScript types from backend OpenAPI schema (src/types/api.gen.ts)
+- TypeScript check passes with no errors
+
+**Evidence**:
+- Files: src/lib/api/client.ts, src/lib/api/$api.ts, src/types/api.gen.ts
+- TypeScript: tsc --noEmit passes with no errors
+- Dependencies: openapi-fetch@0.13.8, openapi-react-query@0.5.1
+
+**Next**: T019 - Create Frontend Auth Context

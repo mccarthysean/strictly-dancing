@@ -320,14 +320,14 @@
       "id": "T018",
       "title": "Configure Frontend API Client",
       "description": "Set up OpenAPI client with TanStack Query for type-safe API calls.",
-      "passes": false,
+      "passes": true,
       "phase": "phase1-foundation",
       "dependencies": ["T017"],
       "acceptance_criteria": [
-        {"id": "AC01", "criterion": "frontend/src/lib/api/client.ts exists with openapi-fetch setup", "verification": "file_exists", "met": false},
-        {"id": "AC02", "criterion": "frontend/src/lib/api/$api.ts exists with TanStack Query hooks", "verification": "file_exists", "met": false},
-        {"id": "AC03", "criterion": "generate-types script in package.json", "verification": "code_review", "met": false},
-        {"id": "AC04", "criterion": "API base URL configurable via environment variable", "verification": "code_review", "met": false}
+        {"id": "AC01", "criterion": "frontend/src/lib/api/client.ts exists with openapi-fetch setup", "verification": "file_exists", "met": true},
+        {"id": "AC02", "criterion": "frontend/src/lib/api/$api.ts exists with TanStack Query hooks", "verification": "file_exists", "met": true},
+        {"id": "AC03", "criterion": "generate-types script in package.json", "verification": "code_review", "met": true},
+        {"id": "AC04", "criterion": "API base URL configurable via environment variable", "verification": "code_review", "met": true}
       ],
       "testing": {"unit_tests": []}
     },
