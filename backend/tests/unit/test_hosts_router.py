@@ -7,6 +7,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.main import create_app
+from app.models.dance_style import DanceStyleCategory
 from app.models.host_profile import VerificationStatus
 
 
@@ -408,3 +409,214 @@ class TestSearchHostsEndpoint:
             assert data["items"][0]["headline"] == "Salsa Expert"
             assert data["items"][1]["first_name"] == "Bob"
             assert data["items"][1]["headline"] == "Bachata Pro"
+
+
+class TestGetHostProfileEndpoint:
+    """Tests for GET /api/v1/hosts/{id} endpoint."""
+
+    def test_get_host_profile_endpoint_exists(self, client: TestClient) -> None:
+        """Test that the get host profile endpoint exists and accepts GET."""
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = create_mock_host_profile(profile_id=host_id)
+        # Add extra required fields
+        mock_profile.bio = "Test bio"
+        mock_profile.total_sessions = 0
+        mock_profile.stripe_onboarding_complete = False
+        mock_profile.created_at = "2026-01-01T00:00:00Z"
+        mock_profile.updated_at = "2026-01-28T00:00:00Z"
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+            mock_host_repo.get_dance_styles.return_value = []
+
+            response = client.get(f"/api/v1/hosts/{host_id}")
+            assert response.status_code != status.HTTP_404_NOT_FOUND
+
+    def test_get_host_profile_returns_200_on_success(self, client: TestClient) -> None:
+        """Test that get host profile returns 200 with valid host ID."""
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = create_mock_host_profile(profile_id=host_id)
+        # Add extra required fields
+        mock_profile.bio = "Test bio"
+        mock_profile.total_sessions = 0
+        mock_profile.stripe_onboarding_complete = False
+        mock_profile.created_at = "2026-01-01T00:00:00Z"
+        mock_profile.updated_at = "2026-01-28T00:00:00Z"
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+            mock_host_repo.get_dance_styles.return_value = []
+
+            response = client.get(f"/api/v1/hosts/{host_id}")
+            assert response.status_code == status.HTTP_200_OK
+
+    def test_get_host_profile_returns_full_profile(self, client: TestClient) -> None:
+        """Test that get host profile returns full profile data."""
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_user = create_mock_user(first_name="John", last_name="Dancer")
+        mock_profile = create_mock_host_profile(
+            profile_id=host_id,
+            headline="Expert Tango Instructor",
+            hourly_rate_cents=7500,
+            rating_average=4.9,
+            total_reviews=50,
+            verification_status=VerificationStatus.VERIFIED,
+            user=mock_user,
+        )
+        # Add extra fields that the response needs
+        mock_profile.bio = "10 years of dance experience"
+        mock_profile.total_sessions = 200
+        mock_profile.stripe_onboarding_complete = True
+        mock_profile.created_at = "2026-01-01T00:00:00Z"
+        mock_profile.updated_at = "2026-01-28T00:00:00Z"
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+            mock_host_repo.get_dance_styles.return_value = []
+
+            response = client.get(f"/api/v1/hosts/{host_id}")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert data["id"] == host_id
+            assert data["headline"] == "Expert Tango Instructor"
+            assert data["hourly_rate_cents"] == 7500
+            assert data["rating_average"] == 4.9
+            assert data["total_reviews"] == 50
+            assert data["first_name"] == "John"
+            assert data["last_name"] == "Dancer"
+
+    def test_get_host_profile_includes_dance_styles(self, client: TestClient) -> None:
+        """Test that get host profile includes dance styles."""
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = create_mock_host_profile(profile_id=host_id)
+        mock_profile.bio = "Dance expert"
+        mock_profile.total_sessions = 100
+        mock_profile.stripe_onboarding_complete = True
+        mock_profile.created_at = "2026-01-01T00:00:00Z"
+        mock_profile.updated_at = "2026-01-28T00:00:00Z"
+
+        # Create mock dance style
+        mock_dance_style = MagicMock()
+        mock_dance_style.id = "770e8400-e29b-41d4-a716-446655440001"
+        mock_dance_style.name = "Salsa"
+        mock_dance_style.slug = "salsa"
+        mock_dance_style.category = DanceStyleCategory.LATIN  # Use proper enum
+        mock_dance_style.description = "Popular Latin dance"
+
+        mock_host_dance_style = MagicMock()
+        mock_host_dance_style.dance_style_id = "770e8400-e29b-41d4-a716-446655440001"
+        mock_host_dance_style.skill_level = 5
+        mock_host_dance_style.dance_style = mock_dance_style
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+            mock_host_repo.get_dance_styles.return_value = [mock_host_dance_style]
+
+            response = client.get(f"/api/v1/hosts/{host_id}")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert "dance_styles" in data
+            assert len(data["dance_styles"]) == 1
+            assert data["dance_styles"][0]["skill_level"] == 5
+            assert data["dance_styles"][0]["dance_style"]["name"] == "Salsa"
+
+    def test_get_host_profile_excludes_password_hash(self, client: TestClient) -> None:
+        """Test that get host profile never exposes password_hash."""
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_user = create_mock_user()
+        mock_user.password_hash = "super_secret_hash"
+        mock_profile = create_mock_host_profile(profile_id=host_id, user=mock_user)
+        mock_profile.bio = "Test bio"
+        mock_profile.total_sessions = 0
+        mock_profile.stripe_onboarding_complete = False
+        mock_profile.created_at = "2026-01-01T00:00:00Z"
+        mock_profile.updated_at = "2026-01-28T00:00:00Z"
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+            mock_host_repo.get_dance_styles.return_value = []
+
+            response = client.get(f"/api/v1/hosts/{host_id}")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert "password_hash" not in data
+            assert "password" not in data
+            # Make sure user-related sensitive data isn't exposed
+            response_str = response.text
+            assert "super_secret_hash" not in response_str
+
+    def test_get_host_profile_returns_404_for_nonexistent(
+        self, client: TestClient
+    ) -> None:
+        """Test that get host profile returns 404 for non-existent host."""
+        host_id = "660e8400-e29b-41d4-a716-446655440099"
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = None
+
+            response = client.get(f"/api/v1/hosts/{host_id}")
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_get_host_profile_returns_404_message(self, client: TestClient) -> None:
+        """Test that get host profile returns appropriate error message for 404."""
+        host_id = "660e8400-e29b-41d4-a716-446655440099"
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = None
+
+            response = client.get(f"/api/v1/hosts/{host_id}")
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+            data = response.json()
+            assert "detail" in data
+
+    def test_get_host_profile_validates_uuid_format(self, client: TestClient) -> None:
+        """Test that get host profile validates UUID format."""
+        invalid_host_id = "not-a-valid-uuid"
+
+        response = client.get(f"/api/v1/hosts/{invalid_host_id}")
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_get_host_profile_returns_verification_status(
+        self, client: TestClient
+    ) -> None:
+        """Test that get host profile returns verification status."""
+        host_id = "660e8400-e29b-41d4-a716-446655440001"
+        mock_profile = create_mock_host_profile(
+            profile_id=host_id,
+            verification_status=VerificationStatus.VERIFIED,
+        )
+        mock_profile.bio = "Bio"
+        mock_profile.total_sessions = 10
+        mock_profile.stripe_onboarding_complete = True
+        mock_profile.created_at = "2026-01-01T00:00:00Z"
+        mock_profile.updated_at = "2026-01-28T00:00:00Z"
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.get_by_id.return_value = mock_profile
+            mock_host_repo.get_dance_styles.return_value = []
+
+            response = client.get(f"/api/v1/hosts/{host_id}")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert data["verification_status"] == "verified"

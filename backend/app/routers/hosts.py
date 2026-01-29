@@ -4,14 +4,17 @@ import math
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.models.host_profile import VerificationStatus
 from app.repositories.host_profile import HostProfileRepository
 from app.schemas.host_profile import (
+    DanceStyleResponse,
+    HostDanceStyleResponse,
     HostProfileSummaryResponse,
+    HostProfileWithUserResponse,
     HostSearchResponse,
 )
 
@@ -244,3 +247,80 @@ def _calculate_distance_km(lat: float, lng: float, profile) -> float | None:
     # method handles this properly.
     # In a full implementation, we'd extract lat/lng from profile.location
     return None
+
+
+@router.get(
+    "/{host_id}",
+    response_model=HostProfileWithUserResponse,
+    summary="Get host profile by ID",
+    description="Get a public host profile by its unique identifier.",
+)
+async def get_host_profile(
+    db: DbSession,
+    host_id: UUID,
+) -> HostProfileWithUserResponse:
+    """Get a host profile by ID.
+
+    Returns the full public profile for a host, including their dance styles,
+    rating, and other public information. Excludes sensitive data like
+    password_hash.
+
+    Args:
+        db: The database session (injected).
+        host_id: The host profile UUID.
+
+    Returns:
+        HostProfileWithUserResponse with full profile data.
+
+    Raises:
+        HTTPException: 404 if host profile not found.
+    """
+    host_repo = HostProfileRepository(db)
+
+    # Get the host profile
+    profile = await host_repo.get_by_id(host_id)
+    if profile is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Host profile not found",
+        )
+
+    # Get dance styles for the profile
+    dance_styles = await host_repo.get_dance_styles(host_id)
+
+    # Build dance styles response
+    dance_styles_response = [
+        HostDanceStyleResponse(
+            dance_style_id=str(hds.dance_style_id),
+            skill_level=hds.skill_level,
+            dance_style=DanceStyleResponse(
+                id=str(hds.dance_style.id),
+                name=hds.dance_style.name,
+                slug=hds.dance_style.slug,
+                category=hds.dance_style.category,
+                description=hds.dance_style.description,
+            ),
+        )
+        for hds in dance_styles
+    ]
+
+    # Build and return response
+    return HostProfileWithUserResponse(
+        id=str(profile.id),
+        user_id=str(profile.user_id),
+        bio=profile.bio,
+        headline=profile.headline,
+        hourly_rate_cents=profile.hourly_rate_cents,
+        rating_average=profile.rating_average,
+        total_reviews=profile.total_reviews,
+        total_sessions=profile.total_sessions,
+        verification_status=profile.verification_status,
+        latitude=None,  # PostGIS location extraction would go here
+        longitude=None,  # PostGIS location extraction would go here
+        stripe_onboarding_complete=profile.stripe_onboarding_complete,
+        created_at=profile.created_at,
+        updated_at=profile.updated_at,
+        dance_styles=dance_styles_response,
+        first_name=profile.user.first_name,
+        last_name=profile.user.last_name,
+    )

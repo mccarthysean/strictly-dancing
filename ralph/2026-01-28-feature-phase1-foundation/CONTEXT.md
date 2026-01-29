@@ -892,3 +892,29 @@ strictly-dancing/
 
 **Next**: T031 - Implement Get Host Profile Endpoint
 
+---
+
+### Entry [E-032] 2026-01-29T07:05:00Z
+
+**Task**: T031 - Implement Get Host Profile Endpoint
+**Status**: DONE
+**Progress**: 31/94 tasks | Blockers: 0
+
+**Accomplished**:
+- Implemented GET /api/v1/hosts/{id} endpoint in app/routers/hosts.py
+- Endpoint returns full host profile including dance styles with skill levels
+- Response includes: id, user_id, bio, headline, hourly_rate_cents, rating_average, total_reviews, verification_status, dance_styles
+- Returns HostProfileWithUserResponse which includes user's first_name and last_name
+- Excludes sensitive data (password_hash, etc.) - verified with explicit test
+- Returns 404 Not Found for non-existent host IDs
+- Validates UUID format and returns 422 for invalid UUIDs
+- Added 9 comprehensive unit tests (all passing)
+
+**Evidence**:
+- Tests: All passing (410/410 total - 9 new tests added)
+- Files: app/routers/hosts.py, tests/unit/test_hosts_router.py
+- Linting: All checks passed
+- Key tests: test_get_host_profile_endpoint_exists, test_get_host_profile_returns_full_profile, test_get_host_profile_includes_dance_styles, test_get_host_profile_excludes_password_hash, test_get_host_profile_returns_404_for_nonexistent
+
+**Next**: T032 - Frontend Host Discovery Page
+
