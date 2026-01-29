@@ -1911,3 +1911,202 @@ class TestCalculateDistanceKm:
         result = _calculate_distance_km(40.7, -74.0, mock_profile)
         # Currently returns None as per implementation
         assert result is None
+
+
+class TestFuzzySearchHosts:
+    """Tests for fuzzy text search on hosts endpoint using pg_trgm."""
+
+    def test_search_hosts_accepts_q_parameter(self, client: TestClient) -> None:
+        """Test that search hosts accepts the q query parameter."""
+        mock_profile = create_mock_host_profile()
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([mock_profile], 1)
+
+            response = client.get("/api/v1/hosts?q=salsa")
+            assert response.status_code == status.HTTP_200_OK
+
+            # Verify that search was called with query parameter
+            mock_host_repo.search.assert_called_once()
+            call_kwargs = mock_host_repo.search.call_args.kwargs
+            assert call_kwargs["query"] == "salsa"
+
+    def test_search_hosts_passes_query_to_repository(self, client: TestClient) -> None:
+        """Test that the q parameter is passed to the repository search method."""
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([], 0)
+
+            client.get("/api/v1/hosts?q=john%20dancer")
+
+            mock_host_repo.search.assert_called_once()
+            call_kwargs = mock_host_repo.search.call_args.kwargs
+            assert call_kwargs["query"] == "john dancer"
+
+    def test_search_hosts_q_parameter_with_max_length(self, client: TestClient) -> None:
+        """Test that q parameter respects max_length of 200 characters."""
+        long_query = "a" * 201  # Over 200 characters
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([], 0)
+
+            response = client.get(f"/api/v1/hosts?q={long_query}")
+            # FastAPI should reject queries over 200 chars
+            assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_search_hosts_empty_query_is_allowed(self, client: TestClient) -> None:
+        """Test that an empty q parameter is allowed and works."""
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([], 0)
+
+            response = client.get("/api/v1/hosts?q=")
+            assert response.status_code == status.HTTP_200_OK
+
+            # Empty query should be passed as empty string
+            call_kwargs = mock_host_repo.search.call_args.kwargs
+            assert call_kwargs["query"] == ""
+
+    def test_search_hosts_q_defaults_to_none(self, client: TestClient) -> None:
+        """Test that q parameter defaults to None when not provided."""
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([], 0)
+
+            client.get("/api/v1/hosts")
+
+            mock_host_repo.search.assert_called_once()
+            call_kwargs = mock_host_repo.search.call_args.kwargs
+            assert call_kwargs["query"] is None
+
+    def test_search_hosts_sort_by_relevance(self, client: TestClient) -> None:
+        """Test that sort_by=relevance is accepted and passed to repository."""
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([], 0)
+
+            response = client.get("/api/v1/hosts?q=salsa&sort_by=relevance")
+            assert response.status_code == status.HTTP_200_OK
+
+            mock_host_repo.search.assert_called_once()
+            call_kwargs = mock_host_repo.search.call_args.kwargs
+            assert call_kwargs["order_by"] == "relevance"
+
+    def test_search_hosts_with_query_defaults_to_relevance_sort(
+        self, client: TestClient
+    ) -> None:
+        """Test that when q is provided with invalid sort_by, defaults to relevance."""
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([], 0)
+
+            response = client.get("/api/v1/hosts?q=dancer&sort_by=invalid")
+            assert response.status_code == status.HTTP_200_OK
+
+            mock_host_repo.search.assert_called_once()
+            call_kwargs = mock_host_repo.search.call_args.kwargs
+            assert call_kwargs["order_by"] == "relevance"
+
+    def test_search_hosts_without_query_defaults_to_distance_sort(
+        self, client: TestClient
+    ) -> None:
+        """Test that without q, invalid sort_by defaults to distance."""
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([], 0)
+
+            response = client.get("/api/v1/hosts?sort_by=invalid")
+            assert response.status_code == status.HTTP_200_OK
+
+            mock_host_repo.search.assert_called_once()
+            call_kwargs = mock_host_repo.search.call_args.kwargs
+            assert call_kwargs["order_by"] == "distance"
+
+    def test_search_hosts_q_combined_with_location(self, client: TestClient) -> None:
+        """Test that q parameter can be combined with location filters."""
+        mock_profile = create_mock_host_profile()
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([mock_profile], 1)
+
+            response = client.get(
+                "/api/v1/hosts?q=salsa&lat=40.7&lng=-74.0&radius_km=25"
+            )
+            assert response.status_code == status.HTTP_200_OK
+
+            mock_host_repo.search.assert_called_once()
+            call_kwargs = mock_host_repo.search.call_args.kwargs
+            assert call_kwargs["query"] == "salsa"
+            assert call_kwargs["latitude"] == 40.7
+            assert call_kwargs["longitude"] == -74.0
+            assert call_kwargs["radius_km"] == 25.0
+
+    def test_search_hosts_q_combined_with_filters(self, client: TestClient) -> None:
+        """Test that q parameter can be combined with other filters."""
+        mock_profile = create_mock_host_profile()
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([mock_profile], 1)
+
+            response = client.get(
+                "/api/v1/hosts?q=tango&min_rating=4.0&max_price=10000"
+            )
+            assert response.status_code == status.HTTP_200_OK
+
+            mock_host_repo.search.assert_called_once()
+            call_kwargs = mock_host_repo.search.call_args.kwargs
+            assert call_kwargs["query"] == "tango"
+            assert call_kwargs["min_rating"] == 4.0
+            assert call_kwargs["max_price_cents"] == 10000
+
+    def test_search_hosts_q_with_special_characters(self, client: TestClient) -> None:
+        """Test that q parameter handles special characters gracefully."""
+        mock_profile = create_mock_host_profile()
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([mock_profile], 1)
+
+            # URL encode special characters
+            response = client.get("/api/v1/hosts?q=john%27s%20dance")
+            assert response.status_code == status.HTTP_200_OK
+
+            mock_host_repo.search.assert_called_once()
+            call_kwargs = mock_host_repo.search.call_args.kwargs
+            assert call_kwargs["query"] == "john's dance"
+
+    def test_search_hosts_returns_results_for_fuzzy_query(
+        self, client: TestClient
+    ) -> None:
+        """Test that search returns matching profiles for a query."""
+        mock_profile = create_mock_host_profile(
+            headline="Professional Salsa Instructor"
+        )
+
+        with patch("app.routers.hosts.HostProfileRepository") as mock_host_repo_class:
+            mock_host_repo = AsyncMock()
+            mock_host_repo_class.return_value = mock_host_repo
+            mock_host_repo.search.return_value = ([mock_profile], 1)
+
+            response = client.get("/api/v1/hosts?q=salsa")
+            assert response.status_code == status.HTTP_200_OK
+
+            data = response.json()
+            assert len(data["items"]) == 1
+            assert data["items"][0]["headline"] == "Professional Salsa Instructor"
+            assert data["total"] == 1

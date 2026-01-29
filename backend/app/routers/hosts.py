@@ -115,7 +115,7 @@ async def search_hosts(
     sort_by: Annotated[
         str,
         Query(
-            description="Sort field: 'distance', 'rating', 'price', 'reviews'",
+            description="Sort field: 'distance', 'rating', 'price', 'reviews', 'relevance'",
         ),
     ] = "distance",
     sort_order: Annotated[
@@ -139,11 +139,19 @@ async def search_hosts(
             description="Results per page (1-100)",
         ),
     ] = 20,
+    q: Annotated[
+        str | None,
+        Query(
+            max_length=200,
+            description="Search query for fuzzy matching on host names and bio",
+        ),
+    ] = None,
 ) -> HostSearchResponse:
     """Search for dance hosts with filters and geospatial search.
 
     This endpoint provides location-based host discovery with various
-    filtering and sorting options.
+    filtering and sorting options. Supports fuzzy text search using
+    PostgreSQL pg_trgm extension.
 
     Args:
         db: The database session (injected).
@@ -154,18 +162,20 @@ async def search_hosts(
         min_rating: Minimum average rating filter.
         max_price: Maximum hourly rate in cents.
         verified_only: Only return verified hosts.
-        sort_by: Sort field - 'distance', 'rating', 'price', or 'reviews'.
+        sort_by: Sort field - 'distance', 'rating', 'price', 'reviews', or 'relevance'.
         sort_order: Sort order - 'asc' or 'desc'.
         page: Page number (1-indexed).
         page_size: Number of results per page.
+        q: Optional search query for fuzzy text matching on host names and bio.
 
     Returns:
         HostSearchResponse with paginated list of host profiles.
     """
     # Validate sort_by
-    allowed_sort_fields = {"distance", "rating", "price", "reviews"}
+    allowed_sort_fields = {"distance", "rating", "price", "reviews", "relevance"}
     if sort_by not in allowed_sort_fields:
-        sort_by = "distance"
+        # Default to relevance if query provided, otherwise distance
+        sort_by = "relevance" if q else "distance"
 
     # Validate sort_order
     if sort_order not in {"asc", "desc"}:
@@ -187,6 +197,7 @@ async def search_hosts(
         "rating": "rating",
         "price": "price",
         "reviews": "rating",  # Use rating for reviews too since we don't have a separate field
+        "relevance": "relevance",  # For text search ranking
     }
     order_by = order_by_map.get(sort_by, "distance")
 
@@ -201,6 +212,7 @@ async def search_hosts(
         order_by=order_by,
         limit=page_size,
         offset=offset,
+        query=q,
     )
 
     # Filter by verification status if requested

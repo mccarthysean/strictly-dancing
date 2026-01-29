@@ -10,6 +10,7 @@ from sqlalchemy.orm import joinedload
 from app.models.dance_style import DanceStyle
 from app.models.host_dance_style import HostDanceStyle
 from app.models.host_profile import HostProfile
+from app.models.user import User
 
 
 class HostProfileRepository:
@@ -320,6 +321,7 @@ class HostProfileRepository:
         order_by: str = "distance",
         limit: int = 20,
         offset: int = 0,
+        query: str | None = None,
     ) -> tuple[list[HostProfile], int]:
         """Search host profiles with multiple filters.
 
@@ -330,14 +332,16 @@ class HostProfileRepository:
             style_ids: Filter by dance style UUIDs (hosts must have at least one).
             min_rating: Minimum average rating.
             max_price_cents: Maximum hourly rate in cents.
-            order_by: Sort order - "distance", "rating", or "price".
+            order_by: Sort order - "distance", "rating", "price", or "relevance".
             limit: Maximum number of results.
             offset: Number of results to skip.
+            query: Optional text search query for fuzzy matching on names and bio.
 
         Returns:
             Tuple of (list of HostProfile, total_count).
         """
         conditions = []
+        similarity_expr = None
 
         # Location filter
         point = None
@@ -370,14 +374,42 @@ class HostProfileRepository:
         if max_price_cents is not None:
             conditions.append(HostProfile.hourly_rate_cents <= max_price_cents)
 
-        # Build base query
-        base_query = select(HostProfile).options(joinedload(HostProfile.user))
+        # Fuzzy text search filter using pg_trgm
+        if query and query.strip():
+            search_term = query.strip()
+            # Calculate combined similarity score across all searchable fields
+            # GREATEST picks the highest similarity from any field
+            similarity_expr = func.greatest(
+                func.coalesce(func.similarity(User.first_name, search_term), 0),
+                func.coalesce(func.similarity(User.last_name, search_term), 0),
+                func.coalesce(func.similarity(HostProfile.headline, search_term), 0),
+                func.coalesce(func.similarity(HostProfile.bio, search_term), 0),
+                # Also check full name match
+                func.coalesce(
+                    func.similarity(
+                        func.concat(User.first_name, " ", User.last_name), search_term
+                    ),
+                    0,
+                ),
+            )
+            # Minimum similarity threshold of 0.1 for any match
+            conditions.append(similarity_expr > 0.1)
+
+        # Build base query with join to users for text search
+        base_query = (
+            select(HostProfile)
+            .join(User, HostProfile.user_id == User.id)
+            .options(joinedload(HostProfile.user))
+        )
 
         if conditions:
             base_query = base_query.where(and_(*conditions))
 
         # Determine ordering
-        if order_by == "distance" and point is not None:
+        if order_by == "relevance" and similarity_expr is not None:
+            # Sort by similarity score descending
+            base_query = base_query.order_by(similarity_expr.desc())
+        elif order_by == "distance" and point is not None:
             distance_expr = ST_Distance(HostProfile.location, point)
             base_query = base_query.order_by(distance_expr)
         elif order_by == "rating":
@@ -386,12 +418,21 @@ class HostProfileRepository:
             )
         elif order_by == "price":
             base_query = base_query.order_by(HostProfile.hourly_rate_cents.asc())
+        elif similarity_expr is not None:
+            # If searching but order_by is not relevance, still use relevance as tiebreaker
+            base_query = base_query.order_by(
+                similarity_expr.desc(), HostProfile.created_at.desc()
+            )
         else:
             # Default to created_at
             base_query = base_query.order_by(HostProfile.created_at.desc())
 
         # Get total count
-        count_query = select(func.count(HostProfile.id))
+        count_query = (
+            select(func.count(HostProfile.id))
+            .select_from(HostProfile)
+            .join(User, HostProfile.user_id == User.id)
+        )
         if conditions:
             count_query = count_query.where(and_(*conditions))
         count_result = await self._session.execute(count_query)

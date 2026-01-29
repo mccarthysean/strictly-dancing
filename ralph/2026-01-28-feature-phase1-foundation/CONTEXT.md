@@ -3665,3 +3665,50 @@ All 94 tasks have been completed:
 **Next**: T110 or next incomplete task
 
 ---
+
+### Entry [E-018] 2026-01-29T16:57:00Z
+
+**Task**: T110 - Implement Full-Text Search with pg_trgm
+**Status**: DONE
+**Progress**: 103/121 tasks | Blockers: 0
+
+**Accomplished**:
+- Created Alembic migration `20260129_140000_add_pg_trgm_fuzzy_search.py`:
+  - Enables pg_trgm extension for trigram-based similarity search
+  - Creates GIN indexes for efficient fuzzy matching:
+    - `ix_host_profiles_headline_trgm` on host_profiles.headline
+    - `ix_host_profiles_bio_trgm` on host_profiles.bio
+    - `ix_users_first_name_trgm` on users.first_name
+    - `ix_users_last_name_trgm` on users.last_name
+- Updated `app/repositories/host_profile.py`:
+  - Added `query` parameter to `search()` method
+  - Implemented similarity scoring using `func.similarity()` from pg_trgm
+  - Combines similarity scores across name, headline, and bio fields using `func.greatest()`
+  - Added minimum similarity threshold of 0.1 for matches
+  - Added `order_by="relevance"` support for ranking by similarity score
+- Updated `app/routers/hosts.py`:
+  - Added `q` query parameter (max 200 chars) for fuzzy text search
+  - Default sort changes to "relevance" when q is provided with invalid sort_by
+  - Updated docstring to document new search capability
+- Created comprehensive unit tests:
+  - `TestFuzzySearchHosts` in test_hosts_router.py (12 tests)
+  - `TestSearchWithFuzzyQuery` in test_host_profile_repository.py (8 tests)
+- All 1548 backend tests pass with 83.34% coverage
+- Linting passes
+
+**Evidence**:
+- Migration: alembic/versions/20260129_140000_add_pg_trgm_fuzzy_search.py
+- Files: app/repositories/host_profile.py, app/routers/hosts.py
+- Tests: 20 new fuzzy search tests (12 router + 8 repository)
+- Total backend tests: 1548 passing
+- Coverage: 83.34% (above 80% threshold)
+- Linting: All checks passed
+- AC01: Alembic migration enables pg_trgm extension ✓
+- AC02: GIN index on host name/bio for text search ✓
+- AC03: GET /api/v1/hosts?q=search supports fuzzy matching ✓
+- AC04: Search results ranked by similarity score ✓
+- AC05: Unit tests for search functionality (20 tests) ✓
+
+**Next**: T114, T118, T120, T121, or T115
+
+---

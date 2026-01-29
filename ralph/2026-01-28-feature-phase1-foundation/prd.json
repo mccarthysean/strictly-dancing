@@ -4612,7 +4612,7 @@
       "id": "T110",
       "title": "Implement Full-Text Search with pg_trgm",
       "description": "Add fuzzy search for hosts using PostgreSQL pg_trgm extension as per PRD.",
-      "passes": false,
+      "passes": true,
       "phase": "phase2-host-profiles",
       "dependencies": [
         "T030"
@@ -4622,31 +4622,31 @@
           "id": "AC01",
           "criterion": "Alembic migration enables pg_trgm extension",
           "verification": "file_exists",
-          "met": false
+          "met": true
         },
         {
           "id": "AC02",
           "criterion": "GIN index on host name/bio for text search",
           "verification": "file_exists",
-          "met": false
+          "met": true
         },
         {
           "id": "AC03",
           "criterion": "GET /api/v1/hosts?q=search supports fuzzy matching",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC04",
           "criterion": "Search results ranked by similarity score",
           "verification": "test",
-          "met": false
+          "met": true
         },
         {
           "id": "AC05",
           "criterion": "Unit tests for search functionality",
           "verification": "test",
-          "met": false
+          "met": true
         }
       ],
       "testing": {

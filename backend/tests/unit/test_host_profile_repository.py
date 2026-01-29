@@ -723,3 +723,152 @@ class TestHostProfileRepositoryAsyncPatterns:
         assert inspect.iscoroutinefunction(
             host_profile_repository.get_dance_style_by_id
         )
+
+
+class TestSearchWithFuzzyQuery:
+    """Tests for search method with fuzzy text query parameter (pg_trgm)."""
+
+    @pytest.fixture
+    def host_profile_repository(self, mock_session):
+        """Create repository with mock session."""
+        from app.repositories.host_profile import HostProfileRepository
+
+        return HostProfileRepository(mock_session)
+
+    @pytest.fixture
+    def mock_session(self):
+        """Create mock async session."""
+        session = MagicMock()
+        session.execute = AsyncMock()
+        session.flush = AsyncMock()
+        session.add = MagicMock()
+        return session
+
+    async def test_search_accepts_query_parameter(
+        self, host_profile_repository, mock_session
+    ):
+        """Test that search method accepts query parameter."""
+        mock_count_result = MagicMock()
+        mock_count_result.scalar.return_value = 0
+        mock_query_result = MagicMock()
+        mock_query_result.unique.return_value.scalars.return_value.all.return_value = []
+
+        mock_session.execute = AsyncMock(
+            side_effect=[mock_count_result, mock_query_result]
+        )
+
+        # Should not raise an error
+        profiles, count = await host_profile_repository.search(query="salsa")
+        assert count == 0
+        assert profiles == []
+
+    async def test_search_with_empty_query(self, host_profile_repository, mock_session):
+        """Test that search handles empty string query."""
+        mock_count_result = MagicMock()
+        mock_count_result.scalar.return_value = 0
+        mock_query_result = MagicMock()
+        mock_query_result.unique.return_value.scalars.return_value.all.return_value = []
+
+        mock_session.execute = AsyncMock(
+            side_effect=[mock_count_result, mock_query_result]
+        )
+
+        # Empty query should not apply text search filters
+        profiles, count = await host_profile_repository.search(query="")
+        assert count == 0
+
+    async def test_search_with_whitespace_only_query(
+        self, host_profile_repository, mock_session
+    ):
+        """Test that search handles whitespace-only query."""
+        mock_count_result = MagicMock()
+        mock_count_result.scalar.return_value = 0
+        mock_query_result = MagicMock()
+        mock_query_result.unique.return_value.scalars.return_value.all.return_value = []
+
+        mock_session.execute = AsyncMock(
+            side_effect=[mock_count_result, mock_query_result]
+        )
+
+        # Whitespace only should not apply text search filters
+        profiles, count = await host_profile_repository.search(query="   ")
+        assert count == 0
+
+    async def test_search_query_combined_with_location(
+        self, host_profile_repository, mock_session
+    ):
+        """Test that query can be combined with location filters."""
+        mock_count_result = MagicMock()
+        mock_count_result.scalar.return_value = 0
+        mock_query_result = MagicMock()
+        mock_query_result.unique.return_value.scalars.return_value.all.return_value = []
+
+        mock_session.execute = AsyncMock(
+            side_effect=[mock_count_result, mock_query_result]
+        )
+
+        # Should not raise an error when combining query with location
+        profiles, count = await host_profile_repository.search(
+            query="dancer",
+            latitude=40.7,
+            longitude=-74.0,
+            radius_km=10.0,
+        )
+        assert count == 0
+
+    async def test_search_query_combined_with_filters(
+        self, host_profile_repository, mock_session
+    ):
+        """Test that query can be combined with all other filters."""
+        mock_count_result = MagicMock()
+        mock_count_result.scalar.return_value = 0
+        mock_query_result = MagicMock()
+        mock_query_result.unique.return_value.scalars.return_value.all.return_value = []
+
+        mock_session.execute = AsyncMock(
+            side_effect=[mock_count_result, mock_query_result]
+        )
+
+        # Should not raise an error when combining query with filters
+        profiles, count = await host_profile_repository.search(
+            query="tango",
+            min_rating=4.0,
+            max_price_cents=10000,
+        )
+        assert count == 0
+
+    async def test_search_order_by_relevance(
+        self, host_profile_repository, mock_session
+    ):
+        """Test that search can order by relevance."""
+        mock_count_result = MagicMock()
+        mock_count_result.scalar.return_value = 0
+        mock_query_result = MagicMock()
+        mock_query_result.unique.return_value.scalars.return_value.all.return_value = []
+
+        mock_session.execute = AsyncMock(
+            side_effect=[mock_count_result, mock_query_result]
+        )
+
+        # Should not raise an error when ordering by relevance
+        profiles, count = await host_profile_repository.search(
+            query="salsa",
+            order_by="relevance",
+        )
+        assert count == 0
+
+    async def test_search_signature_includes_query(self, host_profile_repository):
+        """Verify search method signature includes query parameter."""
+        import inspect
+
+        sig = inspect.signature(host_profile_repository.search)
+        params = list(sig.parameters.keys())
+        assert "query" in params
+
+    async def test_search_query_default_is_none(self, host_profile_repository):
+        """Verify query parameter defaults to None."""
+        import inspect
+
+        sig = inspect.signature(host_profile_repository.search)
+        query_param = sig.parameters["query"]
+        assert query_param.default is None
