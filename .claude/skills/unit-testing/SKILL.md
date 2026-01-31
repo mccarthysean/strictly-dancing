@@ -8,41 +8,75 @@ allowed-tools: [Bash, Read, Grep]
 
 Run the Strictly Dancing test suite quickly and efficiently.
 
-## Quick Start
+## Quick Start - Use the Test Script
+
+**ALWAYS use the test script for running tests:**
+
+```bash
+# Run ALL tests (backend + frontend)
+bash /workspaces/strictly-dancing/scripts/run-tests.sh
+
+# Backend only
+bash /workspaces/strictly-dancing/scripts/run-tests.sh backend
+
+# Frontend only
+bash /workspaces/strictly-dancing/scripts/run-tests.sh frontend
+
+# Fast mode (skip slow tests)
+bash /workspaces/strictly-dancing/scripts/run-tests.sh fast
+
+# With coverage
+bash /workspaces/strictly-dancing/scripts/run-tests.sh coverage
+
+# Re-run failed tests only
+bash /workspaces/strictly-dancing/scripts/run-tests.sh failed
+
+# Frontend watch mode
+bash /workspaces/strictly-dancing/scripts/run-tests.sh watch
+```
+
+## Direct Commands (when needed)
 
 ### Backend Tests
 ```bash
-# Run ALL backend tests
-cd /home/sean/git_wsl/strictly-dancing/backend && uv run pytest
+cd /workspaces/strictly-dancing/backend
 
 # Quick run with minimal output
-cd /home/sean/git_wsl/strictly-dancing/backend && uv run pytest tests/ -q
+uv run pytest tests/ -q
 
 # Stop on first failure
-cd /home/sean/git_wsl/strictly-dancing/backend && uv run pytest tests/ -x
+uv run pytest tests/ -x
 
 # Verbose output
-cd /home/sean/git_wsl/strictly-dancing/backend && uv run pytest tests/ -v
+uv run pytest tests/ -v
+
+# Single test file
+uv run pytest tests/unit/test_auth.py -v
+
+# Single test function
+uv run pytest tests/unit/test_auth.py::test_login -vvs
 
 # With coverage
-cd /home/sean/git_wsl/strictly-dancing/backend && uv run pytest tests/ --cov=app --cov-report=term-missing
+uv run pytest tests/ --cov=app --cov-report=term-missing
 ```
 
 ### Frontend Tests
 ```bash
-# Run ALL frontend tests
-cd /home/sean/git_wsl/strictly-dancing/frontend && bun run test
+cd /workspaces/strictly-dancing/frontend
+
+# Run all tests
+bun run test
 
 # Watch mode
-cd /home/sean/git_wsl/strictly-dancing/frontend && bun run test:watch
+bun run test:watch
 
 # With coverage
-cd /home/sean/git_wsl/strictly-dancing/frontend && bun run test:coverage
+bun run test:coverage
 ```
 
 ## Test Organization
 
-### Backend (`/home/sean/git_wsl/strictly-dancing/backend/tests/`)
+### Backend (`/workspaces/strictly-dancing/backend/tests/`)
 | Directory | Description |
 |-----------|-------------|
 | `unit/` | Pure unit tests, mocked dependencies |
@@ -50,9 +84,9 @@ cd /home/sean/git_wsl/strictly-dancing/frontend && bun run test:coverage
 | `services/` | Business logic tests |
 | `routers/` | API endpoint integration |
 
-### Frontend (`/home/sean/git_wsl/strictly-dancing/frontend/src/**/__tests__/`)
-| File | Description |
-|------|-------------|
+### Frontend (`/workspaces/strictly-dancing/frontend/src/**/__tests__/`)
+| Pattern | Description |
+|---------|-------------|
 | `*.test.ts` | Unit tests for hooks, utilities |
 | `*.test.tsx` | Component tests |
 
@@ -60,39 +94,37 @@ cd /home/sean/git_wsl/strictly-dancing/frontend && bun run test:coverage
 
 ### Backend Pattern
 ```python
+import pytest
+from tests.factories import UserFactory, HostProfileFactory
+
 @pytest.mark.asyncio
-async def test_something(self, db_session):
-    """One-line description of what this tests."""
+async def test_host_profile_creation(db_session):
+    """Test creating a new host profile."""
     # Arrange
-    host = await create_test_host(db_session, display_name="Test Host")
+    user = await UserFactory.create(db_session)
 
     # Act
-    result = await some_function(db_session, host.id)
+    host = await HostProfileFactory.create(db_session, user_id=user.id)
 
     # Assert
-    assert result is not None
+    assert host.id is not None
+    assert host.user_id == user.id
 ```
 
 ### Frontend Pattern
 ```typescript
-it("does something", async () => {
-  // Render with query client
-  const { result } = renderHook(() => useSomeHook(), { wrapper: createWrapper() });
+import { renderHook, waitFor } from "@testing-library/react";
+import { createWrapper } from "@/test/utils";
 
-  // Wait for async operations
+it("fetches host profiles", async () => {
+  const { result } = renderHook(
+    () => useHostProfiles(),
+    { wrapper: createWrapper() }
+  );
+
   await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-  // Assert
-  expect(result.current.data).toEqual(expected);
+  expect(result.current.data).toHaveLength(3);
 });
-```
-
-## Debugging Failed Tests
-
-```bash
-# Run single failing test with verbose output
-cd /home/sean/git_wsl/strictly-dancing/backend
-uv run pytest tests/path/to/test.py::TestClass::test_name -vvs
 ```
 
 ## Test Infrastructure
@@ -100,8 +132,8 @@ uv run pytest tests/path/to/test.py::TestClass::test_name -vvs
 ### Backend
 - **Database**: In-memory SQLite (fast, no PostgreSQL needed)
 - **Fixtures**: `tests/conftest.py` - db_session, test clients
-- **Factories**: `tests/factories.py` - UserFactory, HostProfileFactory, etc.
-- **Mocks**: `tests/mocks.py` - MockEmailService, etc.
+- **Factories**: `tests/factories.py` - UserFactory, HostProfileFactory, BookingFactory
+- **Mocks**: `tests/mocks.py` - MockEmailService, MockStripeService
 
 ### Frontend
 - **Runner**: Vitest with jsdom environment
@@ -109,17 +141,53 @@ uv run pytest tests/path/to/test.py::TestClass::test_name -vvs
 - **Setup**: `src/test/setup.ts`
 - **Handlers**: `src/test/mocks/handlers.ts`
 
+## Debugging Failed Tests
+
+```bash
+# Run single failing test with full output
+cd /workspaces/strictly-dancing/backend
+uv run pytest tests/path/to/test.py::test_function_name -vvs
+
+# Show local variables on failure
+uv run pytest tests/ -l
+
+# Drop into debugger on failure
+uv run pytest tests/ --pdb
+```
+
+## Marking Slow Tests
+
+For tests that take >1 second, mark them as slow:
+
+```python
+@pytest.mark.slow
+def test_complex_booking_flow(db_session):
+    """This test involves multiple API calls."""
+    ...
+```
+
+Then skip them during development:
+```bash
+bash /workspaces/strictly-dancing/scripts/run-tests.sh fast
+```
+
 ## Pre-Commit Testing
 
 Always run tests before committing:
 ```bash
-# Backend
-cd /home/sean/git_wsl/strictly-dancing/backend
-uv run ruff check --fix . && uv run ruff format .
-uv run pytest
+# Quick check
+bash /workspaces/strictly-dancing/scripts/run-tests.sh fast
 
-# Frontend
-cd /home/sean/git_wsl/strictly-dancing/frontend
-bun run lint
-bun run test
+# Full check before PR
+bash /workspaces/strictly-dancing/scripts/run-tests.sh coverage
 ```
+
+## Coverage Requirements
+
+- **Backend**: Minimum 80% line coverage
+- **Frontend**: Minimum 70% line coverage
+- **Critical paths** (auth, payments): 100% coverage
+
+Coverage reports are generated at:
+- Backend: `/workspaces/strictly-dancing/backend/htmlcov/index.html`
+- Frontend: `/workspaces/strictly-dancing/frontend/coverage/index.html`
