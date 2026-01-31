@@ -172,7 +172,9 @@
       "Bash(alembic:*)",
       "Bash(nohup:*)",
       "Bash(sleep:*)",
-      "Bash(./scripts/ralph-external-loop.sh:*)"
+      "Bash(./scripts/ralph-external-loop.sh:*)",
+      "Bash(./scripts/dev-servers.sh:*)",
+      "Bash(bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh:*)"
     ],
     "deny": [
       "Edit(/)",
@@ -290,5 +292,11 @@
   "statusLine": {
     "type": "command",
     "command": "/home/sean/git_wsl/strictly-dancing/scripts/statusline.sh"
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "context7@claude-plugins-official": true
   }
 }

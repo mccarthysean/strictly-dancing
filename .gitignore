@@ -90,7 +90,11 @@ coverage.xml
 # Logs
 *.log
 logs/
+.logs/
 ralph/**/ralph-loop-*.log
+
+# PID files
+.pids/
 
 # Docker
 .docker/

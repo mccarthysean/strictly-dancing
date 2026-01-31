@@ -38,14 +38,50 @@ Global dance host marketplace connecting travelers and dance enthusiasts with qu
 - Use `git add <specific-files>` not `git add -A`
 - NEVER amend commits after hook failures - create NEW commits
 
+## Development Servers
+
+**ALWAYS use the `dev-servers.sh` script for ALL server operations.**
+
+```bash
+# Start all servers (FastAPI + Vite)
+./scripts/dev-servers.sh start
+
+# Stop all servers
+./scripts/dev-servers.sh stop
+
+# Restart all servers
+./scripts/dev-servers.sh restart
+
+# Check status
+./scripts/dev-servers.sh status
+
+# View logs
+./scripts/dev-servers.sh logs              # All logs
+./scripts/dev-servers.sh logs fastapi      # FastAPI only
+./scripts/dev-servers.sh logs vite         # Vite only
+
+# Utilities
+./scripts/dev-servers.sh migrate           # Run Alembic migrations
+./scripts/dev-servers.sh generate-types    # Generate TypeScript types
+```
+
+| Service | Port | URL |
+|---------|------|-----|
+| FastAPI | 8001 | http://localhost:8001/docs |
+| Vite | 5175 | http://localhost:5175 |
+
 ## Quick Commands
 
 ```bash
-# Backend
+# Development Servers (preferred method)
+./scripts/dev-servers.sh start             # Start all servers
+./scripts/dev-servers.sh status            # Check status
+
+# Backend (manual - prefer dev-servers.sh)
 cd backend && uv run pytest                    # Run tests
 cd backend && uv run uvicorn app.main:app --reload --port 8001
 
-# Web Frontend (PWA)
+# Web Frontend (manual - prefer dev-servers.sh)
 cd frontend && bun run dev                     # Dev server on port 5175
 cd frontend && bun run build                   # Production build
 cd frontend && bun run generate-types          # Generate API types
@@ -54,7 +90,7 @@ cd frontend && bun run generate-types          # Generate API types
 cd apps/mobile && bun run start                # Expo dev server
 
 # Type Generation (CRITICAL after FastAPI changes)
-bun run generate-types
+./scripts/dev-servers.sh generate-types
 
 # Python Linting
 cd backend && ruff check --fix . && ruff format .
