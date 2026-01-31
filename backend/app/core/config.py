@@ -33,6 +33,9 @@ class Settings(BaseSettings):
         "http://localhost:3000",  # Alternative port
         "http://127.0.0.1:5175",
         "http://127.0.0.1:3000",
+        # Production URLs
+        "https://strictly-dancing.vercel.app",
+        "https://strictly-dancing-*.vercel.app",  # Preview deployments
     ]
     cors_allow_credentials: bool = True
     cors_allow_methods: list[str] = ["*"]

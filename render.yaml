@@ -1,0 +1,27 @@
+services:
+  # FastAPI Backend
+  - type: web
+    name: strictly-dancing-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        sync: false  # Supabase pooler URL: postgresql+asyncpg://postgres.[ref]:[pass]@...pooler.supabase.com:5432/postgres
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: strictly-dancing-redis
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        sync: false  # Generate with: openssl rand -hex 32
+      - key: DEBUG
+        value: "false"
+
+  # Redis for caching and sessions
+  - type: redis
+    name: strictly-dancing-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru

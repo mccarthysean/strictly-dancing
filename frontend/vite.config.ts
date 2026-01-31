@@ -65,6 +65,7 @@ export default defineConfig({
   server: {
     port: 5175,
     strictPort: true,
+    host: '0.0.0.0', // Bind to all interfaces for Docker/WSL access
   },
   preview: {
     port: 5175,
