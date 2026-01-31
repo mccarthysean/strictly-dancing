@@ -1,7 +1,7 @@
 ---
-name: Playwright Testing
-description: Token-optimized E2E browser testing with Playwright MCP achieving 80-90% token reduction through intelligent subagent delegation. Use for automated browser interactions, visual testing, form workflows, and UI validation.
-allowed-tools: [mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_click, mcp__playwright__browser_type, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_console_messages, mcp__playwright__browser_wait_for, mcp__playwright__browser_fill_form, mcp__playwright__browser_hover, mcp__playwright__browser_resize, Read, Bash]
+name: playwright-testing
+description: Token-optimized E2E browser testing with Playwright MCP achieving 80-90% token reduction through mandatory subagent delegation. ALL Playwright operations MUST use the playwright-testing-agent. Use for automated browser interactions, visual testing, form workflows, and UI validation.
+allowed-tools: [Task, Read, Bash]
 performance:
   token_reduction: 87%
   session_startup: 947 tokens (vs 13,678)
@@ -12,11 +12,11 @@ performance:
 
 ## Purpose
 
-Automate browser testing with Playwright MCP using intelligent token optimization through mandatory subagent delegation. Achieves 87% average token reduction.
+Automate browser testing with Playwright MCP using intelligent token optimization through **mandatory subagent delegation**. Achieves 87% average token reduction.
 
-## CRITICAL: ALL Playwright Operations -> Subagent
+## 🚨 CRITICAL: ALL Playwright Operations → Subagent
 
-**ABSOLUTE RULE**: Never invoke Playwright MCP tools directly in main agent. ALL Playwright operations MUST use subagent delegation.
+**ABSOLUTE RULE**: Never invoke Playwright MCP tools directly in main agent. ALL Playwright operations MUST use the `playwright-testing-agent` subagent.
 
 **Why?** Playwright consumes 500-1K tokens per operation:
 - Navigation: 500-1K tokens
@@ -24,7 +24,7 @@ Automate browser testing with Playwright MCP using intelligent token optimizatio
 - Snapshot: 800+ tokens
 - Screenshots: 2-5K tokens
 
-**Result**: 93% token reduction via subagent (13,678 -> 947 tokens per session)
+**Result**: 93% token reduction via subagent (13,678 → 947 tokens per session)
 
 ## When to Use
 
@@ -37,17 +37,17 @@ Automate browser testing with Playwright MCP using intelligent token optimizatio
 - Form workflows
 - E2E testing workflows
 
-**NO EXCEPTIONS** - If you need Playwright, use subagent.
+**NO EXCEPTIONS** — If you need Playwright, use subagent.
 
 ## Quick Start: Testing Agent
 
-**For ALL Playwright testing, use the general-purpose subagent:**
+**For ALL Playwright testing, use the playwright-testing-agent:**
 
 ```typescript
 Task({
-  subagent_type: "general-purpose",
-  description: "Test Strictly Dancing pages with Playwright",
-  prompt: `Act as the Playwright Testing Agent. Test the following pages:
+  subagent_type: "playwright-testing-agent",
+  description: "Test Strictly Dancing pages",
+  prompt: `Test the following pages:
 
   Pages: /, /hosts, /login
 
@@ -59,6 +59,7 @@ Task({
   5. Verify key elements load
 
   Return structured summary with pass/fail status.
+  Store screenshots in /workspaces/strictly-dancing/.playwright-screenshots/
   DO NOT include screenshots in response.`
 })
 ```
@@ -73,12 +74,12 @@ Task({
 Playwright MCP runs in a Docker container and cannot access localhost directly.
 
 ```typescript
-// CORRECT: Use host.docker.internal
+// ✅ CORRECT: Use host.docker.internal
 mcp__playwright__browser_navigate({
   url: "http://host.docker.internal:5175/"
 });
 
-// WRONG: Don't use localhost
+// ❌ WRONG: Don't use localhost
 mcp__playwright__browser_navigate({
   url: "http://localhost:5175/"  // Won't work from container!
 });
@@ -89,96 +90,18 @@ mcp__playwright__browser_navigate({
 - **Backend API**: `http://host.docker.internal:8001/`
 - **API Docs**: `http://host.docker.internal:8001/docs`
 
-## Prerequisites
-
-Before running Playwright tests, ensure services are running:
-
-```bash
-# Start Playwright MCP container (via rcom)
-cd /home/sean/git_wsl/rcom && docker compose up -d playwright-mcp
-
-# Start development servers
-cd /home/sean/git_wsl/strictly-dancing/backend && uv run uvicorn app.main:app --reload --port 8001
-cd /home/sean/git_wsl/strictly-dancing/frontend && bun run dev
-
-# Check container status
-docker ps | grep playwright-mcp
-```
-
-## Token Optimization Strategies
-
-### 1. Intelligent Caching (100% Reduction on Hits)
-```typescript
-// First visit: ~800 tokens
-mcp__playwright__browser_navigate({ url: "http://host.docker.internal:5175/" });
-// Second visit: 0 tokens (cached!)
-mcp__playwright__browser_navigate({ url: "http://host.docker.internal:5175/" });
-```
-
-### 2. Strategic Snapshots (90% Reduction)
-```typescript
-// GOOD: Snapshot once, reuse refs
-mcp__playwright__browser_snapshot(); // Get all refs
-mcp__playwright__browser_click({ element: "Button 1", ref: "btn-1" });
-mcp__playwright__browser_click({ element: "Button 2", ref: "btn-2" });
-
-// WASTEFUL: Snapshot after every action
-```
-
-### 3. Batch Form Operations (73% Reduction)
-```typescript
-// Single batch call for form filling
-mcp__playwright__browser_fill_form({
-  fields: [
-    { name: "Email", type: "textbox", ref: "input-email", value: "test@example.com" },
-    { name: "Password", type: "textbox", ref: "input-password", value: "securepass123" }
-  ]
-});
-```
-
-## Core Operations
-
-### Navigation & Waiting
-```typescript
-mcp__playwright__browser_navigate({ url: "http://host.docker.internal:5175/hosts" });
-mcp__playwright__browser_wait_for({ text: "Find a Dance Host", time: 2 });
-```
-
-### Page Inspection
-```typescript
-mcp__playwright__browser_snapshot();  // Accessibility tree
-mcp__playwright__browser_take_screenshot({ filename: "hosts-page.png" });
-mcp__playwright__browser_console_messages();  // Check errors
-```
-
-### Interactions
-```typescript
-mcp__playwright__browser_click({ element: "Login button", ref: "btn-login" });
-mcp__playwright__browser_type({ element: "Email", ref: "input-email", text: "test@example.com" });
-```
-
-## Performance Metrics
-
-| Scenario | Standard | Optimized | Reduction |
-|----------|----------|-----------|-----------|
-| Session Startup | 13,678 | 947 | **93%** |
-| Navigate + Snapshot | 8,000 | 800 | **90%** |
-| Navigate (cached) | 8,000 | 0 | **100%** |
-| Form Workflow | 33,000 | 4,000 | **88%** |
-| **Full E2E Test** | **45,000** | **6,000** | **87%** |
-
 ## Common Test Scenarios
 
 ### Smoke Test (Quick Verification)
-Test that all main pages load without errors:
 ```typescript
 Task({
-  subagent_type: "general-purpose",
+  subagent_type: "playwright-testing-agent",
   description: "Smoke test Strictly Dancing",
   prompt: `Test these pages:
     - http://host.docker.internal:5175/ (Home)
     - http://host.docker.internal:5175/hosts (Host Search)
     - http://host.docker.internal:5175/login (Login)
+    - http://host.docker.internal:5175/register (Register)
 
     For each: navigate, check console errors, verify page loads.
     Return pass/fail summary.`
@@ -188,14 +111,16 @@ Task({
 ### Authentication Flow Test
 ```typescript
 Task({
-  subagent_type: "general-purpose",
-  description: "Test Strictly Dancing login flow",
-  prompt: `Test the login flow:
+  subagent_type: "playwright-testing-agent",
+  description: "Test login flow",
+  prompt: `Test the magic link login flow:
     1. Navigate to http://host.docker.internal:5175/login
     2. Verify login form elements present
     3. Take snapshot of form
-    4. Check for any console errors
-    5. Verify email input accepts text
+    4. Enter email: test@example.com
+    5. Click submit button
+    6. Check for any console errors
+    7. Verify success message
 
     Return structured results.`
 })
@@ -204,41 +129,130 @@ Task({
 ### Host Search Test
 ```typescript
 Task({
-  subagent_type: "general-purpose",
-  description: "Test Strictly Dancing host search",
+  subagent_type: "playwright-testing-agent",
+  description: "Test host search",
   prompt: `Test the host search page:
     1. Navigate to http://host.docker.internal:5175/hosts
-    2. Wait for data to load
+    2. Wait for host cards to load
     3. Take snapshot
-    4. Verify host cards appear
-    5. Check for API errors in console/network
+    4. Verify search filters are present
+    5. Verify host cards display correctly
+    6. Check for API errors in console/network
 
     Return pass/fail with details.`
 })
 ```
 
+### Booking Flow Test
+```typescript
+Task({
+  subagent_type: "playwright-testing-agent",
+  description: "Test booking flow",
+  prompt: `Test the complete booking workflow:
+    1. Navigate to http://host.docker.internal:5175/hosts
+    2. Click on a host card
+    3. Verify host profile loads
+    4. Click "Book Now" button
+    5. Fill booking form (date, time, notes)
+    6. Submit booking
+    7. Verify confirmation
+
+    Return comprehensive test results with screenshots.`
+})
+```
+
+## Token Optimization Strategies
+
+### 1. Always Use Subagent (93% Reduction)
+```typescript
+// ✅ CORRECT: Use subagent for all Playwright operations
+Task({
+  subagent_type: "playwright-testing-agent",
+  description: "Test page",
+  prompt: "Navigate to /hosts and take a screenshot"
+})
+
+// ❌ WRONG: Never call Playwright directly
+mcp__playwright__browser_navigate({ url: "..." })  // Don't do this!
+```
+
+### 2. Batch Multiple Pages in One Agent Call
+```typescript
+// ✅ EFFICIENT: Test multiple pages in one agent call
+Task({
+  subagent_type: "playwright-testing-agent",
+  prompt: `Test these 5 pages: /, /hosts, /login, /register, /about
+           Return summary for all pages.`
+})
+
+// ❌ WASTEFUL: Separate agent calls for each page
+```
+
+### 3. Request Structured Summaries Only
+```typescript
+// ✅ GOOD: Request summary without screenshots in response
+prompt: `... Return pass/fail summary. DO NOT include screenshots in response.`
+
+// ❌ WASTEFUL: Requesting screenshot data in response
+```
+
+## Performance Metrics
+
+| Scenario | Standard | With Subagent | Reduction |
+|----------|----------|---------------|-----------|
+| Session Startup | 13,678 | 947 | **93%** |
+| Navigate + Snapshot | 8,000 | 800 | **90%** |
+| Form Workflow | 33,000 | 4,000 | **88%** |
+| **Full E2E Test** | **45,000** | **6,000** | **87%** |
+
+## Prerequisites
+
+Before running Playwright tests:
+
+```bash
+# 1. Start development servers
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh start
+
+# 2. Verify servers are running
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh status
+
+# 3. Check Playwright MCP container is running
+docker ps | grep playwright-mcp
+```
+
 ## Health Check
 
 ```bash
-# Check container status
+# Check Playwright container status
 docker ps | grep playwright-mcp
 
 # View container logs
-docker logs rcom-playwright-mcp-1
+docker logs <playwright-container-name>
 
 # Test connectivity from container
-docker exec rcom-playwright-mcp-1 nc -z host.docker.internal 5175
+docker exec <playwright-container-name> nc -z host.docker.internal 5175
 ```
 
+## Troubleshooting
+
 **"Browser is already in use" Error:**
-This means another session is using the browser. Options:
 1. Wait for other session to complete
-2. Restart the container: `docker restart rcom-playwright-mcp-1`
+2. Restart the container: `docker restart <playwright-container-name>`
 
 **"Session not found" Error:**
-1. Reconnect MCP server in Claude Code settings
-2. Or restart container: `docker restart rcom-playwright-mcp-1`
+1. Reconnect MCP server in Claude Code settings (Ctrl/Cmd + Shift + P → MCP: Manage Servers)
+2. Or restart the Playwright MCP container
+
+**Page not loading:**
+1. Verify dev servers: `bash /workspaces/strictly-dancing/scripts/dev-servers.sh status`
+2. Ensure URL uses `host.docker.internal` not `localhost`
+3. Check correct port (5175 for frontend, 8001 for backend)
 
 ## Related Skills
 
-- `unit-testing` - Backend test suite execution
+- `unit-testing` - Fast pytest and vitest tests
+- `development-servers` - Starting the dev environment
+
+## Related Agents
+
+- `playwright-testing-agent` - The specialized agent for all Playwright operations
