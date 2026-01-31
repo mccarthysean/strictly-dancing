@@ -10,7 +10,7 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 from geoalchemy2 import Geography
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ENUM, UUID
 
 from alembic import op
 
@@ -23,17 +23,11 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Create bookings table."""
-    # Create booking_status enum
-    booking_status_enum = sa.Enum(
-        "pending",
-        "confirmed",
-        "in_progress",
-        "completed",
-        "cancelled",
-        "disputed",
-        name="booking_status_enum",
+    # Create booking_status enum using raw SQL
+    op.execute(
+        "CREATE TYPE booking_status_enum AS ENUM "
+        "('pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'disputed')"
     )
-    booking_status_enum.create(op.get_bind(), checkfirst=True)
 
     # Create bookings table
     op.create_table(
@@ -72,7 +66,16 @@ def upgrade() -> None:
         # Status
         sa.Column(
             "status",
-            booking_status_enum,
+            ENUM(
+                "pending",
+                "confirmed",
+                "in_progress",
+                "completed",
+                "cancelled",
+                "disputed",
+                name="booking_status_enum",
+                create_type=False,
+            ),
             nullable=False,
             server_default="pending",
         ),

@@ -10,7 +10,7 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 from geoalchemy2 import Geography
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ENUM, UUID
 
 from alembic import op
 
@@ -23,15 +23,11 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Create host_profiles table with PostGIS location support."""
-    # Create verification_status enum
-    verification_status_enum = sa.Enum(
-        "unverified",
-        "pending",
-        "verified",
-        "rejected",
-        name="verification_status_enum",
+    # Create verification_status enum using raw SQL
+    op.execute(
+        "CREATE TYPE verification_status_enum AS ENUM "
+        "('unverified', 'pending', 'verified', 'rejected')"
     )
-    verification_status_enum.create(op.get_bind(), checkfirst=True)
 
     # Create host_profiles table
     op.create_table(
@@ -71,7 +67,14 @@ def upgrade() -> None:
         ),
         sa.Column(
             "verification_status",
-            verification_status_enum,
+            ENUM(
+                "unverified",
+                "pending",
+                "verified",
+                "rejected",
+                name="verification_status_enum",
+                create_type=False,
+            ),
             nullable=False,
             server_default="unverified",
         ),

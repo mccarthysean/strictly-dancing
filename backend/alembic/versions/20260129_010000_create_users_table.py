@@ -9,7 +9,7 @@ Create Date: 2026-01-29 01:00:00.000000+00:00
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ENUM, UUID
 
 from alembic import op
 
@@ -22,9 +22,8 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Create users table with all required fields."""
-    # Create user_type enum
-    user_type_enum = sa.Enum("client", "host", "both", name="user_type_enum")
-    user_type_enum.create(op.get_bind(), checkfirst=True)
+    # Create user_type enum using raw SQL
+    op.execute("CREATE TYPE user_type_enum AS ENUM ('client', 'host', 'both')")
 
     # Create users table
     op.create_table(
@@ -41,7 +40,7 @@ def upgrade() -> None:
         sa.Column("last_name", sa.String(100), nullable=False),
         sa.Column(
             "user_type",
-            user_type_enum,
+            ENUM("client", "host", "both", name="user_type_enum", create_type=False),
             nullable=False,
             server_default="client",
         ),

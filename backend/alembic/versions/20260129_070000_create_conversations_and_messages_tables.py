@@ -9,7 +9,7 @@ Create Date: 2026-01-29 07:00:00.000000+00:00
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ENUM, UUID
 
 from alembic import op
 
@@ -107,16 +107,11 @@ def upgrade() -> None:
         ["last_message_at"],
     )
 
-    # Create message_type_enum
-    message_type_enum = sa.Enum(
-        "text",
-        "system",
-        "booking_request",
-        "booking_confirmed",
-        "booking_cancelled",
-        name="message_type_enum",
+    # Create message_type_enum using raw SQL
+    op.execute(
+        "CREATE TYPE message_type_enum AS ENUM "
+        "('text', 'system', 'booking_request', 'booking_confirmed', 'booking_cancelled')"
     )
-    message_type_enum.create(op.get_bind(), checkfirst=True)
 
     # Create messages table
     op.create_table(
@@ -146,7 +141,15 @@ def upgrade() -> None:
         ),
         sa.Column(
             "message_type",
-            message_type_enum,
+            ENUM(
+                "text",
+                "system",
+                "booking_request",
+                "booking_confirmed",
+                "booking_cancelled",
+                name="message_type_enum",
+                create_type=False,
+            ),
             nullable=False,
             server_default="text",
         ),

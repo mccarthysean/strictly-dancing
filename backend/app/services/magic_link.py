@@ -1,13 +1,26 @@
 """Magic link authentication service using Redis for code storage."""
 
+import json
 import secrets
 from datetime import UTC, datetime
+from typing import TypedDict
 
 import structlog
 
 from app.core.config import get_settings
 
 logger = structlog.get_logger()
+
+
+class RegistrationData(TypedDict):
+    """Type for pending registration data stored in Redis."""
+
+    email: str
+    first_name: str
+    last_name: str
+    user_type: str
+    code: str
+    created_at: str
 
 
 class MagicLinkService:
@@ -25,6 +38,7 @@ class MagicLinkService:
     CODE_LENGTH = 6
     DEFAULT_EXPIRY_MINUTES = 15
     REDIS_KEY_PREFIX = "magic_link:"
+    REGISTRATION_KEY_PREFIX = "registration_magic_link:"
 
     def __init__(self, redis_client=None) -> None:
         """Initialize the magic link service.
@@ -197,6 +211,121 @@ class MagicLinkService:
 
         # Redis returns -2 if key doesn't exist, -1 if no expiry
         return ttl if ttl > 0 else None
+
+    def _get_registration_redis_key(self, email: str) -> str:
+        """Get the Redis key for storing registration data.
+
+        Args:
+            email: The user's email address.
+
+        Returns:
+            The Redis key string.
+        """
+        return f"{self.REGISTRATION_KEY_PREFIX}{email.lower()}"
+
+    async def create_registration_code(
+        self,
+        email: str,
+        first_name: str,
+        last_name: str,
+        user_type: str,
+        expiry_minutes: int | None = None,
+    ) -> str:
+        """Create a new registration code and store pending registration data.
+
+        Stores the registration details in Redis along with the code.
+        The data is stored as JSON with automatic expiry.
+
+        Args:
+            email: The user's email address.
+            first_name: User's first name.
+            last_name: User's last name.
+            user_type: Type of user account (client/host).
+            expiry_minutes: Optional custom expiry time. Defaults to 15 minutes.
+
+        Returns:
+            The generated 6-digit code.
+        """
+        redis = await self._get_redis()
+        code = self._generate_code()
+        expiry = expiry_minutes or self.DEFAULT_EXPIRY_MINUTES
+
+        key = self._get_registration_redis_key(email)
+
+        # Store registration data as JSON
+        data: RegistrationData = {
+            "email": email.lower(),
+            "first_name": first_name,
+            "last_name": last_name,
+            "user_type": user_type,
+            "code": code,
+            "created_at": datetime.now(UTC).isoformat(),
+        }
+
+        await redis.setex(key, expiry * 60, json.dumps(data))
+
+        logger.info(
+            "registration_code_created",
+            email=email,
+            expiry_minutes=expiry,
+        )
+
+        return code
+
+    async def verify_registration_code(
+        self,
+        email: str,
+        code: str,
+    ) -> RegistrationData | None:
+        """Verify a registration code and return the stored registration data.
+
+        If verification is successful, the data is deleted from Redis
+        to prevent reuse.
+
+        Args:
+            email: The user's email address.
+            code: The code to verify.
+
+        Returns:
+            The registration data if valid, None otherwise.
+        """
+        redis = await self._get_redis()
+        key = self._get_registration_redis_key(email)
+
+        stored_value = await redis.get(key)
+
+        if stored_value is None:
+            logger.warning(
+                "registration_code_not_found",
+                email=email,
+            )
+            return None
+
+        try:
+            data: RegistrationData = json.loads(stored_value)
+        except json.JSONDecodeError:
+            logger.error(
+                "registration_data_corrupted",
+                email=email,
+            )
+            return None
+
+        if data["code"] != code:
+            logger.warning(
+                "registration_code_mismatch",
+                email=email,
+            )
+            return None
+
+        # Code is valid - delete it to prevent reuse
+        await redis.delete(key)
+
+        logger.info(
+            "registration_code_verified",
+            email=email,
+        )
+
+        return data
 
 
 # Singleton instance for convenience

@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from uuid import uuid4
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ENUM, UUID
 
 from alembic import op
 
@@ -168,16 +168,11 @@ DANCE_STYLES = [
 
 def upgrade() -> None:
     """Create dance_styles table and seed data."""
-    # Create dance_style_category enum
-    category_enum = sa.Enum(
-        "latin",
-        "ballroom",
-        "swing",
-        "social",
-        "other",
-        name="dance_style_category_enum",
+    # Create dance_style_category enum using raw SQL
+    op.execute(
+        "CREATE TYPE dance_style_category_enum AS ENUM "
+        "('latin', 'ballroom', 'swing', 'social', 'other')"
     )
-    category_enum.create(op.get_bind(), checkfirst=True)
 
     # Create dance_styles table
     op.create_table(
@@ -190,7 +185,19 @@ def upgrade() -> None:
         ),
         sa.Column("name", sa.String(100), nullable=False),
         sa.Column("slug", sa.String(100), nullable=False),
-        sa.Column("category", category_enum, nullable=False),
+        sa.Column(
+            "category",
+            ENUM(
+                "latin",
+                "ballroom",
+                "swing",
+                "social",
+                "other",
+                name="dance_style_category_enum",
+                create_type=False,
+            ),
+            nullable=False,
+        ),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column(
             "created_at",
@@ -211,29 +218,14 @@ def upgrade() -> None:
     op.create_index("ix_dance_styles_slug", "dance_styles", ["slug"], unique=True)
     op.create_index("ix_dance_styles_category", "dance_styles", ["category"])
 
-    # Seed dance styles data
-    dance_styles_table = sa.table(
-        "dance_styles",
-        sa.column("id", UUID(as_uuid=False)),
-        sa.column("name", sa.String),
-        sa.column("slug", sa.String),
-        sa.column("category", sa.String),
-        sa.column("description", sa.Text),
-    )
-
-    op.bulk_insert(
-        dance_styles_table,
-        [
-            {
-                "id": str(uuid4()),
-                "name": name,
-                "slug": slug,
-                "category": category,
-                "description": description,
-            }
-            for name, slug, category, description in DANCE_STYLES
-        ],
-    )
+    # Seed dance styles data using raw SQL to properly handle enum type
+    for name, slug, category, description in DANCE_STYLES:
+        op.execute(
+            sa.text(
+                "INSERT INTO dance_styles (id, name, slug, category, description) "
+                "VALUES (gen_random_uuid(), :name, :slug, CAST(:cat AS dance_style_category_enum), :description)"
+            ).bindparams(name=name, slug=slug, cat=category, description=description)
+        )
 
 
 def downgrade() -> None:

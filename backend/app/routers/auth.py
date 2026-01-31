@@ -91,6 +91,143 @@ async def register(
 
 
 @router.post(
+    "/register/magic-link",
+    response_model=MagicLinkResponse,
+    summary="Initiate registration with magic link",
+    description="Start the registration process by sending a 6-digit verification code "
+    "to the provided email. The code expires after 15 minutes.",
+)
+async def register_with_magic_link(
+    request: RegisterRequest,
+    db: DbSession,
+) -> MagicLinkResponse:
+    """Initiate passwordless registration with a magic link code.
+
+    Creates a pending registration and sends a verification code to the user's email.
+    The user must verify the code to complete registration.
+
+    Args:
+        request: The registration request with user details.
+        db: The database session (injected).
+
+    Returns:
+        MagicLinkResponse with a success message and expiry info.
+
+    Raises:
+        HTTPException 409: If email is already registered.
+    """
+    user_repo = UserRepository(db)
+
+    # Check if email already exists (case-insensitive)
+    if await user_repo.exists_by_email(request.email):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered",
+        )
+
+    # Generate and store registration code with user data
+    code = await magic_link_service.create_registration_code(
+        email=request.email,
+        first_name=request.first_name,
+        last_name=request.last_name,
+        user_type=request.user_type.value,
+    )
+
+    # Send verification email asynchronously
+    send_magic_link_email.delay(
+        to_email=request.email,
+        name=request.first_name,
+        code=code,
+        expires_minutes=magic_link_service.DEFAULT_EXPIRY_MINUTES,
+    )
+
+    return MagicLinkResponse(
+        message="A verification code has been sent to your email.",
+        expires_in_minutes=magic_link_service.DEFAULT_EXPIRY_MINUTES,
+    )
+
+
+@router.post(
+    "/register/verify",
+    response_model=TokenResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Verify registration and create account",
+    description="Verify the 6-digit code and complete registration. "
+    "Returns JWT tokens for immediate login.",
+)
+async def verify_registration(
+    request: VerifyMagicLinkRequest,
+    db: DbSession,
+) -> TokenResponse:
+    """Verify registration code and complete account creation.
+
+    Validates the code, creates the user account, and returns JWT tokens
+    for immediate authentication.
+
+    Args:
+        request: The verification request with email and code.
+        db: The database session (injected).
+
+    Returns:
+        TokenResponse with access_token, refresh_token, and expiration info.
+
+    Raises:
+        HTTPException 401: If code is invalid or expired.
+        HTTPException 409: If email was registered by another process.
+    """
+    user_repo = UserRepository(db)
+
+    # Verify the registration code and get stored data
+    registration_data = await magic_link_service.verify_registration_code(
+        request.email, request.code
+    )
+
+    if registration_data is None:
+        raise INVALID_CODE_ERROR
+
+    # Double-check email isn't already registered (race condition protection)
+    if await user_repo.exists_by_email(request.email):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered",
+        )
+
+    # Create the user account
+    user_data = UserCreate(
+        email=registration_data["email"],
+        first_name=registration_data["first_name"],
+        last_name=registration_data["last_name"],
+        user_type=registration_data["user_type"],
+    )
+
+    user = await user_repo.create_passwordless(user_data=user_data)
+
+    # Mark email as verified since they confirmed via code
+    await user_repo.mark_email_verified(user.id)
+
+    # Send welcome email asynchronously
+    send_welcome_email.delay(
+        to_email=user.email,
+        name=user.first_name,
+    )
+
+    # Create tokens for immediate login
+    access_token = token_service.create_access_token(user.id)
+    refresh_token = token_service.create_refresh_token(user.id)
+
+    # Get expiration time in seconds from settings
+    settings = get_settings()
+    expires_in = settings.jwt_access_token_expire_minutes * 60
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=expires_in,
+    )
+
+
+@router.post(
     "/request-magic-link",
     response_model=MagicLinkResponse,
     summary="Request a magic link login code",

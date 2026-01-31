@@ -60,19 +60,8 @@ def upgrade() -> None:
         ["reviewee_id", "created_at"],
     )
 
-    # Messages - index for unread messages query
-    op.create_index(
-        "ix_messages_sender_id",
-        "messages",
-        ["sender_id"],
-    )
-
-    # Host dance styles - index for search by dance style
-    op.create_index(
-        "ix_host_dance_styles_dance_style_id",
-        "host_dance_styles",
-        ["dance_style_id"],
-    )
+    # Note: ix_messages_sender_id already created in messages table migration
+    # Note: ix_host_dance_styles_dance_style_id already created in host_dance_styles migration
 
     # Availability - index for date range queries
     op.create_index(
@@ -87,8 +76,8 @@ def downgrade() -> None:
     op.drop_index(
         "ix_availability_overrides_date_type", table_name="availability_overrides"
     )
-    op.drop_index("ix_host_dance_styles_dance_style_id", table_name="host_dance_styles")
-    op.drop_index("ix_messages_sender_id", table_name="messages")
+    # Note: ix_host_dance_styles_dance_style_id dropped with host_dance_styles migration
+    # Note: ix_messages_sender_id dropped with messages table migration
     op.drop_index("ix_reviews_reviewee_created", table_name="reviews")
     op.drop_index("ix_bookings_host_profile_schedule", table_name="bookings")
     op.drop_index("ix_bookings_scheduled_start_status", table_name="bookings")

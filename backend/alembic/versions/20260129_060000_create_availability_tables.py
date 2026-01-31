@@ -9,7 +9,7 @@ Create Date: 2026-01-29 06:00:00.000000+00:00
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ENUM, UUID
 
 from alembic import op
 
@@ -91,13 +91,10 @@ def upgrade() -> None:
         ["host_profile_id", "day_of_week"],
     )
 
-    # Create availability_override_type enum
-    override_type_enum = sa.Enum(
-        "available",
-        "blocked",
-        name="availability_override_type_enum",
+    # Create availability_override_type enum using raw SQL
+    op.execute(
+        "CREATE TYPE availability_override_type_enum AS ENUM ('available', 'blocked')"
     )
-    override_type_enum.create(op.get_bind(), checkfirst=True)
 
     # Create availability_overrides table for one-time overrides and blocked periods
     op.create_table(
@@ -121,7 +118,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "override_type",
-            override_type_enum,
+            ENUM("available", "blocked", name="availability_override_type_enum", create_type=False),
             nullable=False,
         ),
         sa.Column(

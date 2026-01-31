@@ -14,23 +14,18 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "20260129_110000"
-down_revision: str | None = "20260129_100000"
+revision: str = "000000000012"
+down_revision: str | None = "000000000011"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    # Create document_type enum
-    document_type_enum = postgresql.ENUM(
-        "government_id",
-        "passport",
-        "drivers_license",
-        "other",
-        name="document_type_enum",
-        create_type=True,
+    # Create document_type enum using raw SQL
+    op.execute(
+        "CREATE TYPE document_type_enum AS ENUM "
+        "('government_id', 'passport', 'drivers_license', 'other')"
     )
-    document_type_enum.create(op.get_bind(), checkfirst=True)
 
     # Create verification_documents table
     op.create_table(
@@ -44,7 +39,14 @@ def upgrade() -> None:
         sa.Column("host_profile_id", sa.UUID(as_uuid=False), nullable=False),
         sa.Column(
             "document_type",
-            document_type_enum,
+            postgresql.ENUM(
+                "government_id",
+                "passport",
+                "drivers_license",
+                "other",
+                name="document_type_enum",
+                create_type=False,
+            ),
             nullable=False,
         ),
         sa.Column("document_url", sa.String(length=1024), nullable=True),

@@ -31,24 +31,24 @@ def upgrade() -> None:
     # Create GIN index on host_profiles for bio and headline search
     # gin_trgm_ops enables trigram-based similarity search
     op.execute("""
-        CREATE INDEX CONCURRENTLY IF NOT EXISTS ix_host_profiles_headline_trgm
+        CREATE INDEX IF NOT EXISTS ix_host_profiles_headline_trgm
         ON host_profiles USING gin (headline gin_trgm_ops)
     """)
 
     op.execute("""
-        CREATE INDEX CONCURRENTLY IF NOT EXISTS ix_host_profiles_bio_trgm
+        CREATE INDEX IF NOT EXISTS ix_host_profiles_bio_trgm
         ON host_profiles USING gin (bio gin_trgm_ops)
     """)
 
     # Create GIN index on users table for name search
     # This allows fuzzy matching on host names
     op.execute("""
-        CREATE INDEX CONCURRENTLY IF NOT EXISTS ix_users_first_name_trgm
+        CREATE INDEX IF NOT EXISTS ix_users_first_name_trgm
         ON users USING gin (first_name gin_trgm_ops)
     """)
 
     op.execute("""
-        CREATE INDEX CONCURRENTLY IF NOT EXISTS ix_users_last_name_trgm
+        CREATE INDEX IF NOT EXISTS ix_users_last_name_trgm
         ON users USING gin (last_name gin_trgm_ops)
     """)
 
