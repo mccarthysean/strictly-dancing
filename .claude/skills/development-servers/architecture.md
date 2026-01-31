@@ -29,19 +29,19 @@
 ## File Locations
 
 ### Logs
-All logs stored in `/home/sean/git_wsl/strictly-dancing/.logs/`:
+All logs stored in `/workspaces/strictly-dancing/.logs/`:
 - `fastapi.log` - FastAPI uvicorn output
 - `vite.log` - Vite dev server output
 
 ### PID Files
-Process IDs tracked in `/home/sean/git_wsl/strictly-dancing/.pids/`:
+Process IDs tracked in `/workspaces/strictly-dancing/.pids/`:
 - `fastapi.pid`
 - `vite.pid`
 
 ### Configuration
-- Docker Compose: `/home/sean/git_wsl/strictly-dancing/docker-compose.yml`
-- Backend env: `/home/sean/git_wsl/strictly-dancing/backend/.env`
-- Frontend env: `/home/sean/git_wsl/strictly-dancing/frontend/.env`
+- Docker Compose: `/workspaces/strictly-dancing/docker-compose.yml`
+- Backend env: `/workspaces/strictly-dancing/backend/.env`
+- Frontend env: `/workspaces/strictly-dancing/frontend/.env`
 
 ## URLs
 

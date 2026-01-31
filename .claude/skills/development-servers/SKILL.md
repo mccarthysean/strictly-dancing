@@ -22,38 +22,38 @@ Manage FastAPI and Vite development servers using the centralized `dev-servers.s
 
 ```bash
 # Start all servers
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh start
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh start
 
 # Stop all servers
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh stop
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh stop
 
 # Restart all servers
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh restart
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh restart
 
 # Check status
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh status
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh status
 
 # View logs (all or specific service)
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh logs
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh logs fastapi
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh logs vite
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh logs
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh logs fastapi
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh logs vite
 ```
 
 ## Individual Services
 
 ```bash
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh start-fastapi
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh start-vite
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh start-fastapi
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh start-vite
 ```
 
 ## Utility Commands
 
 ```bash
 # Run database migrations
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh migrate
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh migrate
 
 # Generate TypeScript types from OpenAPI
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh generate-types
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh generate-types
 ```
 
 ## URLs
@@ -68,7 +68,7 @@ Use curl for health checks (minimal token usage):
 
 ```bash
 # Check status (~50 tokens)
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh status
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh status
 
 # Quick health check (~100 tokens)
 curl -f http://localhost:8001/docs && echo "FastAPI OK"
@@ -79,15 +79,15 @@ curl -f http://localhost:5175 && echo "Vite OK"
 
 ### After Git Pull
 ```bash
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh restart
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh migrate
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh status
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh restart
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh migrate
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh status
 ```
 
 ### After API Changes
 ```bash
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh status
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh generate-types
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh status
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh generate-types
 ```
 
 ## Auto-Reload

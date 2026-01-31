@@ -10,8 +10,8 @@
 **Solution:**
 ```bash
 # Use the script's built-in cleanup
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh stop
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh start
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh stop
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh start
 
 # The script automatically:
 # - Kills orphaned processes on ports 8001, 5175
@@ -31,10 +31,10 @@ bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh start
 curl -v telnet://ijack-dev.c9lvkaunz4dq.us-west-2.rds.amazonaws.com:5432
 
 # Check .env file has correct credentials
-cat /home/sean/git_wsl/strictly-dancing/backend/.env
+cat /workspaces/strictly-dancing/backend/.env
 
 # Then start FastAPI
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh start-fastapi
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh start-fastapi
 ```
 
 ## Problem: Frontend Can't Reach API
@@ -46,7 +46,7 @@ bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh start-fastapi
 **Diagnosis:**
 ```bash
 # Check both servers are running
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh status
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh status
 
 # Test direct connections
 curl http://localhost:8001/docs
@@ -62,7 +62,7 @@ curl http://localhost:5175
 
 **Solution:**
 ```bash
-cd /home/sean/git_wsl/strictly-dancing/backend
+cd /workspaces/strictly-dancing/backend
 uv sync
 ```
 
@@ -70,7 +70,7 @@ uv sync
 
 **Solution:**
 ```bash
-cd /home/sean/git_wsl/strictly-dancing/frontend
+cd /workspaces/strictly-dancing/frontend
 bun install
 ```
 
@@ -83,10 +83,10 @@ bun install
 **Solution:**
 ```bash
 # Ensure FastAPI is running
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh status
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh status
 
 # Regenerate types
-bash /home/sean/git_wsl/strictly-dancing/scripts/dev-servers.sh generate-types
+bash /workspaces/strictly-dancing/scripts/dev-servers.sh generate-types
 ```
 
 ## Best Practices
