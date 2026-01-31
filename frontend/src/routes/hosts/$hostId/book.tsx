@@ -3,6 +3,12 @@ import { useState, useMemo } from 'react'
 import { $api } from '@/lib/api/$api'
 import { useAuth } from '@/contexts/AuthContext'
 import type { components } from '@/types/api.gen'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Separator } from '@/components/ui/separator'
+import { cn } from '@/lib/utils'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 
 export const Route = createFileRoute('/hosts/$hostId/book')({
   component: BookingFlowPage,
@@ -171,9 +177,9 @@ function BookingFlowPage() {
   // Loading state
   if (hostLoading) {
     return (
-      <div style={styles.loadingContainer}>
-        <div style={styles.spinner} />
-        <p style={styles.loadingText}>Loading booking details...</p>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading booking details...</p>
       </div>
     )
   }
@@ -181,14 +187,16 @@ function BookingFlowPage() {
   // Error state
   if (hostError || !host) {
     return (
-      <div style={styles.errorContainer}>
-        <h2 style={styles.errorTitle}>Host Not Found</h2>
-        <p style={styles.errorText}>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center p-8 text-center">
+        <h2 className="mb-2 font-display text-2xl font-bold text-foreground">Host Not Found</h2>
+        <p className="mb-6 text-muted-foreground">
           The host you're trying to book doesn't exist or is unavailable.
         </p>
-        <Link to="/hosts" style={styles.backLink}>
-          Back to Host Discovery
-        </Link>
+        <Button asChild>
+          <Link to="/hosts" className="no-underline">
+            Back to Host Discovery
+          </Link>
+        </Button>
       </div>
     )
   }
@@ -196,647 +204,303 @@ function BookingFlowPage() {
   // Auth required state
   if (!isAuthenticated) {
     return (
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <Link to="/hosts/$hostId" params={{ hostId }} style={styles.backButton}>
-            &larr; Back to profile
+      <div className="mx-auto max-w-7xl p-4">
+        <div className="mb-4">
+          <Link
+            to="/hosts/$hostId"
+            params={{ hostId }}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground no-underline hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to profile
           </Link>
         </div>
-        <div style={styles.authRequired}>
-          <h2 style={styles.authTitle}>Login Required</h2>
-          <p style={styles.authText}>
-            Please log in to book a session with {host.first_name}.
-          </p>
-          <Link to="/login" style={styles.loginButton}>
-            Log In
-          </Link>
-          <p style={styles.registerText}>
-            Don't have an account?{' '}
-            <Link to="/register" style={styles.registerLink}>
-              Register
-            </Link>
-          </p>
-        </div>
+        <Card className="mx-auto max-w-md">
+          <CardContent className="p-8 text-center">
+            <h2 className="mb-2 font-display text-xl font-semibold text-foreground">Login Required</h2>
+            <p className="mb-6 text-muted-foreground">
+              Please log in to book a session with {host.first_name}.
+            </p>
+            <Button asChild className="w-full">
+              <Link to="/login" className="no-underline">
+                Log In
+              </Link>
+            </Button>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Don't have an account?{' '}
+              <Link to="/register" className="font-medium text-primary no-underline hover:underline">
+                Register
+              </Link>
+            </p>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div style={styles.container}>
+    <div className="mx-auto max-w-7xl p-4">
       {/* Header */}
-      <div style={styles.header}>
-        <Link to="/hosts/$hostId" params={{ hostId }} from="/hosts/$hostId/book" style={styles.backButton}>
-          &larr; Back to profile
+      <div className="mb-4">
+        <Link
+          to="/hosts/$hostId"
+          params={{ hostId }}
+          from="/hosts/$hostId/book"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground no-underline hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to profile
         </Link>
       </div>
 
-      <h1 style={styles.title}>
+      <h1 className="mb-6 font-display text-[clamp(1.25rem,3vw,1.75rem)] font-bold text-foreground">
         Book a session with {host.first_name} {host.last_name}
       </h1>
 
       {/* Main content */}
-      <div style={styles.content}>
+      <div className="flex flex-col gap-8 lg:flex-row">
         {/* Left side: Calendar and time selection */}
-        <div style={styles.selectionPanel}>
+        <div className="flex-[2] space-y-6">
           {/* Duration picker */}
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>Select Duration</h2>
-            <div style={styles.durationGrid}>
-              {DURATION_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => {
-                    setDurationMinutes(option.value)
-                    setSelectedTime(null) // Reset time when duration changes
-                  }}
-                  style={{
-                    ...styles.durationButton,
-                    ...(durationMinutes === option.value ? styles.durationButtonActive : {}),
-                  }}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Select Duration</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {DURATION_OPTIONS.map((option) => (
+                  <Button
+                    key={option.value}
+                    type="button"
+                    variant={durationMinutes === option.value ? 'default' : 'outline'}
+                    onClick={() => {
+                      setDurationMinutes(option.value)
+                      setSelectedTime(null) // Reset time when duration changes
+                    }}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Calendar */}
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>Select Date</h2>
-            {availabilityLoading ? (
-              <div style={styles.loadingCalendar}>Loading availability...</div>
-            ) : (
-              <div style={styles.calendar}>
-                <div style={styles.calendarHeader}>
-                  <span style={styles.calendarMonth}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Select Date</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {availabilityLoading ? (
+                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Loading availability...
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-center font-medium text-foreground">
                     {today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                  </span>
+                  </div>
+                  <div className="grid grid-cols-7 gap-2">
+                    {calendarDays.map((day) => (
+                      <button
+                        key={day.date}
+                        type="button"
+                        onClick={() => day.isAvailable && handleDateSelect(day.date)}
+                        disabled={!day.isAvailable}
+                        className={cn(
+                          "aspect-square rounded-lg text-sm font-medium transition-colors",
+                          day.isAvailable
+                            ? "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
+                            : "cursor-not-allowed bg-muted text-muted-foreground/50",
+                          selectedDate === day.date &&
+                            "bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-primary dark:text-primary-foreground"
+                        )}
+                      >
+                        {day.dayNum}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-full bg-green-200 ring-1 ring-green-600" />
+                      Available
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-full bg-muted ring-1 ring-muted-foreground/50" />
+                      Unavailable
+                    </span>
+                  </div>
                 </div>
-                <div style={styles.calendarGrid}>
-                  {calendarDays.map((day) => (
-                    <button
-                      key={day.date}
-                      type="button"
-                      onClick={() => day.isAvailable && handleDateSelect(day.date)}
-                      disabled={!day.isAvailable}
-                      style={{
-                        ...styles.calendarDay,
-                        ...(day.isAvailable ? styles.calendarDayAvailable : styles.calendarDayUnavailable),
-                        ...(selectedDate === day.date ? styles.calendarDaySelected : {}),
-                      }}
-                    >
-                      {day.dayNum}
-                    </button>
-                  ))}
-                </div>
-                <div style={styles.calendarLegend}>
-                  <span style={styles.legendItem}>
-                    <span style={styles.legendDotAvailable} /> Available
-                  </span>
-                  <span style={styles.legendItem}>
-                    <span style={styles.legendDotUnavailable} /> Unavailable
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Time slot selection */}
           {selectedDate && (
-            <div style={styles.section}>
-              <h2 style={styles.sectionTitle}>
-                Select Time
-                <span style={styles.selectedDateDisplay}>
-                  {' '}
-                  for{' '}
-                  {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </span>
-              </h2>
-              {validTimeSlots.length === 0 ? (
-                <p style={styles.noSlots}>
-                  No available time slots for {durationMinutes} minutes on this date.
-                  Try a shorter duration or different date.
-                </p>
-              ) : (
-                <div style={styles.timeSlotGrid}>
-                  {validTimeSlots.map((slot: AvailabilitySlot, index: number) => {
-                    // Generate start times within the slot
-                    const startMinutes = timeToMinutes(slot.start_time ?? '00:00')
-                    const endMinutes = timeToMinutes(slot.end_time ?? '00:00')
-                    const times: string[] = []
-                    for (let t = startMinutes; t + durationMinutes <= endMinutes; t += 30) {
-                      const hours = Math.floor(t / 60)
-                      const mins = t % 60
-                      times.push(`${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`)
-                    }
-                    return times.map((time) => (
-                      <button
-                        key={`${index}-${time}`}
-                        type="button"
-                        onClick={() => setSelectedTime(time)}
-                        style={{
-                          ...styles.timeSlotButton,
-                          ...(selectedTime === time ? styles.timeSlotButtonActive : {}),
-                        }}
-                      >
-                        {formatTime(time)}
-                      </button>
-                    ))
-                  })}
-                </div>
-              )}
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">
+                  Select Time
+                  <span className="ml-2 font-normal text-muted-foreground">
+                    for{' '}
+                    {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {validTimeSlots.length === 0 ? (
+                  <p className="py-4 text-center italic text-muted-foreground">
+                    No available time slots for {durationMinutes} minutes on this date.
+                    Try a shorter duration or different date.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+                    {validTimeSlots.map((slot: AvailabilitySlot, index: number) => {
+                      // Generate start times within the slot
+                      const startMinutes = timeToMinutes(slot.start_time ?? '00:00')
+                      const endMinutes = timeToMinutes(slot.end_time ?? '00:00')
+                      const times: string[] = []
+                      for (let t = startMinutes; t + durationMinutes <= endMinutes; t += 30) {
+                        const hours = Math.floor(t / 60)
+                        const mins = t % 60
+                        times.push(`${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`)
+                      }
+                      return times.map((time) => (
+                        <Button
+                          key={`${index}-${time}`}
+                          type="button"
+                          variant={selectedTime === time ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setSelectedTime(time)}
+                        >
+                          {formatTime(time)}
+                        </Button>
+                      ))
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
 
           {/* Client notes */}
           {selectedTime && (
-            <div style={styles.section}>
-              <h2 style={styles.sectionTitle}>Notes (Optional)</h2>
-              <textarea
-                value={clientNotes}
-                onChange={(e) => setClientNotes(e.target.value)}
-                placeholder="Add any notes for your host..."
-                style={styles.notesTextarea}
-                maxLength={1000}
-              />
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Notes (Optional)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <textarea
+                  value={clientNotes}
+                  onChange={(e) => setClientNotes(e.target.value)}
+                  placeholder="Add any notes for your host..."
+                  className="min-h-20 w-full resize-y rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  maxLength={1000}
+                />
+              </CardContent>
+            </Card>
           )}
         </div>
 
         {/* Right side: Price breakdown */}
-        <div style={styles.summaryPanel}>
-          <div style={styles.hostSummary}>
-            <div style={styles.hostAvatar}>
-              {host.first_name.charAt(0)}
-              {host.last_name.charAt(0)}
-            </div>
-            <div>
-              <p style={styles.hostName}>
-                {host.first_name} {host.last_name}
-              </p>
-              <p style={styles.hostRate}>{formatPrice(host.hourly_rate_cents)} / hour</p>
-            </div>
-          </div>
-
-          {priceBreakdown && (
-            <div style={styles.priceBreakdown}>
-              <h3 style={styles.priceTitle}>Price Breakdown</h3>
-              <div style={styles.priceRow}>
-                <span>
-                  {formatPrice(priceBreakdown.hourlyRate)}/hr x{' '}
-                  {durationMinutes >= 60
-                    ? `${durationMinutes / 60} hr${durationMinutes > 60 ? 's' : ''}`
-                    : `${durationMinutes} min`}
-                </span>
-                <span>{formatPrice(priceBreakdown.subtotal)}</span>
+        <div className="flex-1">
+          <Card className="sticky top-20">
+            <CardContent className="p-6">
+              <div className="mb-4 flex items-center gap-4 border-b border-border pb-4">
+                <Avatar className="h-12 w-12">
+                  <AvatarFallback className="bg-rose-600 text-white dark:bg-rose-gold-400 dark:text-foreground">
+                    {host.first_name.charAt(0)}{host.last_name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-semibold text-foreground">
+                    {host.first_name} {host.last_name}
+                  </p>
+                  <p className="text-sm text-muted-foreground">{formatPrice(host.hourly_rate_cents)} / hour</p>
+                </div>
               </div>
-              <div style={styles.priceRow}>
-                <span>Service fee (15%)</span>
-                <span>{formatPrice(priceBreakdown.platformFee)}</span>
-              </div>
-              <div style={styles.priceDivider} />
-              <div style={styles.priceRowTotal}>
-                <span>Total</span>
-                <span>{formatPrice(priceBreakdown.total)}</span>
-              </div>
-            </div>
-          )}
 
-          {/* Booking summary */}
-          {selectedDate && selectedTime && (
-            <div style={styles.bookingSummary}>
-              <h3 style={styles.summaryTitle}>Your Booking</h3>
-              <p style={styles.summaryDetail}>
-                <strong>Date:</strong>{' '}
-                {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  month: 'long',
-                  day: 'numeric',
-                })}
+              {priceBreakdown && (
+                <div className="mb-6 space-y-3">
+                  <h3 className="font-semibold text-foreground">Price Breakdown</h3>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>
+                      {formatPrice(priceBreakdown.hourlyRate)}/hr x{' '}
+                      {durationMinutes >= 60
+                        ? `${durationMinutes / 60} hr${durationMinutes > 60 ? 's' : ''}`
+                        : `${durationMinutes} min`}
+                    </span>
+                    <span>{formatPrice(priceBreakdown.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Service fee (15%)</span>
+                    <span>{formatPrice(priceBreakdown.platformFee)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-semibold text-foreground">
+                    <span>Total</span>
+                    <span>{formatPrice(priceBreakdown.total)}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Booking summary */}
+              {selectedDate && selectedTime && (
+                <div className="mb-4 rounded-lg bg-muted p-4">
+                  <h3 className="mb-2 text-sm font-semibold text-foreground">Your Booking</h3>
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Date:</strong>{' '}
+                    {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Time:</strong> {formatTime(selectedTime)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Duration:</strong>{' '}
+                    {durationMinutes >= 60
+                      ? `${durationMinutes / 60} hour${durationMinutes > 60 ? 's' : ''}`
+                      : `${durationMinutes} minutes`}
+                  </p>
+                </div>
+              )}
+
+              {bookingError && (
+                <div className="mb-4 rounded-lg border border-destructive bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {bookingError}
+                </div>
+              )}
+
+              <Button
+                onClick={handleBookNow}
+                disabled={!selectedDate || !selectedTime || createBooking.isPending}
+                className="w-full"
+              >
+                {createBooking.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Confirm Booking'
+                )}
+              </Button>
+
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                You won't be charged until the host confirms your booking.
               </p>
-              <p style={styles.summaryDetail}>
-                <strong>Time:</strong> {formatTime(selectedTime)}
-              </p>
-              <p style={styles.summaryDetail}>
-                <strong>Duration:</strong>{' '}
-                {durationMinutes >= 60
-                  ? `${durationMinutes / 60} hour${durationMinutes > 60 ? 's' : ''}`
-                  : `${durationMinutes} minutes`}
-              </p>
-            </div>
-          )}
-
-          {bookingError && (
-            <div style={styles.errorBox}>
-              {bookingError}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={handleBookNow}
-            disabled={!selectedDate || !selectedTime || createBooking.isPending}
-            style={{
-              ...styles.bookButton,
-              ...((!selectedDate || !selectedTime || createBooking.isPending)
-                ? styles.bookButtonDisabled
-                : {}),
-            }}
-          >
-            {createBooking.isPending ? 'Processing...' : 'Confirm Booking'}
-          </button>
-
-          <p style={styles.disclaimer}>
-            You won't be charged until the host confirms your booking.
-          </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   )
-}
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '1rem',
-  },
-  loadingContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '60vh',
-  },
-  spinner: {
-    width: '40px',
-    height: '40px',
-    border: '4px solid #e5e7eb',
-    borderTop: '4px solid #e11d48',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-  },
-  loadingText: {
-    marginTop: '1rem',
-    color: '#6b7280',
-  },
-  errorContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '60vh',
-    padding: '2rem',
-    textAlign: 'center',
-  },
-  errorTitle: {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: '0.5rem',
-  },
-  errorText: {
-    color: '#6b7280',
-    marginBottom: '1.5rem',
-  },
-  backLink: {
-    color: '#e11d48',
-    textDecoration: 'none',
-    fontWeight: 500,
-  },
-  header: {
-    marginBottom: '1rem',
-  },
-  backButton: {
-    color: '#6b7280',
-    textDecoration: 'none',
-    fontSize: '0.875rem',
-  },
-  title: {
-    fontSize: 'clamp(1.25rem, 3vw, 1.75rem)',
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: '1.5rem',
-  },
-  content: {
-    display: 'flex',
-    gap: '2rem',
-    flexWrap: 'wrap',
-  },
-  selectionPanel: {
-    flex: '2',
-    minWidth: '300px',
-  },
-  summaryPanel: {
-    flex: '1',
-    minWidth: '280px',
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    padding: '1.5rem',
-    alignSelf: 'flex-start',
-    position: 'sticky',
-    top: '1rem',
-  },
-  section: {
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    padding: '1.5rem',
-    marginBottom: '1.5rem',
-  },
-  sectionTitle: {
-    fontSize: '1.125rem',
-    fontWeight: 600,
-    color: '#1f2937',
-    marginTop: 0,
-    marginBottom: '1rem',
-  },
-  selectedDateDisplay: {
-    fontWeight: 'normal',
-    color: '#6b7280',
-  },
-  durationGrid: {
-    display: 'flex',
-    gap: '0.5rem',
-    flexWrap: 'wrap',
-  },
-  durationButton: {
-    padding: '0.75rem 1rem',
-    border: '2px solid #e5e7eb',
-    borderRadius: '8px',
-    backgroundColor: 'white',
-    cursor: 'pointer',
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    transition: 'all 0.2s',
-  },
-  durationButtonActive: {
-    borderColor: '#e11d48',
-    backgroundColor: '#fdf2f4',
-    color: '#e11d48',
-  },
-  loadingCalendar: {
-    padding: '2rem',
-    textAlign: 'center',
-    color: '#6b7280',
-  },
-  calendar: {
-    padding: '0.5rem',
-  },
-  calendarHeader: {
-    marginBottom: '1rem',
-    textAlign: 'center',
-  },
-  calendarMonth: {
-    fontWeight: 600,
-    color: '#1f2937',
-  },
-  calendarGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(7, 1fr)',
-    gap: '0.5rem',
-  },
-  calendarDay: {
-    aspectRatio: '1',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
-  calendarDayAvailable: {
-    backgroundColor: '#dcfce7',
-    color: '#166534',
-  },
-  calendarDayUnavailable: {
-    backgroundColor: '#f3f4f6',
-    color: '#9ca3af',
-    cursor: 'not-allowed',
-  },
-  calendarDaySelected: {
-    backgroundColor: '#e11d48',
-    color: 'white',
-  },
-  calendarLegend: {
-    display: 'flex',
-    gap: '1rem',
-    justifyContent: 'center',
-    marginTop: '1rem',
-    fontSize: '0.75rem',
-    color: '#6b7280',
-  },
-  legendItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.25rem',
-  },
-  legendDotAvailable: {
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
-    backgroundColor: '#dcfce7',
-    border: '1px solid #166534',
-  },
-  legendDotUnavailable: {
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
-    backgroundColor: '#f3f4f6',
-    border: '1px solid #9ca3af',
-  },
-  noSlots: {
-    color: '#6b7280',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    padding: '1rem',
-  },
-  timeSlotGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
-    gap: '0.5rem',
-  },
-  timeSlotButton: {
-    padding: '0.75rem',
-    border: '2px solid #e5e7eb',
-    borderRadius: '8px',
-    backgroundColor: 'white',
-    cursor: 'pointer',
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    transition: 'all 0.2s',
-  },
-  timeSlotButtonActive: {
-    borderColor: '#e11d48',
-    backgroundColor: '#fdf2f4',
-    color: '#e11d48',
-  },
-  notesTextarea: {
-    width: '100%',
-    minHeight: '80px',
-    padding: '0.75rem',
-    border: '2px solid #e5e7eb',
-    borderRadius: '8px',
-    fontSize: '0.875rem',
-    resize: 'vertical',
-    boxSizing: 'border-box',
-  },
-  hostSummary: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    paddingBottom: '1rem',
-    borderBottom: '1px solid #e5e7eb',
-    marginBottom: '1rem',
-  },
-  hostAvatar: {
-    width: '50px',
-    height: '50px',
-    borderRadius: '50%',
-    backgroundColor: '#e11d48',
-    color: 'white',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: 'bold',
-    fontSize: '1.125rem',
-  },
-  hostName: {
-    fontWeight: 600,
-    color: '#1f2937',
-    margin: 0,
-  },
-  hostRate: {
-    color: '#6b7280',
-    fontSize: '0.875rem',
-    margin: 0,
-  },
-  priceBreakdown: {
-    marginBottom: '1.5rem',
-  },
-  priceTitle: {
-    fontSize: '1rem',
-    fontWeight: 600,
-    color: '#1f2937',
-    marginTop: 0,
-    marginBottom: '0.75rem',
-  },
-  priceRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '0.875rem',
-    color: '#6b7280',
-    marginBottom: '0.5rem',
-  },
-  priceDivider: {
-    height: '1px',
-    backgroundColor: '#e5e7eb',
-    margin: '0.75rem 0',
-  },
-  priceRowTotal: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '1rem',
-    fontWeight: 600,
-    color: '#1f2937',
-  },
-  bookingSummary: {
-    backgroundColor: '#f9fafb',
-    borderRadius: '8px',
-    padding: '1rem',
-    marginBottom: '1rem',
-  },
-  summaryTitle: {
-    fontSize: '0.875rem',
-    fontWeight: 600,
-    color: '#1f2937',
-    marginTop: 0,
-    marginBottom: '0.5rem',
-  },
-  summaryDetail: {
-    fontSize: '0.875rem',
-    color: '#4b5563',
-    margin: '0.25rem 0',
-  },
-  errorBox: {
-    backgroundColor: '#fef2f2',
-    border: '1px solid #fecaca',
-    borderRadius: '8px',
-    padding: '0.75rem',
-    color: '#dc2626',
-    fontSize: '0.875rem',
-    marginBottom: '1rem',
-  },
-  bookButton: {
-    width: '100%',
-    padding: '1rem',
-    backgroundColor: '#e11d48',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
-  },
-  bookButtonDisabled: {
-    backgroundColor: '#d1d5db',
-    cursor: 'not-allowed',
-  },
-  disclaimer: {
-    fontSize: '0.75rem',
-    color: '#9ca3af',
-    textAlign: 'center',
-    marginTop: '0.75rem',
-    marginBottom: 0,
-  },
-  authRequired: {
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    padding: '2rem',
-    maxWidth: '400px',
-    margin: '2rem auto',
-    textAlign: 'center',
-  },
-  authTitle: {
-    fontSize: '1.25rem',
-    fontWeight: 600,
-    color: '#1f2937',
-    marginTop: 0,
-    marginBottom: '0.5rem',
-  },
-  authText: {
-    color: '#6b7280',
-    marginBottom: '1.5rem',
-  },
-  loginButton: {
-    display: 'block',
-    width: '100%',
-    padding: '0.875rem',
-    backgroundColor: '#e11d48',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    fontWeight: 600,
-    textDecoration: 'none',
-    textAlign: 'center',
-  },
-  registerText: {
-    marginTop: '1rem',
-    fontSize: '0.875rem',
-    color: '#6b7280',
-  },
-  registerLink: {
-    color: '#e11d48',
-    textDecoration: 'none',
-    fontWeight: 500,
-  },
 }

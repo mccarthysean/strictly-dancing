@@ -248,12 +248,12 @@
 @layer components {
   /* Card with hover effect */
   .card-hover {
-    @apply transition-elegant hover:shadow-lg hover:-translate-y-0.5;
+    @apply transition-all duration-300 ease-out hover:shadow-lg hover:-translate-y-0.5;
   }
 
   /* Button rose gold accent */
   .btn-rose-gold {
-    @apply bg-rose-gold-400 text-foreground hover:bg-rose-gold-500 transition-elegant;
+    @apply bg-rose-gold-400 text-foreground hover:bg-rose-gold-500 transition-all duration-300 ease-out;
   }
 
   /* Gradient border */

@@ -1,5 +1,10 @@
 import { useState } from 'react'
 import { $api } from '@/lib/api/$api'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
+import { Star, AlertTriangle } from 'lucide-react'
 
 interface ReviewFormProps {
   bookingId: string
@@ -75,75 +80,83 @@ export function ReviewForm({
 
   if (showConfirmation) {
     return (
-      <div style={styles.container}>
-        <div style={styles.confirmationCard}>
-          <h3 style={styles.confirmationTitle}>Confirm Your Review</h3>
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-display text-xl">Confirm Your Review</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground">
+            You are about to submit a review for <strong className="text-foreground">{hostName}</strong>
+          </p>
 
-          <div style={styles.confirmationContent}>
-            <p style={styles.confirmationText}>
-              You are about to submit a review for{' '}
-              <strong>{hostName}</strong>
-            </p>
-
-            <div style={styles.confirmationSummary}>
-              <div style={styles.summaryRow}>
-                <span style={styles.summaryLabel}>Rating:</span>
-                <span style={styles.summaryValue}>
-                  {'★'.repeat(rating)}
-                  {'☆'.repeat(5 - rating)} ({ratingLabels[rating]})
+          <div className="rounded-lg bg-muted p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Rating:</span>
+              <span className="flex items-center gap-0.5 text-amber-400">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star
+                    key={i}
+                    className={cn(
+                      "h-4 w-4",
+                      i <= rating ? "fill-current" : "fill-none opacity-30"
+                    )}
+                  />
+                ))}
+              </span>
+              <span className="text-sm text-muted-foreground">({ratingLabels[rating]})</span>
+            </div>
+            {comment.trim() && (
+              <div className="flex gap-2">
+                <span className="text-sm font-medium text-muted-foreground">Comment:</span>
+                <span className="flex-1 text-sm italic text-muted-foreground">
+                  "{comment.trim()}"
                 </span>
               </div>
-              {comment.trim() && (
-                <div style={styles.summaryRow}>
-                  <span style={styles.summaryLabel}>Comment:</span>
-                  <span style={styles.summaryValueText}>
-                    "{comment.trim()}"
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <p style={styles.confirmationWarning}>
-              This action cannot be undone. Are you sure you want to submit?
-            </p>
+            )}
           </div>
 
-          <div style={styles.confirmationButtons}>
-            <button
+          <div className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>This action cannot be undone. Are you sure you want to submit?</p>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
               onClick={handleCancelConfirmation}
-              style={styles.cancelButton}
               disabled={createReviewMutation.isPending}
             >
               Go Back
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleConfirmSubmit}
-              style={styles.confirmButton}
               disabled={createReviewMutation.isPending}
+              className="bg-green-600 hover:bg-green-700"
             >
               {createReviewMutation.isPending
                 ? 'Submitting...'
                 : 'Confirm & Submit'}
-            </button>
+            </Button>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     )
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.formCard}>
-        <h2 style={styles.title}>Leave a Review</h2>
-        <p style={styles.subtitle}>
-          How was your experience with <strong>{hostName}</strong>?
-        </p>
-
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-display text-xl">Leave a Review</CardTitle>
+        <CardDescription>
+          How was your experience with <strong className="text-foreground">{hostName}</strong>?
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
         {/* Star Rating Selector */}
-        <div style={styles.ratingSection}>
-          <label style={styles.label}>Rating *</label>
+        <div className="space-y-2">
+          <Label>Rating *</Label>
           <div
-            style={styles.starsContainer}
+            className="flex gap-1"
             onMouseLeave={handleStarLeave}
           >
             {[1, 2, 3, 4, 5].map((value) => (
@@ -152,248 +165,73 @@ export function ReviewForm({
                 type="button"
                 onClick={() => handleStarClick(value)}
                 onMouseEnter={() => handleStarHover(value)}
-                style={{
-                  ...styles.starButton,
-                  color: value <= displayRating ? '#facc15' : '#d1d5db',
-                }}
+                className="p-1 transition-transform hover:scale-110"
                 aria-label={`Rate ${value} star${value > 1 ? 's' : ''}`}
               >
-                {value <= displayRating ? '★' : '☆'}
+                <Star
+                  className={cn(
+                    "h-8 w-8 transition-colors",
+                    value <= displayRating
+                      ? "fill-amber-400 text-amber-400"
+                      : "fill-none text-muted-foreground/30"
+                  )}
+                />
               </button>
             ))}
           </div>
           {displayRating > 0 && (
-            <span style={styles.ratingLabel}>
+            <span className="text-sm font-medium text-muted-foreground">
               {ratingLabels[displayRating]}
             </span>
           )}
         </div>
 
         {/* Written Review Textarea */}
-        <div style={styles.commentSection}>
-          <label htmlFor="review-comment" style={styles.label}>
-            Written Review (Optional)
-          </label>
+        <div className="space-y-2">
+          <Label htmlFor="review-comment">Written Review (Optional)</Label>
           <textarea
             id="review-comment"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             placeholder="Share your experience with this host..."
-            style={styles.textarea}
+            className="min-h-28 w-full resize-y rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             maxLength={2000}
             rows={5}
           />
-          <div style={styles.charCount}>
+          <div className="text-right text-xs text-muted-foreground">
             {comment.length} / 2000 characters
           </div>
         </div>
 
         {/* Error Message */}
-        {error && <div style={styles.errorMessage}>{error}</div>}
+        {error && (
+          <div className="rounded-lg border border-destructive bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </div>
+        )}
 
         {/* Action Buttons */}
-        <div style={styles.buttonContainer}>
+        <div className="flex justify-end gap-3">
           {onCancel && (
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={onCancel}
-              style={styles.cancelButton}
             >
               Cancel
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             type="button"
             onClick={handleSubmitClick}
-            style={{
-              ...styles.submitButton,
-              opacity: isValid ? 1 : 0.5,
-              cursor: isValid ? 'pointer' : 'not-allowed',
-            }}
             disabled={!isValid}
           >
             Submit Review
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
-}
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    width: '100%',
-  },
-  formCard: {
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    padding: '1.5rem',
-  },
-  title: {
-    fontSize: '1.25rem',
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: '0.5rem',
-    margin: 0,
-  },
-  subtitle: {
-    color: '#6b7280',
-    marginBottom: '1.5rem',
-    marginTop: '0.5rem',
-  },
-  ratingSection: {
-    marginBottom: '1.5rem',
-  },
-  label: {
-    display: 'block',
-    fontSize: '0.875rem',
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: '0.5rem',
-  },
-  starsContainer: {
-    display: 'flex',
-    gap: '0.25rem',
-    marginBottom: '0.5rem',
-  },
-  starButton: {
-    background: 'none',
-    border: 'none',
-    fontSize: '2.5rem',
-    cursor: 'pointer',
-    padding: '0.25rem',
-    lineHeight: 1,
-    transition: 'transform 0.1s ease',
-  },
-  ratingLabel: {
-    fontSize: '0.875rem',
-    color: '#6b7280',
-    fontWeight: '500',
-  },
-  commentSection: {
-    marginBottom: '1.5rem',
-  },
-  textarea: {
-    width: '100%',
-    padding: '0.75rem',
-    borderRadius: '8px',
-    border: '1px solid #d1d5db',
-    fontSize: '1rem',
-    resize: 'vertical',
-    fontFamily: 'inherit',
-    boxSizing: 'border-box',
-  },
-  charCount: {
-    fontSize: '0.75rem',
-    color: '#9ca3af',
-    textAlign: 'right',
-    marginTop: '0.25rem',
-  },
-  errorMessage: {
-    backgroundColor: '#fef2f2',
-    color: '#b91c1c',
-    padding: '0.75rem',
-    borderRadius: '8px',
-    marginBottom: '1rem',
-    fontSize: '0.875rem',
-  },
-  buttonContainer: {
-    display: 'flex',
-    gap: '0.75rem',
-    justifyContent: 'flex-end',
-  },
-  cancelButton: {
-    padding: '0.75rem 1.5rem',
-    borderRadius: '8px',
-    border: '1px solid #d1d5db',
-    backgroundColor: 'white',
-    color: '#374151',
-    fontSize: '1rem',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
-  submitButton: {
-    padding: '0.75rem 1.5rem',
-    borderRadius: '8px',
-    border: 'none',
-    backgroundColor: '#7c3aed',
-    color: 'white',
-    fontSize: '1rem',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
-  // Confirmation styles
-  confirmationCard: {
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    padding: '1.5rem',
-  },
-  confirmationTitle: {
-    fontSize: '1.25rem',
-    fontWeight: 'bold',
-    color: '#1f2937',
-    margin: 0,
-    marginBottom: '1rem',
-  },
-  confirmationContent: {
-    marginBottom: '1.5rem',
-  },
-  confirmationText: {
-    color: '#374151',
-    marginBottom: '1rem',
-    marginTop: 0,
-  },
-  confirmationSummary: {
-    backgroundColor: '#f9fafb',
-    borderRadius: '8px',
-    padding: '1rem',
-    marginBottom: '1rem',
-  },
-  summaryRow: {
-    display: 'flex',
-    marginBottom: '0.5rem',
-  },
-  summaryLabel: {
-    fontWeight: '500',
-    color: '#374151',
-    width: '80px',
-    flexShrink: 0,
-  },
-  summaryValue: {
-    color: '#facc15',
-    letterSpacing: '0.1em',
-  },
-  summaryValueText: {
-    color: '#6b7280',
-    fontStyle: 'italic',
-    flex: 1,
-    wordBreak: 'break-word',
-  },
-  confirmationWarning: {
-    color: '#92400e',
-    backgroundColor: '#fffbeb',
-    padding: '0.75rem',
-    borderRadius: '8px',
-    fontSize: '0.875rem',
-    margin: 0,
-  },
-  confirmationButtons: {
-    display: 'flex',
-    gap: '0.75rem',
-    justifyContent: 'flex-end',
-  },
-  confirmButton: {
-    padding: '0.75rem 1.5rem',
-    borderRadius: '8px',
-    border: 'none',
-    backgroundColor: '#16a34a',
-    color: 'white',
-    fontSize: '1rem',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
 }
 
 export default ReviewForm

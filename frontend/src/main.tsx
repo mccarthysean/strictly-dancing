@@ -5,7 +5,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { ToastProvider } from '@/components/Toast'
+// Toast notifications are provided by Sonner via @/components/ui/sonner
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { initSentry } from '@/lib/sentry'
@@ -67,12 +67,10 @@ createRoot(rootElement).render(
     <ErrorBoundary>
       <ThemeProvider defaultTheme="system" storageKey="strictly-dancing-theme">
         <QueryClientProvider client={queryClient}>
-          <ToastProvider>
-            <AuthProvider>
-              <RouterProvider router={router} />
-              <Toaster richColors position="bottom-right" />
-            </AuthProvider>
-          </ToastProvider>
+          <AuthProvider>
+            <RouterProvider router={router} />
+            <Toaster richColors position="bottom-right" />
+          </AuthProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </ErrorBoundary>

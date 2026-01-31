@@ -1,6 +1,12 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAuth } from '@/contexts/AuthContext'
 import { $api } from '@/lib/api/$api'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { cn } from '@/lib/utils'
+import { Loader2 } from 'lucide-react'
 
 export const Route = createFileRoute('/messages/')({
   component: MessagesIndexPage,
@@ -36,22 +42,28 @@ function MessagesIndexPage() {
 
   if (authLoading) {
     return (
-      <div style={styles.container}>
-        <div style={styles.loading}>Loading...</div>
+      <div className="mx-auto min-h-[calc(100vh-60px)] max-w-4xl p-4">
+        <div className="flex h-[300px] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
       </div>
     )
   }
 
   if (!isAuthenticated) {
     return (
-      <div style={styles.container}>
-        <div style={styles.authRequired}>
-          <h2 style={styles.title}>Sign in required</h2>
-          <p style={styles.subtitle}>Please log in to view your messages.</p>
-          <Link to="/login" style={styles.loginLink}>
-            Sign In
-          </Link>
-        </div>
+      <div className="mx-auto min-h-[calc(100vh-60px)] max-w-4xl p-4">
+        <Card className="mx-auto max-w-md">
+          <CardContent className="flex h-[300px] flex-col items-center justify-center gap-4 text-center">
+            <h2 className="font-display text-2xl font-bold text-foreground">Sign in required</h2>
+            <p className="text-muted-foreground">Please log in to view your messages.</p>
+            <Button asChild>
+              <Link to="/login" className="no-underline">
+                Sign In
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -60,101 +72,113 @@ function MessagesIndexPage() {
   const totalUnread = unreadData?.total_unread ?? 0
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.pageTitle}>
+    <div className="mx-auto min-h-[calc(100vh-60px)] max-w-4xl p-4">
+      <div className="mb-6 flex items-center gap-2">
+        <h1 className="font-display text-[clamp(1.5rem,4vw,2rem)] font-bold text-foreground">
           Messages
-          {totalUnread > 0 && (
-            <span style={styles.headerBadge}>{totalUnread}</span>
-          )}
         </h1>
+        {totalUnread > 0 && (
+          <Badge variant="destructive" className="min-w-[1.5rem] text-center">
+            {totalUnread}
+          </Badge>
+        )}
       </div>
 
       {isLoading && (
-        <div style={styles.loadingContainer}>
-          <div style={styles.spinner} />
+        <div className="flex h-[200px] flex-col items-center justify-center gap-4 text-muted-foreground">
+          <Loader2 className="h-10 w-10 animate-spin" />
           <span>Loading conversations...</span>
         </div>
       )}
 
       {error && (
-        <div style={styles.errorContainer}>
-          <p style={styles.errorText}>Failed to load conversations</p>
-          <button onClick={() => refetch()} style={styles.retryButton}>
-            Try Again
-          </button>
-        </div>
+        <Card className="border-destructive bg-destructive/10">
+          <CardContent className="flex flex-col items-center justify-center gap-4 p-8">
+            <p className="text-destructive">Failed to load conversations</p>
+            <Button onClick={() => refetch()} variant="outline">
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       {!isLoading && !error && conversations.length === 0 && (
-        <div style={styles.emptyState}>
-          <div style={styles.emptyIcon}>💬</div>
-          <h3 style={styles.emptyTitle}>No conversations yet</h3>
-          <p style={styles.emptySubtitle}>
-            Start a conversation by messaging a host from their profile page.
-          </p>
-          <Link to="/hosts" style={styles.discoverButton}>
-            Find a Host
-          </Link>
-        </div>
+        <Card className="bg-muted/50">
+          <CardContent className="flex flex-col items-center justify-center gap-3 p-12 text-center">
+            <div className="text-5xl">💬</div>
+            <h3 className="font-display text-xl font-semibold text-foreground">No conversations yet</h3>
+            <p className="max-w-xs text-muted-foreground">
+              Start a conversation by messaging a host from their profile page.
+            </p>
+            <Button asChild className="mt-2">
+              <Link to="/hosts" className="no-underline">
+                Find a Host
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       {!isLoading && !error && conversations.length > 0 && (
-        <div style={styles.conversationList}>
-          {conversations.map((conversation) => {
-            const otherUser = conversation.other_participant
-            const hasUnread = conversation.unread_count > 0
-            const lastMessageTime = conversation.last_message_at
-              ? formatTime(new Date(conversation.last_message_at))
-              : ''
+        <Card className="overflow-hidden">
+          <div className="divide-y divide-border">
+            {conversations.map((conversation) => {
+              const otherUser = conversation.other_participant
+              const hasUnread = conversation.unread_count > 0
+              const lastMessageTime = conversation.last_message_at
+                ? formatTime(new Date(conversation.last_message_at))
+                : ''
 
-            return (
-              <Link
-                key={conversation.id}
-                to="/messages/$conversationId"
-                params={{ conversationId: conversation.id }}
-                style={{
-                  ...styles.conversationItem,
-                  ...(hasUnread ? styles.conversationItemUnread : {}),
-                }}
-              >
-                <div style={styles.avatar}>
-                  {getInitials(otherUser.first_name, otherUser.last_name)}
-                </div>
-                <div style={styles.conversationContent}>
-                  <div style={styles.conversationHeader}>
-                    <span
-                      style={{
-                        ...styles.participantName,
-                        ...(hasUnread ? styles.participantNameUnread : {}),
-                      }}
-                    >
-                      {otherUser.first_name} {otherUser.last_name}
-                    </span>
-                    <span style={styles.timestamp}>{lastMessageTime}</span>
-                  </div>
-                  <div style={styles.messagePreviewRow}>
-                    <p
-                      style={{
-                        ...styles.messagePreview,
-                        ...(hasUnread ? styles.messagePreviewUnread : {}),
-                      }}
-                    >
-                      {conversation.last_message_preview ?? 'No messages yet'}
-                    </p>
-                    {hasUnread && (
-                      <span style={styles.unreadBadge}>
-                        {conversation.unread_count > 99
-                          ? '99+'
-                          : conversation.unread_count}
+              return (
+                <Link
+                  key={conversation.id}
+                  to="/messages/$conversationId"
+                  params={{ conversationId: conversation.id }}
+                  className={cn(
+                    "flex items-center gap-3 p-4 no-underline transition-colors hover:bg-muted/50",
+                    hasUnread && "bg-amber-50 dark:bg-amber-900/10"
+                  )}
+                >
+                  <Avatar>
+                    <AvatarFallback className="bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400">
+                      {getInitials(otherUser.first_name, otherUser.last_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={cn(
+                          "text-foreground",
+                          hasUnread ? "font-bold" : "font-medium"
+                        )}
+                      >
+                        {otherUser.first_name} {otherUser.last_name}
                       </span>
-                    )}
+                      <span className="shrink-0 text-xs text-muted-foreground">{lastMessageTime}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <p
+                        className={cn(
+                          "flex-1 truncate text-sm",
+                          hasUnread ? "font-medium text-foreground" : "text-muted-foreground"
+                        )}
+                      >
+                        {conversation.last_message_preview ?? 'No messages yet'}
+                      </p>
+                      {hasUnread && (
+                        <Badge variant="default" className="min-w-[1.25rem] text-center text-xs">
+                          {conversation.unread_count > 99
+                            ? '99+'
+                            : conversation.unread_count}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </Link>
-            )
-          })}
-        </div>
+                </Link>
+              )
+            })}
+          </div>
+        </Card>
       )}
     </div>
   )
@@ -181,237 +205,4 @@ function formatTime(date: Date): string {
     // Older - show date
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
   }
-}
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    maxWidth: '800px',
-    margin: '0 auto',
-    padding: '1rem',
-    minHeight: 'calc(100vh - 60px)',
-  },
-  loading: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '300px',
-    color: '#6b7280',
-  },
-  authRequired: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '300px',
-    textAlign: 'center',
-    gap: '1rem',
-  },
-  title: {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: '#1f2937',
-    margin: 0,
-  },
-  subtitle: {
-    color: '#6b7280',
-    margin: 0,
-  },
-  loginLink: {
-    backgroundColor: '#3b82f6',
-    color: 'white',
-    padding: '0.75rem 1.5rem',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    fontWeight: '500',
-  },
-  header: {
-    marginBottom: '1.5rem',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  pageTitle: {
-    fontSize: 'clamp(1.5rem, 4vw, 2rem)',
-    fontWeight: 'bold',
-    color: '#1f2937',
-    margin: 0,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-  },
-  headerBadge: {
-    backgroundColor: '#ef4444',
-    color: 'white',
-    fontSize: '0.875rem',
-    fontWeight: '600',
-    padding: '0.25rem 0.5rem',
-    borderRadius: '9999px',
-    minWidth: '1.5rem',
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '200px',
-    gap: '1rem',
-    color: '#6b7280',
-  },
-  spinner: {
-    width: '40px',
-    height: '40px',
-    border: '3px solid #e5e7eb',
-    borderTopColor: '#3b82f6',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-  },
-  errorContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '200px',
-    gap: '1rem',
-  },
-  errorText: {
-    color: '#dc2626',
-    margin: 0,
-  },
-  retryButton: {
-    backgroundColor: '#3b82f6',
-    color: 'white',
-    padding: '0.5rem 1rem',
-    borderRadius: '8px',
-    border: 'none',
-    cursor: 'pointer',
-    fontWeight: '500',
-  },
-  emptyState: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    padding: '3rem',
-    textAlign: 'center',
-    gap: '0.75rem',
-  },
-  emptyIcon: {
-    fontSize: '3rem',
-    marginBottom: '0.5rem',
-  },
-  emptyTitle: {
-    fontSize: '1.25rem',
-    fontWeight: '600',
-    color: '#1f2937',
-    margin: 0,
-  },
-  emptySubtitle: {
-    color: '#6b7280',
-    margin: 0,
-    maxWidth: '300px',
-  },
-  discoverButton: {
-    backgroundColor: '#3b82f6',
-    color: 'white',
-    padding: '0.75rem 1.5rem',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    fontWeight: '500',
-    marginTop: '0.5rem',
-  },
-  conversationList: {
-    display: 'flex',
-    flexDirection: 'column',
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    overflow: 'hidden',
-  },
-  conversationItem: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '1rem',
-    gap: '0.75rem',
-    textDecoration: 'none',
-    color: 'inherit',
-    borderBottom: '1px solid #f3f4f6',
-    transition: 'background-color 0.15s ease',
-    cursor: 'pointer',
-  },
-  conversationItemUnread: {
-    backgroundColor: '#fefce8',
-  },
-  avatar: {
-    width: '48px',
-    height: '48px',
-    borderRadius: '50%',
-    backgroundColor: '#e0e7ff',
-    color: '#4f46e5',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: '600',
-    fontSize: '1rem',
-    flexShrink: 0,
-  },
-  conversationContent: {
-    flex: 1,
-    minWidth: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.25rem',
-  },
-  conversationHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '0.5rem',
-  },
-  participantName: {
-    fontWeight: '500',
-    color: '#1f2937',
-    fontSize: '1rem',
-  },
-  participantNameUnread: {
-    fontWeight: '700',
-  },
-  timestamp: {
-    fontSize: '0.75rem',
-    color: '#9ca3af',
-    flexShrink: 0,
-  },
-  messagePreviewRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '0.5rem',
-  },
-  messagePreview: {
-    color: '#6b7280',
-    fontSize: '0.875rem',
-    margin: 0,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-    flex: 1,
-  },
-  messagePreviewUnread: {
-    color: '#374151',
-    fontWeight: '500',
-  },
-  unreadBadge: {
-    backgroundColor: '#3b82f6',
-    color: 'white',
-    fontSize: '0.75rem',
-    fontWeight: '600',
-    padding: '0.125rem 0.5rem',
-    borderRadius: '9999px',
-    minWidth: '1.25rem',
-    textAlign: 'center',
-    flexShrink: 0,
-  },
 }

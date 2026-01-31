@@ -1,6 +1,11 @@
 import { useState, type FormEvent } from 'react'
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useAuth } from '@/contexts/AuthContext'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
@@ -81,253 +86,118 @@ function LoginPage() {
   const isCodeValid = code.length === 6 && /^\d{6}$/.test(code)
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '60vh',
-        padding: '1rem',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '400px',
-          padding: '2rem',
-          backgroundColor: '#ffffff',
-          borderRadius: '0.5rem',
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-        }}
-      >
-        <h1
-          style={{
-            fontSize: '1.5rem',
-            fontWeight: 'bold',
-            color: '#1f2937',
-            marginBottom: '0.5rem',
-            textAlign: 'center',
-          }}
-        >
-          Welcome Back
-        </h1>
-        <p
-          style={{
-            fontSize: '0.875rem',
-            color: '#6b7280',
-            marginBottom: '1.5rem',
-            textAlign: 'center',
-          }}
-        >
-          {step === 'email'
-            ? "Enter your email to receive a sign-in code"
-            : `Enter the 6-digit code sent to ${email}`}
-        </p>
-
-        {error && (
-          <div
-            style={{
-              padding: '0.75rem',
-              marginBottom: '1rem',
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fecaca',
-              borderRadius: '0.375rem',
-              color: '#dc2626',
-              fontSize: '0.875rem',
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        {successMessage && (
-          <div
-            style={{
-              padding: '0.75rem',
-              marginBottom: '1rem',
-              backgroundColor: '#f0fdf4',
-              border: '1px solid #bbf7d0',
-              borderRadius: '0.375rem',
-              color: '#16a34a',
-              fontSize: '0.875rem',
-            }}
-          >
-            {successMessage}
-          </div>
-        )}
-
-        {step === 'email' ? (
-          <form onSubmit={handleRequestMagicLink}>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label
-                htmlFor="email"
-                style={{
-                  display: 'block',
-                  marginBottom: '0.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#374151',
-                }}
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                disabled={isLoading}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.375rem',
-                  fontSize: '1rem',
-                  boxSizing: 'border-box',
-                }}
-              />
+    <div className="flex min-h-[60vh] flex-col items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="font-display text-2xl">Welcome Back</CardTitle>
+          <CardDescription>
+            {step === 'email'
+              ? "Enter your email to receive a sign-in code"
+              : `Enter the 6-digit code sent to ${email}`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <div className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
             </div>
+          )}
 
-            <button
-              type="submit"
-              disabled={isLoading || !isEmailValid}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                backgroundColor: isLoading || !isEmailValid ? '#9ca3af' : '#6366f1',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '0.375rem',
-                fontSize: '1rem',
-                fontWeight: '500',
-                cursor: isLoading || !isEmailValid ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {isLoading ? 'Sending...' : 'Send Magic Link'}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleVerifyCode}>
-            <div style={{ marginBottom: '1rem' }}>
-              <label
-                htmlFor="code"
-                style={{
-                  display: 'block',
-                  marginBottom: '0.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#374151',
-                }}
-              >
-                6-Digit Code
-              </label>
-              <input
-                id="code"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="000000"
-                required
-                disabled={isLoading}
-                autoComplete="one-time-code"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.375rem',
-                  fontSize: '1.5rem',
-                  textAlign: 'center',
-                  letterSpacing: '0.5rem',
-                  boxSizing: 'border-box',
-                }}
-              />
+          {successMessage && (
+            <div className="mb-4 rounded-md border border-green-500/50 bg-green-500/10 px-3 py-2 text-sm text-green-600 dark:text-green-400">
+              {successMessage}
             </div>
+          )}
 
-            <button
-              type="submit"
-              disabled={isLoading || !isCodeValid}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                backgroundColor: isLoading || !isCodeValid ? '#9ca3af' : '#6366f1',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '0.375rem',
-                fontSize: '1rem',
-                fontWeight: '500',
-                cursor: isLoading || !isCodeValid ? 'not-allowed' : 'pointer',
-                marginBottom: '1rem',
-              }}
-            >
-              {isLoading ? 'Verifying...' : 'Sign In'}
-            </button>
+          {step === 'email' ? (
+            <form onSubmit={handleRequestMagicLink} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
 
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                fontSize: '0.875rem',
-              }}
-            >
-              <button
-                type="button"
-                onClick={handleBackToEmail}
-                disabled={isLoading}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#6366f1',
-                  cursor: 'pointer',
-                  padding: 0,
-                }}
+              <Button
+                type="submit"
+                disabled={isLoading || !isEmailValid}
+                className="w-full"
               >
-                Use different email
-              </button>
-              <button
-                type="button"
-                onClick={handleResendCode}
-                disabled={isLoading}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#6366f1',
-                  cursor: 'pointer',
-                  padding: 0,
-                }}
-              >
-                Resend code
-              </button>
-            </div>
-          </form>
-        )}
+                {isLoading ? 'Sending...' : 'Send Magic Link'}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyCode} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="code">6-Digit Code</Label>
+                <Input
+                  id="code"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  required
+                  disabled={isLoading}
+                  autoComplete="one-time-code"
+                  className="text-center text-2xl tracking-[0.5rem]"
+                />
+              </div>
 
-        <p
-          style={{
-            marginTop: '1.5rem',
-            textAlign: 'center',
-            fontSize: '0.875rem',
-            color: '#6b7280',
-          }}
-        >
-          Don't have an account?{' '}
-          <Link
-            to="/register"
-            style={{
-              color: '#6366f1',
-              textDecoration: 'none',
-              fontWeight: '500',
-            }}
-          >
-            Register
-          </Link>
-        </p>
-      </div>
+              <Button
+                type="submit"
+                disabled={isLoading || !isCodeValid}
+                className="w-full"
+              >
+                {isLoading ? 'Verifying...' : 'Sign In'}
+              </Button>
+
+              <div className="flex justify-between text-sm">
+                <button
+                  type="button"
+                  onClick={handleBackToEmail}
+                  disabled={isLoading}
+                  className={cn(
+                    "bg-transparent p-0 text-primary hover:underline",
+                    "disabled:cursor-not-allowed disabled:opacity-50"
+                  )}
+                >
+                  Use different email
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResendCode}
+                  disabled={isLoading}
+                  className={cn(
+                    "bg-transparent p-0 text-primary hover:underline",
+                    "disabled:cursor-not-allowed disabled:opacity-50"
+                  )}
+                >
+                  Resend code
+                </button>
+              </div>
+            </form>
+          )}
+
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            Don't have an account?{' '}
+            <Link
+              to="/register"
+              className="font-medium text-primary no-underline hover:underline"
+            >
+              Register
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
     </div>
   )
 }
