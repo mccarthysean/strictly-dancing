@@ -1,0 +1,24 @@
+<svg viewBox="0 0 320 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="rose-gold-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0b89a"/>
+      <stop offset="50%" stop-color="#e5a88f"/>
+      <stop offset="100%" stop-color="#d4967d"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(10, 8)">
+    <!-- Flowing S-curve dancers -->
+    <path
+      d="M32 4C22 4 14 12 14 22C14 28 17 33 22 36C17 39 14 44 14 50C14 58 20 64 28 64C32 64 36 62 38 59L42 52C44 49 48 47 52 47C56 47 60 49 62 52L66 59C68 62 72 64 76 64C84 64 90 58 90 50C90 44 87 39 82 36C87 33 90 28 90 22C90 12 82 4 72 4C68 4 64 6 62 9L58 16C56 19 52 21 48 21C44 21 40 19 38 16L34 9C32 6 28 4 24 4"
+      stroke="#fafafa"
+      stroke-width="3.5"
+      stroke-linecap="round"
+      fill="none"
+    />
+    <!-- Rose gold accent point -->
+    <circle cx="52" cy="34" r="4" fill="url(#rose-gold-dark)"/>
+  </g>
+  <!-- Wordmark -->
+  <text x="115" y="52" font-family="Cormorant Garamond, Georgia, serif" font-size="28" font-weight="600" fill="#fafafa">Strictly</text>
+  <text x="205" y="52" font-family="Cormorant Garamond, Georgia, serif" font-size="28" font-weight="400" fill="#fafafa" font-style="italic">Dancing</text>
+</svg>

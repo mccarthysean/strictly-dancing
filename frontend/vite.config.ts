@@ -2,10 +2,12 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [
+    tailwindcss(),
     TanStackRouterVite(),
     react(),
     VitePWA({
@@ -15,7 +17,7 @@ export default defineConfig({
         name: 'Strictly Dancing',
         short_name: 'Strictly',
         description: 'Global dance host marketplace connecting travelers and dance enthusiasts with qualified dance hosts.',
-        theme_color: '#6366f1',
+        theme_color: '#0a0a0a',
         background_color: '#ffffff',
         display: 'standalone',
         icons: [

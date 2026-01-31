@@ -1,3 +1,4 @@
+import './index.css'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
@@ -5,6 +6,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ToastProvider } from '@/components/Toast'
+import { ThemeProvider } from '@/components/theme-provider'
+import { Toaster } from '@/components/ui/sonner'
 import { initSentry } from '@/lib/sentry'
 import { routeTree } from './routeTree.gen'
 
@@ -58,17 +61,20 @@ if (!rootElement) {
   throw new Error('Root element not found')
 }
 
-// Render the app with ErrorBoundary and ToastProvider
+// Render the app with ErrorBoundary, ThemeProvider, and ToastProvider
 createRoot(rootElement).render(
   <StrictMode>
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          <AuthProvider>
-            <RouterProvider router={router} />
-          </AuthProvider>
-        </ToastProvider>
-      </QueryClientProvider>
+      <ThemeProvider defaultTheme="system" storageKey="strictly-dancing-theme">
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>
+            <AuthProvider>
+              <RouterProvider router={router} />
+              <Toaster richColors position="bottom-right" />
+            </AuthProvider>
+          </ToastProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   </StrictMode>,
 )
