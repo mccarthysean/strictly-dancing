@@ -1,6 +1,6 @@
 ---
 name: Frontend Design
-description: Create sophisticated, luxury UI using Tailwind CSS and shadcn/ui with Black & Gold theme. Use when designing pages, creating components, styling interfaces, implementing responsive layouts, or working on visual design. Triggers on design, UI, component, styling, shadcn, Tailwind, theme, luxury, elegant.
+description: Create sophisticated, luxury UI using Tailwind CSS and shadcn/ui with Black & Rose Gold theme. Use when designing pages, creating components, styling interfaces, implementing the Strictly Dancing design system. Triggers on design, UI, component, styling, shadcn, Tailwind, theme, luxury, elegant, beautiful.
 allowed-tools: [Read, Write, Edit, Bash, Glob, Grep]
 ---
 
@@ -8,397 +8,342 @@ allowed-tools: [Read, Write, Edit, Bash, Glob, Grep]
 
 ## Purpose
 
-Build sophisticated, production-grade UI components for Strictly Dancing using Tailwind CSS v4 and shadcn/ui with a **Black & Gold luxury theme**.
+Create sophisticated, elegant UI components following the Strictly Dancing **Black & Rose Gold** design system using Tailwind CSS v4 and shadcn/ui.
 
 ## When to Use This Skill
 
 - Designing new pages or layouts
 - Creating UI components
-- Styling interfaces with Tailwind
+- Styling interfaces
 - Implementing responsive designs
-- Adding shadcn/ui components
-- Working on visual polish and animations
-- Implementing dark mode
+- Adding animations and transitions
+- Working with the design system
 
-## Brand Identity: Black & Gold
+## Brand Identity
 
-### Design Philosophy
+### Philosophy
 
-Strictly Dancing uses a **Black & Gold** color palette that conveys:
-- **Luxury**: Premium marketplace positioning
-- **Elegance**: Sophisticated dance culture
-- **Trust**: Professional, established feel
-- **Movement**: Gold accents suggest energy and dance
+**Timeless elegance meets modern luxury** - The Strictly Dancing brand combines:
+- Classic black for sophisticated authority
+- Rose gold accents for warmth and premium feel
+- Elegant serif typography for display text
+- Clean sans-serif for readability
 
-### Logo
+### Color Palette
 
-**"The Elegant Embrace"** - Two abstract figures in a dance hold, formed by a flowing S-curve with a gold accent at the connection point.
+#### Primary Colors
 
-- Light mode: Black stroke, gold accent
-- Dark mode: White stroke, bright gold accent
-- Location: `/frontend/public/logo.svg`, `/frontend/public/logo-dark.svg`
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `black` / `foreground` | `#0a0a0a` | Primary text, buttons |
+| `white` / `background` | `#fffbf7` | Backgrounds (warm white) |
 
----
+#### Rose Gold Accent Scale
 
-## Color System
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `rose-gold-50` | `#fdf4f0` | Subtle tints |
+| `rose-gold-100` | `#fbe8e0` | Light backgrounds |
+| `rose-gold-200` | `#f5d4c8` | Hover states |
+| `rose-gold-300` | `#f0b89a` | Dark mode accent |
+| `rose-gold-400` | `#e5a88f` | **Primary rose gold** |
+| `rose-gold-500` | `#d4967d` | Medium tone |
+| `rose-gold-600` | `#c8856c` | Dark rose gold |
+| `rose-gold-700` | `#a66b55` | Shadows |
 
-### Primary Palette
+#### Deep Rose (CTAs)
 
-| Token | Light Mode | Dark Mode | Usage |
-|-------|------------|-----------|-------|
-| `--background` | `#ffffff` | `#0a0a0a` | Page background |
-| `--foreground` | `#0a0a0a` | `#fafafa` | Primary text |
-| `--primary` | `#0a0a0a` | `#fafafa` | CTAs, primary actions |
-| `--accent` | `#d4a853` | `#f0c75e` | Gold highlights, premium elements |
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `rose-600` | `#e11d48` | Primary CTAs |
+| `rose-700` | `#be123c` | CTA hover |
 
-### Gold Palette (Premium Accents)
+### Typography
 
-```css
---color-gold-50: #fefce8;   /* Subtle tints */
---color-gold-100: #fef9c3;  /* Light backgrounds */
---color-gold-200: #fef08a;  /* Hover states */
---color-gold-300: #fde047;  /* Active states */
---color-gold-400: #f0c75e;  /* Dark mode accent */
---color-gold-500: #d4a853;  /* Primary gold */
---color-gold-600: #b8860b;  /* Dark gold */
-```
+**Display Font**: `Cormorant Garamond` (serif)
+- Used for: H1-H4, wordmark, special callouts
+- Weights: 400 (regular), 500, 600 (semi-bold), 700 (bold)
+- Conveys: Elegance, sophistication, dance heritage
 
-### Semantic Colors
+**Body Font**: `Inter` (sans-serif)
+- Used for: Body text, UI elements, buttons, navigation
+- Weights: 400 (regular), 500 (medium), 600 (semi-bold), 700 (bold)
+- Conveys: Modern, clean, highly readable
 
-| Token | Light | Dark | Usage |
-|-------|-------|------|-------|
-| `--destructive` | `#dc2626` | `#ef4444` | Errors, delete actions |
-| `--success` | `#16a34a` | `#22c55e` | Success states |
-| `--muted` | `#f4f4f5` | `#27272a` | Secondary backgrounds |
-| `--border` | `#e4e4e7` | `#27272a` | Borders |
-
-### Usage Rules
-
-1. **Primary actions**: Use `bg-primary text-primary-foreground`
-2. **Premium elements**: Use gold for badges, highlights, verified icons
-3. **Never use gold for destructive actions**
-4. **Gold text only on dark backgrounds** (contrast ratio)
-
----
-
-## Typography
-
-### Fonts
-
-- **Display**: `Cormorant Garamond` - Headings, wordmark, luxury feel
-- **Body**: `Inter` - UI, body text, excellent readability
-
-### CSS Classes
-
-```css
-.font-display { font-family: var(--font-display); }
-.font-body { font-family: var(--font-body); }
-```
-
-### Scale
-
-| Element | Font | Size | Weight | Tailwind |
-|---------|------|------|--------|----------|
-| H1 | Cormorant | 3.75rem | 700 | `text-6xl font-display font-bold` |
-| H2 | Cormorant | 2.25rem | 600 | `text-4xl font-display font-semibold` |
-| H3 | Cormorant | 1.5rem | 600 | `text-2xl font-display font-semibold` |
-| Body | Inter | 1rem | 400 | `text-base` |
-| Small | Inter | 0.875rem | 400 | `text-sm` |
-
-### Heading Pattern
+#### Usage in Tailwind
 
 ```tsx
-<h1 className="font-display text-6xl font-bold tracking-tight">
-  Find Your Perfect Dance Host
-</h1>
+// Display headings (serif)
+<h1 className="font-display text-4xl font-bold">Find Your Dance Host</h1>
 
-<h2 className="font-display text-4xl font-semibold">
-  Featured Hosts
-</h2>
+// Body text (sans-serif - default)
+<p className="text-base text-muted-foreground">Discover qualified hosts...</p>
 ```
 
----
+### Shadows
+
+```css
+/* Elegant subtle shadow */
+--shadow-elegant: 0 0 40px rgba(229, 168, 143, 0.15);
+
+/* Rose gold glow effect */
+--shadow-rose-gold: 0 4px 20px rgba(229, 168, 143, 0.25);
+```
+
+Use classes: `glow-elegant` or `glow-rose-gold`
 
 ## Component Patterns
 
 ### Buttons
 
 ```tsx
-// Primary (Black)
-<Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-  Book Now
-</Button>
+import { Button } from '@/components/ui/button'
 
-// Gold Accent (Premium CTA)
-<Button className="bg-gold-500 text-black hover:bg-gold-600 shadow-gold">
-  Become a Host
-</Button>
+// Primary (black background)
+<Button>Book Now</Button>
 
-// Outline
-<Button variant="outline" className="border-border hover:bg-muted">
-  Learn More
-</Button>
+// Secondary (outline)
+<Button variant="outline">View Profile</Button>
+
+// Ghost (minimal)
+<Button variant="ghost">Cancel</Button>
+
+// Rose gold accent (custom)
+<Button className="btn-rose-gold">Premium Feature</Button>
+
+// Destructive
+<Button variant="destructive">Delete</Button>
 ```
 
 ### Cards
 
 ```tsx
-<Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow">
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+
+<Card className="card-hover">
   <CardHeader>
-    <CardTitle className="font-display text-xl">Host Name</CardTitle>
+    <CardTitle className="font-display">Dance Host</CardTitle>
   </CardHeader>
   <CardContent>
-    {/* Content */}
+    <p className="text-muted-foreground">Content here...</p>
   </CardContent>
 </Card>
 ```
 
-### Premium/Featured Cards (with Gold)
+### Forms
 
 ```tsx
-<Card className="bg-card border-gold-500/30 shadow-gold">
-  <div className="absolute top-3 right-3">
-    <Badge className="bg-gold-500 text-black">Featured</Badge>
-  </div>
-  {/* Content */}
-</Card>
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+
+<div className="space-y-2">
+  <Label htmlFor="email">Email</Label>
+  <Input id="email" type="email" placeholder="you@example.com" />
+</div>
 ```
 
-### Inputs
+### Badges
 
 ```tsx
-<Input
-  className="border-input bg-background focus:ring-2 focus:ring-ring"
-  placeholder="Search hosts..."
-/>
+import { Badge } from '@/components/ui/badge'
+
+<Badge>Verified</Badge>
+<Badge variant="secondary">New</Badge>
+<Badge variant="outline">Popular</Badge>
 ```
 
----
-
-## Shadows
-
-| Name | CSS | Usage |
-|------|-----|-------|
-| `shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)` | Subtle elevation |
-| `shadow-md` | `0 4px 6px rgba(0,0,0,0.07)` | Cards |
-| `shadow-lg` | `0 10px 15px rgba(0,0,0,0.1)` | Modals, dropdowns |
-| `shadow-gold` | `0 4px 20px rgba(212,168,83,0.25)` | Premium elements |
-| `shadow-elegant` | `0 0 40px rgba(212,168,83,0.15)` | Ambient gold glow |
-
----
-
-## Animations
-
-### Transitions
+### Toasts (Sonner)
 
 ```tsx
-// Standard transition
-<div className="transition-all duration-300 ease-out">
+import { toast } from 'sonner'
 
-// Elegant hover (cubic-bezier)
-<div className="transition-elegant">
+// Success
+toast.success('Booking confirmed!')
+
+// Error
+toast.error('Payment failed')
+
+// Info
+toast.info('New message received')
 ```
 
-### Keyframes Available
+## Custom Utility Classes
 
-- `fade-in` - Opacity 0 to 1
-- `slide-up` - Slide up with fade
-- `shimmer` - Loading shimmer effect
+### Defined in index.css
 
-### Hover Patterns
+```css
+/* Rose gold glow effect */
+.glow-rose-gold { box-shadow: var(--shadow-rose-gold); }
+.glow-elegant { box-shadow: var(--shadow-elegant); }
 
-```tsx
-// Card hover
-<Card className="hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+/* Text gradient */
+.text-gradient-rose-gold {
+  @apply bg-gradient-to-r from-rose-gold-400 via-rose-gold-500 to-rose-gold-600 bg-clip-text text-transparent;
+}
 
-// Button hover
-<Button className="hover:scale-[1.02] active:scale-[0.98] transition-transform">
+/* Smooth transitions */
+.transition-elegant { @apply transition-all duration-300 ease-out; }
+
+/* Card hover effect */
+.card-hover { @apply transition-elegant hover:shadow-lg hover:-translate-y-0.5; }
+
+/* Rose gold button */
+.btn-rose-gold { @apply bg-rose-gold-400 text-foreground hover:bg-rose-gold-500 transition-elegant; }
+
+/* Gradient border */
+.border-gradient-rose-gold { /* Creates rose gold gradient border */ }
 ```
-
----
 
 ## Dark Mode
 
-### Implementation
+The design system supports dark mode via the `.dark` class on the HTML element.
 
-Dark mode is controlled via the `.dark` class on `<html>`.
-
-```tsx
-// Toggle dark mode
-document.documentElement.classList.toggle('dark')
-
-// Check current mode
-const isDark = document.documentElement.classList.contains('dark')
-```
-
-### Color Switching
-
-All colors automatically switch via CSS variables. Use semantic tokens:
+### Theme Toggle
 
 ```tsx
-// GOOD - Uses CSS variables, auto-switches
-<div className="bg-background text-foreground">
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
-// BAD - Hardcoded colors
-<div className="bg-white text-black">
+<ThemeToggle />  // Toggles between light/dark/system
 ```
 
-### Logo Switching
+### Hook
 
 ```tsx
-const Logo = () => {
-  const isDark = useIsDarkMode()
-  return (
-    <img
-      src={isDark ? '/logo-dark.svg' : '/logo.svg'}
-      alt="Strictly Dancing"
-    />
-  )
-}
+import { useTheme } from '@/components/theme-provider'
+
+const { theme, setTheme, resolvedTheme } = useTheme()
 ```
 
----
+### Conditional Classes
+
+```tsx
+// Using Tailwind's dark: variant
+<div className="bg-white dark:bg-card">
+  <p className="text-black dark:text-white">Adapts to theme</p>
+</div>
+```
 
 ## Responsive Design
 
-### Breakpoints
+**Mobile-first approach** using Tailwind breakpoints:
 
 | Breakpoint | Min Width | Usage |
 |------------|-----------|-------|
-| `sm` | 640px | Large phones |
+| `sm` | 640px | Small tablets |
 | `md` | 768px | Tablets |
 | `lg` | 1024px | Laptops |
 | `xl` | 1280px | Desktops |
 | `2xl` | 1536px | Large screens |
 
-### Mobile-First Pattern
-
 ```tsx
-<div className="
-  px-4 py-6
-  md:px-6 md:py-8
-  lg:px-8 lg:py-12
-">
-  <h1 className="
-    text-3xl
-    md:text-4xl
-    lg:text-6xl
-    font-display font-bold
-  ">
-    Welcome
-  </h1>
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  {/* Cards stack on mobile, 2 cols on tablet, 3 on desktop */}
 </div>
 ```
 
-### Container
+## Animation Patterns
+
+### Elegant Transitions
+
+Use `transition-elegant` for smooth 300ms ease-out animations:
 
 ```tsx
-<div className="container mx-auto px-4 max-w-7xl">
-  {/* Content */}
-</div>
+<button className="transition-elegant hover:scale-105">
+  Hover me
+</button>
 ```
 
----
+### Dance-Inspired Motion
+
+For special elements, use flowing, graceful animations:
+
+```tsx
+// Subtle float animation
+<div className="animate-pulse">...</div>
+
+// Custom keyframes in index.css for dance-like motion
+@keyframes sway {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+```
 
 ## Accessibility
 
-### Focus States
+### Requirements
 
-All interactive elements have visible focus via `focus-visible:ring-2 focus-visible:ring-ring`.
+- WCAG AA contrast ratios (4.5:1 for normal text)
+- Focus indicators on all interactive elements
+- Proper heading hierarchy
+- ARIA labels where needed
+- Keyboard navigation support
 
-### Color Contrast
+### Built-in Support
 
-- Text on backgrounds: Minimum 4.5:1 contrast ratio
-- Gold on white: Use `gold-600` or darker for text
-- Gold on black: Use `gold-400` or lighter for text
+shadcn/ui components include:
+- Proper ARIA attributes
+- Keyboard navigation
+- Focus management
+- Screen reader support
 
-### ARIA Patterns
+## File Locations
 
-```tsx
-// Loading state
-<Button disabled aria-busy="true">
-  <span className="animate-spin">...</span>
-  Loading
-</Button>
+| File | Purpose |
+|------|---------|
+| `frontend/src/index.css` | Design tokens, utilities |
+| `frontend/src/components/ui/` | shadcn components |
+| `frontend/src/components/theme-provider.tsx` | Dark mode |
+| `frontend/public/logo.svg` | Light mode logo |
+| `frontend/public/logo-dark.svg` | Dark mode logo |
+| `frontend/public/favicon.svg` | Browser favicon |
 
-// Icon buttons
-<Button size="icon" aria-label="Close menu">
-  <X className="h-4 w-4" />
-</Button>
-```
+## Examples
 
----
-
-## File Structure
-
-```
-frontend/
-├── src/
-│   ├── index.css              # Tailwind + design tokens
-│   ├── lib/
-│   │   └── utils.ts           # cn() utility
-│   └── components/
-│       └── ui/                # shadcn components
-├── public/
-│   ├── logo.svg               # Light mode logo
-│   ├── logo-dark.svg          # Dark mode logo
-│   ├── logo-icon.svg          # Icon only
-│   └── favicon.svg            # Browser favicon
-└── tailwind.config.ts         # (Tailwind v4 uses CSS config)
-```
-
----
-
-## Quick Reference
-
-### Import cn() Utility
+### Hero Section
 
 ```tsx
-import { cn } from '@/lib/utils'
-
-<div className={cn(
-  'base-classes',
-  condition && 'conditional-class',
-  className
-)}>
-```
-
-### Common Patterns
-
-```tsx
-// Hero section
-<section className="py-20 md:py-32 bg-background">
+<section className="relative min-h-[60vh] flex items-center justify-center bg-background">
   <div className="container mx-auto px-4 text-center">
-    <h1 className="font-display text-5xl md:text-7xl font-bold mb-6">
-      Title
+    <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
+      Find Your Perfect
+      <span className="text-gradient-rose-gold"> Dance Host</span>
     </h1>
-    <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto">
-      Description
+    <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+      Connect with qualified dance hosts worldwide for unforgettable experiences.
     </p>
+    <div className="flex gap-4 justify-center">
+      <Button size="lg">Browse Hosts</Button>
+      <Button size="lg" variant="outline">Become a Host</Button>
+    </div>
   </div>
 </section>
-
-// Feature card grid
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  {features.map(feature => (
-    <Card key={feature.id}>...</Card>
-  ))}
-</div>
-
-// Gold badge
-<Badge className="bg-gold-500 text-black font-medium">
-  Verified Host
-</Badge>
 ```
 
----
+### Host Card
+
+```tsx
+<Card className="card-hover overflow-hidden">
+  <div className="aspect-square relative">
+    <img src={host.photo} alt={host.name} className="object-cover w-full h-full" />
+    {host.verified && (
+      <Badge className="absolute top-3 right-3 bg-rose-gold-400">Verified</Badge>
+    )}
+  </div>
+  <CardContent className="p-4">
+    <h3 className="font-display text-xl font-semibold">{host.name}</h3>
+    <p className="text-muted-foreground text-sm">{host.location}</p>
+    <div className="flex items-center gap-1 mt-2">
+      <Star className="h-4 w-4 fill-rose-gold-400 text-rose-gold-400" />
+      <span className="font-medium">{host.rating}</span>
+      <span className="text-muted-foreground">({host.reviews} reviews)</span>
+    </div>
+  </CardContent>
+</Card>
+```
 
 ## Integration
 
-This skill automatically activates when:
-- Creating UI components
-- Styling with Tailwind CSS
-- Working with shadcn/ui
-- Implementing designs
-- Adding animations or transitions
-- Working on responsive layouts
+This skill works with:
+- **TanStack Router** - For page layouts and navigation
+- **TanStack Query** - For data-driven UI
+- **shadcn/ui** - Component library foundation
