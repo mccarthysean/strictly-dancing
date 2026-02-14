@@ -11,7 +11,7 @@ export PATH="$HOME/.claude/local/bin:$HOME/.bun/bin:$HOME/.local/bin:$PATH"
 # Update Claude Code to latest version
 echo "Updating Claude Code to latest..."
 if command -v claude &> /dev/null; then
-    if claude update --yes 2>/dev/null; then
+    if claude update 2>/dev/null; then
         echo "Claude Code updated: $(claude --version 2>/dev/null)"
     else
         echo "Update command failed, reinstalling..."
